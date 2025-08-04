@@ -1,0 +1,88 @@
+version: '3'
+services:
+  elasticsearch:
+    build:
+      context: ./search_system
+      dockerfile: Dockerfile
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true  # Keep security enabled
+      # - xpack.security.http.ssl.enabled=true
+      # - xpack.security.http.ssl.keystore.path=certs/http.p12
+      # - xpack.security.http.ssl.truststore.path=certs/http.p12
+      - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
+    volumes:
+      - ./es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - es_network
+
+  fastapi:
+    build:
+      context: ./search_system/FastAPI_service
+      dockerfile: Dockerfile
+    container_name: fastapi_service
+    volumes:
+      - ./es_certs:/usr/certs
+      - ./FastAPI_service/code:/app  # Persistent data storage for FastAPI
+    environment:
+      - ES_USERNAME=elastic
+      - ES_PASSWORD=gAcstb8v-lFCVzCBC__a  # Use the manually set password
+      - ES_HOST=http://elasticsearch:9200
+      - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
+    networks:
+      - es_network
+    depends_on:
+      - elasticsearch
+    ports:
+      - "3002:3002"  # Expose FastAPI on port 8000
+      
+  python_etl:
+    build:
+      context: ./search_system/ETL_process
+      dockerfile: Dockerfile_python
+    container_name: etl_container
+    volumes:
+      - ./es_certs:/usr/certs
+      - ./ETL_process/code:/app  # Persistent data storage for ETL
+    networks:
+      - es_network
+    
+  pg_vector:
+    image: ankane/pgvector:latest
+    container_name: pg_vector_container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: infopower
+      POSTGRES_DB: vector_db
+    ports:
+      - "9100:5432"  # Expose PostgreSQL on port 9100
+    volumes:
+      - pg_data:/var/lib/postgresql/data  # Persistent data storage for PostgreSQL
+    networks:
+      - ai_attr_network
+
+  seg_ai":
+    build:
+      context: ./ai_attribute_recommendation
+      dockerfile: Dockerfile
+    container_name: seg_ai_container
+    volumes:
+      - "${PWD}\app:/app"
+    port:
+      - "8000:8000"  # Expose AI service on port 8000
+    depends_on:
+      - pg_vector
+    networks:
+      - ai_attr_network
+
+networks:
+  es_network:
+    driver: bridge
+  ai_attr_network:
+    driver: bridge
+
+volumes:
+  es_certs:

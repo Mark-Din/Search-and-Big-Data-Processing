@@ -1,0 +1,9 @@
+{
+    "MYSQL_HOST": "172.104.101.201",
+    "MYSQL_PORT": "3306",
+    "MYSQL_PASSWORD": "Inf0p0werc@rp",
+    "POSTGRESQL_HOST": "172.233.81.209",
+    "POSTGRESQL_PORT": "9300",
+    "POSTGRESQL_PASSWORD": "Infopower_INTT55688"
+}
+

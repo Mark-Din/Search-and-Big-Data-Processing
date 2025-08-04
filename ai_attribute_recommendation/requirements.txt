@@ -1,0 +1,30 @@
+torch==2.2.2
+urllib3==2.2.1
+uvicorn==0.29.0
+wrapt==1.16.0
+yarl==1.9.4
+pdfplumber 
+pgvector
+psycopg2_binary==2.9.9
+ollama==0.4.7
+# dspy-ai
+itsdangerous==2.1.2
+websockets
+fastapi==0.110.1
+pandas==2.2.1
+transformers==4.39.2
+python-dotenv==1.0.1
+accelerate==0.28.0
+dspy-ai==2.6.6
+litellm==1.61.13
+pytest
+
+## For local development below packages are required and should manuall using pip install dspy-ai --no-deps##
+
+# cloudpickle 
+# litellm
+# json_repair
+# asyncer
+# cachetools
+# magicattr
+# optuna

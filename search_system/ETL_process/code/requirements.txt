@@ -1,0 +1,8 @@
+pandas
+elasticsearch==8.13.0
+TCSP
+spacy==3.7.2
+scikit-learn==1.0.2
+mysql-connector-python==8.0.27
+nltk
+

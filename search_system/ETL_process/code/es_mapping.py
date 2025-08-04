@@ -1,0 +1,386 @@
+'''-----------------------------Create mapping for user----------------------------------'''
+def user_mapping():
+    # Define the settings for the custom analyzer
+    body = {
+        "settings":{
+            "analysis": {
+                "filter": {
+                    "chinese_synonym":{
+                        "type":"synonym",
+                        "synonyms":[
+                            "家具, 傢俱"
+                        ]
+                    },
+                    "my_stopwords": {
+                        "type": "stop",
+                        "stopwords":  [
+                                        "的", "了", "在", "是", "我", "有", "和", "就", "不", "人",
+                                        "都", "一", "上", "也", "很", "到", "他", "年", "就是", "而",
+                                        "我們", "這個", "可以", "這些", "自己", "沒有", "這樣", "著",
+                                        "多", "對", "下", "但", "要", "被", "讓", "她", "向", "以",
+                                        "所以", "把", "跟", "之", "其", "又", "在這裡", "這", "能",
+                                        "應該", "則", "然後", "只是", "那", "在那裡", "這種", "因為",
+                                        "這是", "而且", "如何", "誰", "它", "不是", "這裡", "如此",
+                                        "每個", "這一點", "即使", "大", "小", "因此", "可能", "其他",
+                                        "不過", "他們", "最後", "使用", "至於", "此", "其中", "大家",
+                                        "或者", "最", "且", "雖然", "那麼", "這些", "一些", "通過",
+                                        "為什麼", "什麼", "進行", "再", "已經", "不同", "整個", "以及",
+                                        "從", "這樣的", "不能", "他的", "我們的", "自", "這邊", "那邊",
+                                        "對於", "所有", "能夠", "請", "給", "在此", "上面", "以下",
+                                        "儘管", "不需要", "不管", "與此同時", "關於", "有關", "將",
+                                        "沒事", "沒關係", "這邊", "那邊", "有時候", "有時", "為", "可能性"
+                                    ]
+ 
+                    }
+                },
+                "analyzer": {
+                    "traditional_chinese_analyzer": {
+                        "type": "custom",
+                        "tokenizer": "icu_tokenizer",
+                        "filter": ["icu_folding", "my_stopwords"]
+                    }
+                }
+            }
+        },        
+          "mappings": {
+            "properties": {
+              "id": {
+                "type": "keyword"
+              },
+              "account": {
+                "type": "keyword"
+              },
+              "email": {
+                "type": "keyword"
+              },
+              "phone": {
+                "type": "keyword"
+              },
+              "nodebbUid": {
+                "type": "integer"
+              },
+              "name": {
+                'type': 'text',
+                'analyzer':'traditional_chinese_analyzer',
+                "fields": {
+                    "raw": { 
+                        "type": "keyword",
+                        "doc_values": True
+                  }
+              }
+            },
+              "contactName": {
+                "type": "text"
+              },
+              "userType": {
+                "type": "keyword"
+              },
+              "avatarImage": {
+                "type": "text",
+                "index": False 
+              },
+              "coverImage": {
+                "type": "text",
+                "index": False  
+              },
+              "experienceESG": {
+                "type": "text"
+              },
+              "experience": {
+                "type": "text"
+              },
+              "education": {
+                "type": "text"
+              },
+              "personalIntroduce": {
+                "type": "text"
+              },
+              "companyName": {
+                "type": "text"
+              },
+              "uniformNumber": {
+                "type": "integer"
+              },
+              "jobTitle": {
+                "type": "text"
+              },
+              "companyAddress": {
+                "type": "text"
+              },
+              "companyTelephone": {
+                "type": "keyword"
+              },
+              "companyTelephoneExtension": {
+                "type": "integer"
+              },
+              "estimatedNumberOfPeople": {
+                "type": "integer"
+              },
+              "trainingObjective": {
+                "type": "text"
+              },
+              "level": {
+                "type": "integer"
+              },
+              "disabled": {
+                "type": "keyword"
+              },
+              "createdAt": {
+                "type": "date",
+                "format": "strict_date_optional_time||epoch_millis"
+              },
+              "updatedAt": {
+                "type": "date",
+                "format": "strict_date_optional_time||epoch_millis"
+      }
+    }
+  }
+}
+
+    return body
+
+
+'''-----------------------------Create mapping for user----------------------------------'''
+def life_mapping():
+    # Define the settings for the custom analyzer
+    body = {
+        "settings":{
+            "analysis": {
+                "filter": {
+                    "chinese_synonym":{
+                        "type":"synonym",
+                        "synonyms":[
+                            "家具, 傢俱"
+                        ]
+                    },
+                    "my_stopwords": {
+                        "type": "stop",
+                        "stopwords":  [
+                                        "的", "了", "在", "是", "我", "有", "和", "就", "不", "人",
+                                        "都", "一", "上", "也", "很", "到", "他", "年", "就是", "而",
+                                        "我們", "這個", "可以", "這些", "自己", "沒有", "這樣", "著",
+                                        "多", "對", "下", "但", "要", "被", "讓", "她", "向", "以",
+                                        "所以", "把", "跟", "之", "其", "又", "在這裡", "這", "能",
+                                        "應該", "則", "然後", "只是", "那", "在那裡", "這種", "因為",
+                                        "這是", "而且", "如何", "誰", "它", "不是", "這裡", "如此",
+                                        "每個", "這一點", "即使", "大", "小", "因此", "可能", "其他",
+                                        "不過", "他們", "最後", "使用", "至於", "此", "其中", "大家",
+                                        "或者", "最", "且", "雖然", "那麼", "這些", "一些", "通過",
+                                        "為什麼", "什麼", "進行", "再", "已經", "不同", "整個", "以及",
+                                        "從", "這樣的", "不能", "他的", "我們的", "自", "這邊", "那邊",
+                                        "對於", "所有", "能夠", "請", "給", "在此", "上面", "以下",
+                                        "儘管", "不需要", "不管", "與此同時", "關於", "有關", "將",
+                                        "沒事", "沒關係", "這邊", "那邊", "有時候", "有時", "為", "可能性"
+                                    ]
+                    }
+                },
+                "analyzer": {
+                    "traditional_chinese_analyzer": {
+                        "type": "custom",
+                        "tokenizer": "icu_tokenizer",
+                        "filter": ["icu_folding", "my_stopwords"]
+                    }
+                }
+            }
+        },        
+           "mappings": {
+            "properties": {
+              "id": {
+                "type": "keyword"  # Using keyword as it is a char(36), likely a UUID or fixed string
+              },
+              "name": {
+                'type': 'text',
+                'analyzer':'traditional_chinese_analyzer',
+                "fields": {
+                    "raw": { 
+                        "type": "keyword",
+                        "doc_values": True
+                  }
+              }
+            },
+              "nodebbCid": {
+                "type": "integer"  
+              },
+              "nodebbUid": {
+                "type": "integer"  
+              },
+              "visibility": {
+                "type": "keyword"  
+              },
+              "about": {
+                "type": "text"  
+              },
+              "coverImage": {
+                "type": "text",  
+                "index": False
+              },
+              "forumImage": {
+                "type": "text",  
+                "index": False
+              },
+              "deleted": {
+                "type": "keyword"  
+              },
+              "createdAt": {
+                "type": "date",  
+                "format": "strict_date_optional_time||epoch_millis"
+              },
+              "updatedAt": {
+                "type": "date",  
+                "format": "strict_date_optional_time||epoch_millis"
+      }
+    }
+  }
+}
+    return body
+
+
+'''-----------------------------Create mapping for course----------------------------------'''
+def article_mapping():
+    # Define the settings for the custom analyzer
+    body =  {
+    "settings": {
+        "analysis": {
+            "filter": {
+                "chinese_synonym": {
+                    "type": "synonym",
+                    "synonyms": [
+                        "家具, 傢俱"
+                    ]
+                },
+                "my_stopwords": {
+                    "type": "stop",
+                    "stopwords":  [
+                            "的", "了", "在", "是", "我", "有", "和", "就", "不", "人",
+                            "都", "一", "上", "也", "很", "到", "他", "年", "就是", "而",
+                            "我們", "這個", "可以", "這些", "自己", "沒有", "這樣", "著",
+                            "多", "對", "下", "但", "要", "被", "讓", "她", "向", "以",
+                            "所以", "把", "跟", "之", "其", "又", "在這裡", "這", "能",
+                            "應該", "則", "然後", "只是", "那", "在那裡", "這種", "因為",
+                            "這是", "而且", "如何", "誰", "它", "不是", "這裡", "如此",
+                            "每個", "這一點", "即使", "大", "小", "因此", "可能", "其他",
+                            "不過", "他們", "最後", "使用", "至於", "此", "其中", "大家",
+                            "或者", "最", "且", "雖然", "那麼", "這些", "一些", "通過",
+                            "為什麼", "什麼", "進行", "再", "已經", "不同", "整個", "以及",
+                            "從", "這樣的", "不能", "他的", "我們的", "自", "這邊", "那邊",
+                            "對於", "所有", "能夠", "請", "給", "在此", "上面", "以下",
+                            "儘管", "不需要", "不管", "與此同時", "關於", "有關", "將",
+                            "沒事", "沒關係", "這邊", "那邊", "有時候", "有時", "為", "可能性",
+                            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 
+                            'm', 'n', 'o','p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 
+                            'y', 'z'
+                    ]
+                }
+            },
+            "analyzer": {
+                "traditional_chinese_analyzer": {
+                    "type": "custom",
+                    "tokenizer": "icu_tokenizer",
+                    "filter": ["icu_folding", "my_stopwords"]
+                }
+            }
+        }
+    },
+    "mappings": {
+        "properties": {
+            "id": {
+                "type": "keyword"
+            },
+          "title": {
+            "type": "text",
+            "analyzer": "traditional_chinese_analyzer",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+                    }
+                }
+            },
+            "advancedPlacement": {
+                "type": "keyword"
+            },
+            "advancedPlacementTid": {
+                "type": "integer"
+            },
+            "price": {
+                "type": "integer"
+            },
+            "startDate": {
+                "type": "date",
+                "format": "strict_date_optional_time||epoch_millis"
+            },
+            "introduction": {
+                "type": "text",
+                "analyzer": "traditional_chinese_analyzer",
+                "fields": {
+                    "raw": {
+                        "type": "keyword",
+                        "doc_values": True
+                    }
+                }
+            },
+            "coverPicture": {
+                "type": "text",
+                "index": False  
+            },
+            "originPreVideo": {
+                "type": "text"
+            },
+            "convertPreVideo": {
+                "type": "text"
+            },
+            "preVideoLength": {
+                "type": "text"
+            },
+            "videoReady": {
+                "type": "keyword"
+            },
+            "instructorIdentity": {
+                "type": "keyword"
+            },
+            "nodebbUidTeacher": {
+                "type": "integer"
+            },
+            "nodebbUidOwner": {
+                "type": "integer"
+            },
+            "groupOwnerNodebbUid": {
+                "type": "integer"
+            },
+            "nodebbBigCid": {
+                "type": "integer"
+            },
+            "nodebbSmallCid": {
+                "type": "integer"
+            },
+            "nodebbTid": {
+                "type": "integer"
+            },
+            "nodebbPid": {
+                "type": "integer"
+            },
+            "disabled": {
+                "type": "keyword"
+            },
+            "createdAt": {
+                "type": "date",
+                "format": "strict_date_optional_time||epoch_millis"
+            },
+            "updatedAt": {
+                "type": "date",
+                "format": "strict_date_optional_time||epoch_millis"
+            },
+            "preVideoReady": {
+                "type": "keyword"
+            },
+            "sumVideoLength": {
+                "type": "double"
+            },
+            "authorizeStatus": {
+                "type": "integer"
+            },
+            #  "vector": {"type": "dense_vector", "dims": df_encoded.shape[1]}
+        }
+    }
+}
+    return body

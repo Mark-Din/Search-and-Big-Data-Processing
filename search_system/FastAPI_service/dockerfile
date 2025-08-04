@@ -1,0 +1,42 @@
+# Use an official Python runtime as a parent image
+FROM python:3.9.12
+
+# Install necessary packages for locales, network tools, and other dependencies
+RUN apt-get update && \
+    apt-get install -y locales iputils-ping curl && \
+    sed -i -e 's/# zh_TW.UTF-8 UTF-8/zh_TW.UTF-8 UTF-8/' /etc/locale.gen && \
+    locale-gen zh_TW.UTF-8
+
+# Set environment variables for locale
+ENV LANG=zh_TW.UTF-8
+ENV LC_ALL=zh_TW.UTF-8
+
+# Create a new user 'appuser'
+RUN useradd -m appuser
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the current directory contents into the container at /app
+COPY ./code /app
+COPY ./code/requirements.txt /app/requirements.txt
+
+# Create the logs directory and set permissions
+RUN mkdir -p /app/logs && \
+    chown -R appuser:appuser /app/logs && \
+    chmod -R 775 /app/logs
+
+# Switch to the new user
+USER appuser
+
+# Update PATH environment variable
+ENV PATH="/home/appuser/.local/bin:${PATH}"
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --user --no-cache-dir -r requirements.txt
+
+# Make port 3002 available to the world outside this container
+EXPOSE 3002
+
+# Run main.py when the container launches
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3002", "--reload"]

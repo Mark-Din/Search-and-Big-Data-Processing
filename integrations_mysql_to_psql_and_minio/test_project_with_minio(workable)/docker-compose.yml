@@ -1,89 +1,89 @@
-services:
-  spark-master:
-    image: bitnami/spark:3.5.0
-    environment:
-      - SPARK_MODE=master
-      - SPARK_MASTER_HOST=spark-master
-    ports:
-      - "7077:7077"
-      - "8081:8080"
-    networks:
-      - spark-net
+# services:
+#   spark-master:
+#     image: bitnami/spark:3.5.0
+#     environment:
+#       - SPARK_MODE=master
+#       - SPARK_MASTER_HOST=spark-master
+#     ports:
+#       - "7077:7077"
+#       - "8081:8080"
+#     networks:
+#       - spark-net
 
-  spark-worker:
-    image: bitnami/spark:3.5.0
-    depends_on:
-      - spark-master
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=1G
-      - SPARK_WORKER_CORES=1
-      - SPARK_MASTER_HOST=spark-master
-    networks:
-      - spark-net
-  spark-worker-2:
-    image: bitnami/spark:3.5.0
-    depends_on:
-      - spark-master
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_CORES=1
-      - SPARK_WORKER_MEMORY=1G
-  jupyter:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8888:8888"
-    volumes:
-      - ./notebooks:/home/jovyan/work
-    environment:
-      - PYSPARK_DRIVER_PYTHON_OPTS=""
-      - PYSPARK_NO_DRIVER=true
-      - PYSPARK_SUBMIT_ARGS=--jars /usr/local/spark/jars/delta-core_2.12-2.4.0.jar,/usr/local/spark/jars/delta-storage-2.4.0.jar pyspark-shell
-      - JUPYTER_ENABLE_LAB=yes
-    command: jupyter lab --NotebookApp.token='' --NotebookApp.password=''
-    depends_on:
-      - spark-master
-    networks:
-      - spark-net
+#   spark-worker:
+#     image: bitnami/spark:3.5.0
+#     depends_on:
+#       - spark-master
+#     environment:
+#       - SPARK_MODE=worker
+#       - SPARK_MASTER_URL=spark://spark-master:7077
+#       - SPARK_WORKER_MEMORY=1G
+#       - SPARK_WORKER_CORES=1
+#       - SPARK_MASTER_HOST=spark-master
+#     networks:
+#       - spark-net
+#   spark-worker-2:
+#     image: bitnami/spark:3.5.0
+#     depends_on:
+#       - spark-master
+#     environment:
+#       - SPARK_MODE=worker
+#       - SPARK_MASTER_URL=spark://spark-master:7077
+#       - SPARK_WORKER_CORES=1
+#       - SPARK_WORKER_MEMORY=1G
+#   jupyter:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile
+#     ports:
+#       - "8888:8888"
+#     volumes:
+#       - ./notebooks:/home/jovyan/work
+#     environment:
+#       - PYSPARK_DRIVER_PYTHON_OPTS=""
+#       - PYSPARK_NO_DRIVER=true
+#       - PYSPARK_SUBMIT_ARGS=--jars /usr/local/spark/jars/delta-core_2.12-2.4.0.jar,/usr/local/spark/jars/delta-storage-2.4.0.jar pyspark-shell
+#       - JUPYTER_ENABLE_LAB=yes
+#     command: jupyter lab --NotebookApp.token='' --NotebookApp.password=''
+#     depends_on:
+#       - spark-master
+#     networks:
+#       - spark-net
 
-  minio:
-    image: minio/minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - minio-data:/data
-    environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
-    command: server /data --console-address ":9001"
-    networks:
-      - spark-net
+#   minio:
+#     image: minio/minio
+#     ports:
+#       - "9000:9000"
+#       - "9001:9001"
+#     volumes:
+#       - minio-data:/data
+#     environment:
+#       - MINIO_ROOT_USER=minioadmin
+#       - MINIO_ROOT_PASSWORD=minioadmin
+#     command: server /data --console-address ":9001"
+#     networks:
+#       - spark-net
 
-  createbucket:
-    image: minio/mc
-    depends_on:
-      - minio
-    entrypoint: >
-      /bin/sh -c "
-        sleep 5;
-        mc alias set local http://minio:9000 minioadmin minioadmin; 
-        mc mb -p local/deltabucket;
-        mc mb -p local/media-bucket;
-        mc policy set public local/deltabucket;
-        mc policy set public local/media-bucket;
-        exit 0;
-      "
-    networks:
-      - spark-net
+#   createbucket:
+#     image: minio/mc
+#     depends_on:
+#       - minio
+#     entrypoint: >
+#       /bin/sh -c "
+#         sleep 5;
+#         mc alias set local http://minio:9000 minioadmin minioadmin; 
+#         mc mb -p local/deltabucket;
+#         mc mb -p local/media-bucket;
+#         mc policy set public local/deltabucket;
+#         mc policy set public local/media-bucket;
+#         exit 0;
+#       "
+#     networks:
+#       - spark-net
 
-volumes:
-  minio-data:
+# volumes:
+#   minio-data:
 
-networks:
-  spark-net:
+# networks:
+#   spark-net:
 

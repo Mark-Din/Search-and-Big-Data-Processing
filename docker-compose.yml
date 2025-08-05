@@ -1,4 +1,8 @@
 version: '3'
+
+# ---------------
+# search_system
+# ---------------
 services:
   elasticsearch:
     build:
@@ -17,7 +21,7 @@ services:
       - "9200:9200"
       - "9300:9300"
     networks:
-      - es_network
+      - bigdata-net
 
   fastapi:
     build:
@@ -33,12 +37,19 @@ services:
       - ES_HOST=http://elasticsearch:9200
       - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
     networks:
-      - es_network
+      - bigdata-net
     depends_on:
       - elasticsearch
     ports:
       - "3002:3002"  # Expose FastAPI on port 8000
-      
+
+  mysql:
+    image: mysql:5.7
+    container_name: mysql_container_compose
+    environment:
+      MYSQL_ROOT_PASSWORD: !QAZ2wsx
+      MYSQL_DATABASE: reporting
+
   python_etl:
     build:
       context: ./search_system/ETL_process
@@ -47,9 +58,15 @@ services:
     volumes:
       - ./es_certs:/usr/certs
       - ./ETL_process/code:/app  # Persistent data storage for ETL
+    depends_on:
+      - elasticsearch
+      - mysql
     networks:
-      - es_network
+      - bigdata-net
     
+# ----------------------------------
+# AI Attribute Recommendation Service
+# ----------------------------------
   pg_vector:
     image: ankane/pgvector:latest
     container_name: pg_vector_container
@@ -62,7 +79,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data  # Persistent data storage for PostgreSQL
     networks:
-      - ai_attr_network
+      - bigdata-net
 
   seg_ai":
     build:
@@ -76,13 +93,10 @@ services:
     depends_on:
       - pg_vector
     networks:
-      - ai_attr_network
+      - bigdata-net
 
 networks:
-  es_network:
-    driver: bridge
-  ai_attr_network:
-    driver: bridge
+  bigdata-net:
 
 volumes:
   es_certs:

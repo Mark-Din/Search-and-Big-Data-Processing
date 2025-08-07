@@ -18,13 +18,13 @@ ENV HF_HOME=/hf_cache
 
 # Preload the model at build time to cache it under /root/.cache/huggingface.
 COPY download_model.py /app/download_model.py
-RUN python /app/download_model.py
+# RUN python /app/download_model.py
 
 #  Update the PATH environment variable to include the local bin directory
 ENV PATH="/home/appuser/.local/bin:${PATH}"
 
 # Expose the port the app runs on
-EXPOSE 8000
+EXPOSE 3002
 
 # Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3002", "--reload"]

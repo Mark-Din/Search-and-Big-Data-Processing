@@ -14,20 +14,20 @@ services:
   #     # - xpack.security.http.ssl.truststore.path=certs/http.p12
   #     - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
   #   volumes:
-  #     - ./es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
+  #     - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
   #   ports:
   #     - "9200:9200"
   #     - "9300:9300"
   #   networks:
   #     - bigdata-net
 
-  # fastapi:
+  # fastapi_search_service:
   #   build:
   #     context: ./search_system/FastAPI_service
   #     dockerfile: Dockerfile
-  #   container_name: fastapi_service
+  #   container_name: fastapi_search_service
   #   volumes:
-  #     - ./es_certs:/usr/certs
+  #     - ./search_system/es_certs:/usr/certs
   #     - ./search_system/FastAPI_service/code:/app  # Persistent data storage for FastAPI
   #   environment:
   #     - ES_USERNAME=elastic
@@ -83,15 +83,15 @@ services:
     networks:
       - bigdata-net
 
-  seg_ai:
+  fastapi_seg_ai_service:
     build:
       context: ./ai_attribute_recommendation
       dockerfile: Dockerfile
-    container_name: seg_ai_container
+    container_name: fastapi_seg_ai_service
     volumes:
-      - "${PWD}\app:/app"
-    port:
-      - "8000:8000"  # Expose AI service on port 8000
+      - ./ai_attribute_recommendation/app:/app
+    ports:
+      - "3003:3002" 
     depends_on:
       - pg_vector
     networks:
@@ -261,3 +261,4 @@ volumes:
   minio-data:
   postgres_data:
   es_certs:
+  pg_data:

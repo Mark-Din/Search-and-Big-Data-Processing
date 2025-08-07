@@ -122,8 +122,6 @@ def etl_process(table_name, es, es_index):
     if date_now_python != date_now_sql:
         logger.info("Date time is not the same: %s and %s", date_now_python, date_now_sql)
         cursor.execute("SET time_zone = 'Asia/Taipei';")
-    else:
-        logger.info("Date time is the same: %s", date_now_python)
 
     # Query to fetch updated records
     sql_query_updatedAt = f"SELECT * FROM {table_name} where updatedAt > DATE_SUB(now(), INTERVAL 5 MINUTE)"
@@ -178,16 +176,20 @@ def get_mapping_for_table(index_name):
         return es_mapping.life_mapping()
     elif index_name == 'articleallgets':
         return es_mapping.article_mapping()
+    elif index_name == 'categoryesg':
+        return es_mapping.category_mapping()
+    elif index_name == 'chatesg':
+        return es_mapping.chat_mapping()
     else:
         logger.error(f"Invalid index name: {index_name}")
         return None
 
 
 def main():
-    logger.info("ETL process started.")
+    logger.info("==========================ETL process started==========================")
     es = ElasticSearchConnectionManager.get_instance()
     
-    table_names = ['userESG', 'lifeCircleESG', 'articleAllgets']
+    table_names = ['userESG', 'lifeCircleESG', 'articleAllgets', "categoryESG", 'chatESG']
     
     for table_name in table_names:
         index_name = table_name.lower()
@@ -201,7 +203,7 @@ def main():
         
         logger.info(f"Data update for {table_name} completed, with update_data_count: {update_data_count}, create_data_count: {create_data_count}")
     
-    logger.info("ETL process finished.")
+    logger.info("==========================ETL process finished==========================")
 
 
 if __name__ == "__main__":

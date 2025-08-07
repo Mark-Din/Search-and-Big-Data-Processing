@@ -18,6 +18,18 @@ class CreateLog:
         log_data = [self.collection_name,
                     self.getTimeNow, self.update_data_count, self.create_data_count, status]
         cursor = self.conn.cursor()
+
+        # Check if the table exists, if not create it
+        cursor.execute("""
+                       CREATE TABLE IF NOT EXISTS ETL_log (
+                           id INT AUTO_INCREMENT PRIMARY KEY,
+                           from_which_collection VARCHAR(50),
+                           createTime DATETIME,
+                           update_data_count INT(50),
+                           create_data_count INT(50),
+                           status CHAR(1)
+                       )
+                       """)
         cursor.execute(self.query, log_data)
         self.conn.commit()
         cursor.close()

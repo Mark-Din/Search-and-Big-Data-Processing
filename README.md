@@ -22,21 +22,22 @@ Containerization: Docker, Docker Compose
 
 ## Project Structure
 
-
 ## Architecture
-<img width="1547" height="478" alt="image" src="https://github.com/user-attachments/assets/f4c5261e-afcb-4c84-901a-15dc4991ac66" />
-Web APP → Extract (Airflow Task) → Transform (Pandas) → Load with structured data(PostgreSQL)
-Web APP → Extract (Airflow Task) → Transform (Apache Spark) → Save format (Delta format) → Load with structured/unstructured data(MinIO)
+<img width="970" height="578" alt="image" src="https://github.com/user-attachments/assets/4b14954d-9295-4ad2-afd0-817141f65f82" />
+For regular ETL : Web APP → MySQL→ Extract (Airflow Task) → Transform (Pandas) → Load with structured data(PostgreSQL)
+                                                          → Save format (Delta format) → Load with structured/unstructured data(MinIO)
+
+For big data/ML process : MySQL → Transform (Apache Spark) → Load with structured data(PostgreSQL)
 
 ## How to Run
 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/etl-automation-airflow.git
+git clone https://github.com/Mark-Din/big-data-ai-integration-platform.git
 cd etl-automation-airflow
 ```
 2. Start Airflow and PostgreSQL with Docker
 ```bash
-docker-compose up -d
+astro dev start
 ```
 3. Access Airflow UI
 URL: http://localhost:8080

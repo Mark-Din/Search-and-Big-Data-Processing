@@ -32,4 +32,4 @@ services:
     networks:
       - astro_custom_net
     ports:
-      - 0.0.0.0:8081:8080
+      - 0.0.0.0:8080:8080

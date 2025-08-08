@@ -20,7 +20,6 @@ Database: PostgreSQL
 Libraries: Pandas, SQLAlchemy
 Containerization: Docker, Docker Compose
 
-
 ## Project Structure
 
 

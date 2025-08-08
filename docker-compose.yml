@@ -2,100 +2,100 @@
 # search_system
 # ---------------
 services:
-  # elasticsearch:
-  #   build:
-  #     context: ./search_system
-  #     dockerfile: Dockerfile
-  #   environment:
-  #     - discovery.type=single-node
-  #     - xpack.security.enabled=true  # Keep security enabled
-  #     # - xpack.security.http.ssl.enabled=true
-  #     # - xpack.security.http.ssl.keystore.path=certs/http.p12
-  #     # - xpack.security.http.ssl.truststore.path=certs/http.p12
-  #     - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
-  #   volumes:
-  #     - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
-  #   ports:
-  #     - "9200:9200"
-  #     - "9300:9300"
-  #   networks:
-  #     - bigdata-net
+  elasticsearch:
+    build:
+      context: ./search_system
+      dockerfile: Dockerfile
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true  # Keep security enabled
+      # - xpack.security.http.ssl.enabled=true
+      # - xpack.security.http.ssl.keystore.path=certs/http.p12
+      # - xpack.security.http.ssl.truststore.path=certs/http.p12
+      - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
+    volumes:
+      - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - bigdata-net
 
-  # fastapi_search_service:
-  #   build:
-  #     context: ./search_system/FastAPI_service
-  #     dockerfile: Dockerfile
-  #   container_name: fastapi_search_service
-  #   volumes:
-  #     - ./search_system/es_certs:/usr/certs
-  #     - ./search_system/FastAPI_service/code:/app  # Persistent data storage for FastAPI
-  #   environment:
-  #     - ES_USERNAME=elastic
-  #     - ES_PASSWORD=gAcstb8v-lFCVzCBC__a  # Use the manually set password
-  #     - ES_HOST=http://elasticsearch:9200
-  #     - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
-  #   networks:
-  #     - bigdata-net
-  #   depends_on:
-  #     - elasticsearch
-  #   ports:
-  #     - "3002:3002"  # Expose FastAPI on port 8000
+  fastapi_search_service:
+    build:
+      context: ./search_system/FastAPI_service
+      dockerfile: Dockerfile
+    container_name: fastapi_search_service
+    volumes:
+      - ./search_system/es_certs:/usr/certs
+      - ./search_system/FastAPI_service/code:/app  # Persistent data storage for FastAPI
+    environment:
+      - ES_USERNAME=elastic
+      - ES_PASSWORD=gAcstb8v-lFCVzCBC__a  # Use the manually set password
+      - ES_HOST=http://elasticsearch:9200
+      - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
+    networks:
+      - bigdata-net
+    depends_on:
+      - elasticsearch
+    ports:
+      - "3002:3002"  # Expose FastAPI on port 8000
 
-  # mysql_db:
-  #   image: mysql:5.7
-  #   container_name: mysql_db_container
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
-  #     MYSQL_DATABASE: reporting
-  #   ports:
-  #     - "3307:3306"  # Expose MySQL on port 3306
-  #   networks:
-  #     - bigdata-net
+  mysql_db:
+    image: mysql:5.7
+    container_name: mysql_db_container
+    environment:
+      MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
+      MYSQL_DATABASE: reporting
+    ports:
+      - "3307:3306"  # Expose MySQL on port 3306
+    networks:
+      - bigdata-net
 
-  # python_etl:
-  #   build:
-  #     context: ./search_system/ETL_process
-  #     dockerfile: Dockerfile_python
-  #   container_name: etl_container
-  #   volumes:
-  #     - ./es_certs:/usr/certs
-  #     - ./search_system/ETL_process/code:/app  # Persistent data storage for ETL
-  #   depends_on:
-  #     - elasticsearch
-  #     - mysql_db
-  #   networks:
-  #     - bigdata-net
+  python_etl:
+    build:
+      context: ./search_system/ETL_process
+      dockerfile: Dockerfile_python
+    container_name: etl_container
+    volumes:
+      - ./es_certs:/usr/certs
+      - ./search_system/ETL_process/code:/app  # Persistent data storage for ETL
+    depends_on:
+      - elasticsearch
+      - mysql_db
+    networks:
+      - bigdata-net
 
 # ----------------------------------
 # AI Attribute Recommendation Service
 # ----------------------------------
-  pg_vector:
-    image: ankane/pgvector:latest
-    container_name: pg_vector_container
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: infopower
-      POSTGRES_DB: vector_db
-    ports:
-      - "9100:5432"  # Expose PostgreSQL on port 9100
-    volumes:
-      - pg_data:/var/lib/postgresql/data  # Persistent data storage for PostgreSQL
-    networks:
-      - bigdata-net
+  # pg_vector:
+  #   image: ankane/pgvector:latest
+  #   container_name: pg_vector_container
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: infopower
+  #     POSTGRES_DB: vector_db
+  #   ports:
+  #     - "9100:5432"  # Expose PostgreSQL on port 9100
+  #   volumes:
+  #     - pg_data:/var/lib/postgresql/data  # Persistent data storage for PostgreSQL
+  #   networks:
+  #     - bigdata-net
 
-  fastapi_seg_ai_service:
-    build:
-      context: ./ai_attribute_recommendation
-      dockerfile: Dockerfile
-    container_name: fastapi_seg_ai_service
-    volumes:
-      - ./ai_attribute_recommendation/app:/app
-    ports:
-      - "3003:3002" 
-    depends_on:
-      - pg_vector
-    networks:
-      - bigdata-net
+  # fastapi_seg_ai_service:
+  #   build:
+  #     context: ./ai_attribute_recommendation
+  #     dockerfile: Dockerfile
+  #   container_name: fastapi_seg_ai_service
+  #   volumes:
+  #     - ./ai_attribute_recommendation/app:/app
+  #   ports:
+  #     - "3003:3002" 
+  #   depends_on:
+  #     - pg_vector
+  #   networks:
+  #     - bigdata-net
 
 #   # --------------------
 #   # MinIO for object storage

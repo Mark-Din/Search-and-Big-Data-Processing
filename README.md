@@ -20,14 +20,13 @@ Database: PostgreSQL
 Libraries: Pandas, SQLAlchemy
 Containerization: Docker, Docker Compose
 
-
 ## Project Structure
 
-
 ## Architecture
-<img width="1547" height="478" alt="image" src="https://github.com/user-attachments/assets/f4c5261e-afcb-4c84-901a-15dc4991ac66" />
-Web APP → Extract (Airflow Task) → Transform (Pandas) → Load with structured data(PostgreSQL)
-Web APP → Extract (Airflow Task) → Transform (Apache Spark) → Save format (Delta format) → Load with structured/unstructured data(MinIO)
+<img width="1268" height="579" alt="image" src="https://github.com/user-attachments/assets/96dba9b9-c2e7-4d32-bc0c-9ce89c5af740" />
+For regular ETL : Web APP → MySQL→ Extract (Airflow Task) → Transform (Pandas) → Load with structured data(PostgreSQL)
+                                                             → Save format (Delta format) → Load with structured/unstructured data(MinIO)
+For big data/ML process : MySQL → Transform (Apache Spark) → Load with structured data(PostgreSQL)
 
 ## How to Run
 1. Clone the Repository

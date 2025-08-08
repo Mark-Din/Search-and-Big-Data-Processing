@@ -8,12 +8,8 @@ import json
 from common import initlog
 logger = initlog('connection')
 
-try:
-    with open('/app/config.json', 'r') as config:
-        config_json = json.loads(config.read())
-except FileNotFoundError:
-    with open('config.json', 'r') as config:
-        config_json = json.loads(config.read())
+with open('/app/config.json', 'r') as config:
+    config_json = json.loads(config.read())
 
 class ElasticSearchConnectionManager:
     _instance = None
@@ -35,6 +31,7 @@ class ElasticSearchConnectionManager:
     def _create_es_connection():
         for attempt in range(ElasticSearchConnectionManager._max_attempts):
             for node in ElasticSearchConnectionManager._es_nodes:
+                logger.info(f"Attempting to connect to Elasticsearch at {node['ip']} with CA file {node['cafile']} (Attempt {attempt + 1})")
                 try:
                     # context.check_hostname = False
                     # context.verify_mode = CERT_NONE
@@ -57,14 +54,18 @@ class ElasticSearchConnectionManager:
     @staticmethod
     def mysql_connection_nexva():
         try:
-            conn = connect(host='mysql-business-only',
+            conn = connect(host='mysql_container',
+                port='3306',
+                user='root',
+                password='!QAZ2wsx',
+                database='nexva'
+            )
+        except:
+            conn = connect(host='mysql_container',
                 port='3306',
                 user='root',
                 password='Inf0p0werc@rp',
                 database='nexva'
             )
-        except:
-            logger.error("Failed to connect to MySQL database 'nexva'.", exc_info=True)
-            raise
             
         return conn

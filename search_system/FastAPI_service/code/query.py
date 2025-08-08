@@ -36,7 +36,7 @@ def suggestion_params(querys):
                 ]
             }
         },
-        "_source": ["id","title","coverPicture","nodebbTid","content"],
+        "_source": ["id","title","coverPicture","nodebbTid"],
         "track_total_hits": True
       }
     
@@ -105,47 +105,19 @@ def suggestion_params(querys):
           "track_total_hits": True
           }
                
-    query_param_chat = {
-        'size':12,
-        "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "bool": {
-                                "should": [
-                                        {"match": {"content": {"query": "", "analyzer": "traditional_chinese_analyzer"}}},
-                                        {"wildcard": {"content": {"value": ""}}}
-                                ],
-                                "minimum_should_match": 1
-                            }
-                        }
-                    ]
-                }
-            },
-        "_source": ["id", "senderId", "receiverId", "content", "createdAt"],
-        "track_total_hits": True
-    }
     
-
     if isinstance(querys, list):
         for query in querys:
-            append_content_query = [
-                {"match": {"content": {"query": query, "analyzer": "traditional_chinese_analyzer"}}},
-                {"wildcard": {"content": {"value": f"*{query}*"}}}
-            ]
-            append_query_course  = [
-                {"match": {"title": {"query": query, "analyzer": "traditional_chinese_analyzer"}}},
-                {"wildcard": {"title": {"value": f"*{query}*"}}},
-            ]
+            append_query_course  = [{"match": {"title": {"query": query, "analyzer": "traditional_chinese_analyzer"}}},
+                            {"wildcard": {"title": {"value": f"*{query}*"}}}]
             query_param_course["query"]["bool"]["must"][0]["bool"]["should"].extend(append_query_course)
-            query_param_course["query"]["bool"]["must"][0]["bool"]["should"].extend(append_content_query)
             append_query = [{"match": {"name": {"query": query, "analyzer": "traditional_chinese_analyzer"}}},
                             {"wildcard": {"name": {"value": f"*{query}*"}}}]
             query_param_life["query"]["bool"]["must"][0]["bool"]["should"].extend(append_query)
             query_param_user["query"]["bool"]["should"].extend(append_query)
-            query_param_chat["query"]["bool"]["must"][0]["bool"]["should"].extend(append_content_query)
 
-    return query_param_course, query_param_user, query_param_life, query_param_chat
+
+    return query_param_course, query_param_user, query_param_life
 
 
 def specific_dest_params(unique_id, ResultsType):

@@ -5,6 +5,7 @@ import os
 import time
 import logging
 
+from pymongo import MongoClient
 from common import initlog
 logger = initlog('connection')
 

@@ -1,0 +1,35 @@
+version: "3.8"
+
+networks:
+  astro_custom_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
+          gateway: 172.30.0.1
+
+services:
+  # Attach only the services you want to a custom network.
+  # DO NOT redefine them unless you're modifying image/build etc.
+
+  scheduler:
+    networks:
+      - astro_custom_net
+
+  dag-processor:
+    networks:
+      - astro_custom_net
+
+  triggerer:
+    networks:
+      - astro_custom_net
+
+  postgres:
+    networks:
+      - astro_custom_net
+
+  api-server:
+    networks:
+      - astro_custom_net
+    ports:
+      - 0.0.0.0:8081:8080

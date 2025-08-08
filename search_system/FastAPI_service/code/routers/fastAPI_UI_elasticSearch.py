@@ -70,7 +70,6 @@ def search_query_suggestions(search_params=None, index_name=None, es=None):
 
         for hit in results_list:
             hits = {key: hit['_source'][key] for key in hit['_source'] if key in hit['_source']}
-            hits['score'] = hit['_score']
             results.append(hits)
 
     except Exception as e:
@@ -122,6 +121,32 @@ class ResultsType(str, Enum):
     lifecircleesg = 'lifecircleesg'
        
 
+# Define Enums
+class PriceType(str, Enum):
+    all = None
+    paid = '付費'
+    free = '免費'
+    custom = '自行輸入'
+
+class VideoMode(str, Enum):
+    all = None
+    pic = '圖片'
+    one_video = '單一影片'
+    # multiple_video = '多章節影片'
+
+class VideoDuration(str, Enum):
+    all = None
+    short = '0-3小時'
+    medium = '3-6小時'
+    long = '6-12小時'
+    extra_long = '12小時以上'
+
+# Define Pydantic Model
+class SearchQuery(BaseModel):
+    query: Optional[str]
+    page_number: int = 1
+
+
 @router.get("/init", response_class=Response)
 async def init_values():
     try:
@@ -140,24 +165,22 @@ async def perform_search_suggestions(
     try:
         # Tokenize the queries
         query_tokens = tokenization(query,es)
-        query_param_course, query_param_user, query_param_life, query_param_chat = suggestion_params(query_tokens)
+        query_param_course, query_param_user, query_param_life = suggestion_params(query_tokens)
 
-        print(f'=========query_param_chat: {query_param_chat}=========')
         if query_tokens != []:
             results_course = search_query_suggestions(query_param_course, 'articleallgets', es)
             results_user = search_query_suggestions(query_param_user, 'useresg', es)
             results_life = search_query_suggestions(query_param_life, 'lifecircleesg', es)
-            result_chat = search_query_suggestions(query_param_chat, 'chatesg', es)
         else:
             results_course = []
             results_user = []
             results_life = []
-            result_chat = []
         
-        return JSONResponse(content={"articleallgets": results_course, "useresg": results_user, "lifecircleesg": results_life, "chatesg": result_chat})
+        logger.info(f'=========results_course: {results_course}=========')
+        return JSONResponse(content={"articleallgets": results_course, "useresg": results_user, "lifecircleesg": results_life})
     except Exception as e:
         logger.error(f"Error during search: {e}")
-        return JSONResponse(content={"articleallgets": [], "useresg": [], "lifecircleesg": [], "chatesg": []}, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return JSONResponse(content={"articleallgets": [], "useresg": [], "lifecircleesg": []})
 
 
 # After clicking the search button, the search results are displayed on the search page
@@ -173,32 +196,6 @@ async def perform_search_specific(unique_id: Optional[str], ResultsType: Results
     # Return the search results along with the request information
     return JSONResponse(content={"results": results})
 
-
-
-# # Define Enums
-# class PriceType(str, Enum):
-#     all = None
-#     paid = '付費'
-#     free = '免費'
-#     custom = '自行輸入'
-
-# class VideoMode(str, Enum):
-#     all = None
-#     pic = '圖片'
-#     one_video = '單一影片'
-#     # multiple_video = '多章節影片'
-
-# class VideoDuration(str, Enum):
-#     all = None
-#     short = '0-3小時'
-#     medium = '3-6小時'
-#     long = '6-12小時'
-#     extra_long = '12小時以上'
-
-# # Define Pydantic Model
-# class SearchQuery(BaseModel):
-#     query: Optional[str]
-#     page_number: int = 1
 
 # @router.post("/search_course", response_class=JSONResponse)
 # async def perform_course_search(

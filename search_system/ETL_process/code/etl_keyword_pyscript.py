@@ -11,8 +11,6 @@ from collections import Counter
 from nltk.corpus import stopwords
 from connection import ElasticSearchConnectionManager
 from common import initlog
-from sqlalchemy import create_engine
-from urllib.parse import quote
 
 logger = initlog(__name__)
 
@@ -159,54 +157,17 @@ def action_processing(result_view_action_peteco_data_df: pd.DataFrame):
     return result_view_action_peteco_data_df
 
 
-def mysql_connection_nexva():
-
-    encode = quote('Inf0p0werc@rp')
-    return create_engine(
-        f"mysql+pymysql://root:{encode}@localhost:3306/nexva",
-        echo=False
-    )
-
 def insert_data_to_mysql_adjusted(table_name, df: pd.DataFrame, conn=None):
-
-    """
-    Can't use df.to_sql() directly with MySQL, so we use SQLAlchemy, and failed to use mysql connector, 
-    because it has the error "Python 'timestamp' cannot be converted to a MySQL type"
-    """
     if conn is None:
-        conn = mysql_connection_nexva()
-
-    # df['createdAt'] = pd.to_datetime(df['createdAt']).dt.to_pydatetime()
-    # df['create_date'] = pd.to_datetime(df['create_date']).dt.date
-
-    print(df.info())
+        conn = ElasticSearchConnectionManager.mysql_connection_nexva()
+        cursor = conn.cursor()
 
     try:
-        df.to_sql(
-            name=table_name,
-            con=conn,
-            if_exists='append',
-            index=False,
-            chunksize=1000
-        )
-
-        # # check if the table exists, if not create it
-        # cursor.execute(f"""
-        #                   CREATE TABLE IF NOT EXISTS {table_name} (
-        #                       id INT AUTO_INCREMENT PRIMARY KEY,
-        #                       create_date date,
-        #                       uid VARCHAR(50),
-        #                       searchKey VARCHAR(255),
-        #                       createdAt DATETIME,
-        #                       count INT
-        #                   )
-        #                   """)
-        # for row in df.itertuples(index=False):
-        #     cursor.execute(
-        #         "Insert into keyword_processed_search (create_date, uid, searchKey, createdAt, count) VALUES (%s, %s, %s, %s, %s)",
-        #         (row.create_date, row.uid, row.searchKey, row.createdAt, row.count) 
-        #     )
-
+        for row in df.intertuples(index=False):
+            cursor.execute(
+                "Insert into keyword_processed_search (create_date, uid, searchKey, createdAt, count) VALUES (%s, %s, %s, %s, %s)",
+                (row.create_date, row.uid, row.searchKey, row.createdAt, row.count) 
+            )
         return True
     except Exception as e:
         logger.error('Error in inserting data in mysql {e}', exc_info=True)
@@ -229,17 +190,19 @@ def etl_search():
 
     conn = ElasticSearchConnectionManager.mysql_connection_nexva()
 
-    # # Load data from MySQL, and remove the data that has been loaded
-    # loaded_data = pd.read_sql(f'SELECT * FROM keyword_processed_action where createdAt > date_sub(now(), {time_interval})', con=conn)
-    # logger.debug('====================loaded_data=======================:\n%s', loaded_data)
+    # Load data from MySQL, and remove the data that has been loaded
+    loaded_data = pd.read_sql(f'SELECT * FROM keyword_processed_action where createdAt > date_sub(now(), {time_interval})', con=conn)
+    logger.debug('====================loaded_data=======================:\n%s', loaded_data)
 
-    # action_df = action_df[~action_df.createdAt.isin(loaded_data.createdAt)]
-    # loaded_data = pd.read_sql(f'SELECT * FROM keyword_processed_search where createdAt > date_sub(now(), {time_interval})', con=conn)
-    # search_df = search_df[~search_df.createdAt.isin(loaded_data.createdAt)]
-    # logger.debug('====================search_df=======================:\n%s', search_df)
+    action_df = action_df[~action_df.createdAt.isin(loaded_data.createdAt)]
+    loaded_data = pd.read_sql(f'SELECT * FROM keyword_processed_search where createdAt > date_sub(now(), {time_interval})', con=conn)
+    search_df = search_df[~search_df.createdAt.isin(loaded_data.createdAt)]
+    logger.debug('====================search_df=======================:\n%s', search_df)
 
     if search_df.empty and action_df.empty:
         logger.info('No new data to process.')
+        CreateLog(collection_name='keyword_processed_search', update_data_count=0, create_data_count=0).success()
+        CreateLog(collection_name='keyword_processed_action', update_data_count=0, create_data_count=0).success()
         return
     
     # Insert data to MySQL, and create log

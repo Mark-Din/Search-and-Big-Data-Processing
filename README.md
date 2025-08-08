@@ -37,7 +37,7 @@ cd etl-automation-airflow
 ```
 2. Start Airflow and PostgreSQL with Docker
 ```bash
-docker-compose up -d
+astro dev start
 ```
 3. Access Airflow UI
 URL: http://localhost:8080

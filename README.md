@@ -23,9 +23,10 @@ Containerization: Docker, Docker Compose
 ## Project Structure
 
 ## Architecture
-<img width="1268" height="579" alt="image" src="https://github.com/user-attachments/assets/96dba9b9-c2e7-4d32-bc0c-9ce89c5af740" />
+<img width="1276" height="665" alt="image" src="https://github.com/user-attachments/assets/72338d31-2643-4f7a-a810-b1797ebf4ed3" />
 For regular ETL : Web APP → MySQL→ Extract (Airflow Task) → Transform (Pandas) → Load with structured data(PostgreSQL)
-                                                             → Save format (Delta format) → Load with structured/unstructured data(MinIO)
+                                                          → Save format (Delta format) → Load with structured/unstructured data(MinIO)
+
 For big data/ML process : MySQL → Transform (Apache Spark) → Load with structured data(PostgreSQL)
 
 ## How to Run

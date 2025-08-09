@@ -1,45 +1,45 @@
-# ---------------
-# search_system
-# ---------------
+# # ---------------
+# # search_system
+# # ---------------
 services:
-  elasticsearch:
-    build:
-      context: ./search_system
-      dockerfile: Dockerfile
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=true  # Keep security enabled
-      # - xpack.security.http.ssl.enabled=true
-      # - xpack.security.http.ssl.keystore.path=certs/http.p12
-      # - xpack.security.http.ssl.truststore.path=certs/http.p12
-      - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
-    volumes:
-      - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    networks:
-      - bigdata-net
+#   elasticsearch:
+#     build:
+#       context: ./search_system
+#       dockerfile: Dockerfile
+#     environment:
+#       - discovery.type=single-node
+#       - xpack.security.enabled=true  # Keep security enabled
+#       # - xpack.security.http.ssl.enabled=true
+#       # - xpack.security.http.ssl.keystore.path=certs/http.p12
+#       # - xpack.security.http.ssl.truststore.path=certs/http.p12
+#       - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
+#     volumes:
+#       - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
+#     ports:
+#       - "9200:9200"
+#       - "9300:9300"
+#     networks:
+#       - bigdata-net
 
-  fastapi_search_service:
-    build:
-      context: ./search_system/FastAPI_service
-      dockerfile: Dockerfile
-    container_name: fastapi_search_service
-    volumes:
-      - ./search_system/es_certs:/usr/certs
-      - ./search_system/FastAPI_service/code:/app  # Persistent data storage for FastAPI
-    environment:
-      - ES_USERNAME=elastic
-      - ES_PASSWORD=gAcstb8v-lFCVzCBC__a  # Use the manually set password
-      - ES_HOST=http://elasticsearch:9200
-      - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
-    networks:
-      - bigdata-net
-    depends_on:
-      - elasticsearch
-    ports:
-      - "3002:3002"  # Expose FastAPI on port 8000
+#   fastapi_search_service:
+#     build:
+#       context: ./search_system/FastAPI_service
+#       dockerfile: Dockerfile
+#     container_name: fastapi_search_service
+#     volumes:
+#       - ./search_system/es_certs:/usr/certs
+#       - ./search_system/FastAPI_service/code:/app  # Persistent data storage for FastAPI
+#     environment:
+#       - ES_USERNAME=elastic
+#       - ES_PASSWORD=gAcstb8v-lFCVzCBC__a  # Use the manually set password
+#       - ES_HOST=http://elasticsearch:9200
+#       - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
+#     networks:
+#       - bigdata-net
+#     depends_on:
+#       - elasticsearch
+#     ports:
+#       - "3002:3002"  # Expose FastAPI on port 8000
 
   mysql_db:
     image: mysql:5.7
@@ -47,24 +47,26 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
       MYSQL_DATABASE: reporting
+    volumes:
+      - ./my.cnf:/etc/mysql/conf.d/my.cnf
     ports:
       - "3307:3306"  # Expose MySQL on port 3306
     networks:
       - bigdata-net
 
-  python_etl:
-    build:
-      context: ./search_system/ETL_process
-      dockerfile: Dockerfile_python
-    container_name: etl_container
-    volumes:
-      - ./es_certs:/usr/certs
-      - ./search_system/ETL_process/code:/app  # Persistent data storage for ETL
-    depends_on:
-      - elasticsearch
-      - mysql_db
-    networks:
-      - bigdata-net
+#   python_etl:
+#     build:
+#       context: ./search_system/ETL_process
+#       dockerfile: Dockerfile_python
+#     container_name: etl_container
+#     volumes:
+#       - ./es_certs:/usr/certs
+#       - ./search_system/ETL_process/code:/app  # Persistent data storage for ETL
+#     depends_on:
+#       - elasticsearch
+#       - mysql_db
+#     networks:
+#       - bigdata-net
 
 # ----------------------------------
 # AI Attribute Recommendation Service
@@ -97,162 +99,105 @@ services:
   #   networks:
   #     - bigdata-net
 
-#   # --------------------
-#   # MinIO for object storage
-#   # --------------------
-#   minio:
-#     image: minio/minio
-#     ports:
-#       - "9000:9000"
-#       - "9001:9001"
-#     volumes:
-#       - minio-data:/data
-#     environment:
-#       - MINIO_ROOT_USER=minioadmin
-#       - MINIO_ROOT_PASSWORD=minioadmin
-#     command: server /data --console-address ":9001"
-#     networks:
-#       - bigdata-net
+  # --------------------
+  # MinIO for object storage
+  # --------------------
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    networks:
+      - bigdata-net
 
-#   createbucket:
-#     image: minio/mc
-#     depends_on:
-#       - minio
-#     entrypoint: >
-#       /bin/sh -c "
-#         sleep 5;
-#         mc alias set local http://minio:9000 minioadmin minioadmin; 
-#         mc mb -p local/deltabucket;
-#         mc mb -p local/media-bucket;
-#         mc policy set public local/deltabucket;
-#         mc policy set public local/media-bucket;
-#         exit 0;
-#       "
-#     networks:
-#       - bigdata-net
+  createbucket:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+        sleep 5;
+        mc alias set local http://minio:9000 minioadmin minioadmin; 
+        mc mb -p local/deltabucket;
+        mc mb -p local/media-bucket;
+        mc policy set public local/deltabucket;
+        mc policy set public local/media-bucket;
+        exit 0;
+      "
+    networks:
+      - bigdata-net
 
 #   # --------------------
 #   # Spark Cluster
 #   # --------------------
-#   spark-master:
-#     image: bitnami/spark:3.5.0
-#     container_name: spark-master
-#     environment:
-#       - SPARK_MODE=master
-#       - SPARK_MASTER_HOST=spark-master
-#     ports:
-#       - "7077:7077"
-#       - "8081:8080"
-#     networks:
-#       - bigdata-net
+  spark-master:
+    image: bitnami/spark:3.5.0
+    container_name: spark-master
+    volumes:
+      - ./workForSpark:/home/jovyan/work
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_HOST=spark-master
+    ports:
+      - "7077:7077"
+      - "8081:8080"
+    networks:
+      - bigdata-net
 
-#   spark-worker-1:
-#     image: bitnami/spark:3.5.0
-#     container_name: spark-worker-1
-#     depends_on:
-#       - spark-master
-#     environment:
-#       - SPARK_MODE=worker
-#       - SPARK_MASTER_URL=spark://spark-master:7077
-#       - SPARK_WORKER_MEMORY=2G
-#       - SPARK_WORKER_CORES=2
-#       - SPARK_MASTER_HOST=spark-master
-#     networks:
-#       - bigdata-net
+  spark-worker-1:
+    image: bitnami/spark:3.5.0
+    container_name: spark-worker-1
+    volumes:
+      - ./workForSpark:/home/jovyan/work
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_MASTER_HOST=spark-master
+    networks:
+      - bigdata-net
 
-#   spark-worker-2:
-#     image: bitnami/spark:3.5.0
-#     container_name: spark-worker-2
-#     depends_on:
-#       - spark-master
-#     environment:
-#       - SPARK_MODE=worker
-#       - SPARK_MASTER_URL=spark://spark-master:7077
-#       - SPARK_WORKER_CORES=2
-#       - SPARK_WORKER_MEMORY=2G
+  # spark-worker-2:
+  #   image: bitnami/spark:3.5.0
+  #   container_name: spark-worker-2
+  #   depends_on:
+  #     - spark-master
+  #   environment:
+  #     - SPARK_MODE=worker
+  #     - SPARK_MASTER_URL=spark://spark-master:7077
+  #     - SPARK_WORKER_CORES=2
+  #     - SPARK_WORKER_MEMORY=2G
+  #   networks:
+  #     - bigdata-net
 
-#   # --------------------
-#   # Airflow (Astro-based)
-#   # --------------------
-#   airflow-webserver:
-#     image: quay.io/astronomer/astro-runtime:11.4.0
-#     container_name: airflow-webserver
-#     restart: always
-#     depends_on:
-#       - airflow-scheduler
-#       - airflow-triggerer
-#       - airflow-db
-#     ports:
-#       - "8085:8080"  # Avoid conflict with Spark's 8080
-#     environment:
-#       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-#       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
-#       - AIRFLOW__WEBSERVER__RBAC=True
-#     volumes:
-#       - ./dags:/usr/local/airflow/dags
-#       - ./plugins:/usr/local/airflow/plugins
-#       - ./include:/usr/local/airflow/include
-#     networks:
-#       - bigdata-net
-
-#   airflow-scheduler:
-#     image: quay.io/astronomer/astro-runtime:11.4.0
-#     container_name: airflow-scheduler
-#     restart: always
-#     depends_on:
-#       - airflow-db
-#     environment:
-#       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-#       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
-#     volumes:
-#       - ./dags:/usr/local/airflow/dags
-#       - ./plugins:/usr/local/airflow/plugins
-#       - ./include:/usr/local/airflow/include
-#     networks:
-#       - bigdata-net
-
-#   airflow-triggerer:
-#     image: quay.io/astronomer/astro-runtime:11.4.0
-#     container_name: airflow-triggerer
-#     restart: always
-#     depends_on:
-#       - airflow-db
-#     environment:
-#       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-#       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
-#     networks:
-#       - bigdata-net
-
-#   airflow-db:
-#     image: postgres:13
-#     container_name: airflow-db
-#     environment:
-#       POSTGRES_USER: airflow
-#       POSTGRES_PASSWORD: airflow
-#       POSTGRES_DB: airflow
-#     volumes:
-#       - postgres_data:/var/lib/postgresql/data
-#     networks:
-#       - bigdata-net
-    
-#   # jupyter:
-#   #   build:
-#   #     context: ./test_project_with_minio(workable)
-#   #     dockerfile: Dockerfile_jupyter
-#   #   ports:
-#   #     - "8888:8888"
-#   #   volumes:
-#   #     - ./notebooks:/home/jovyan/work
-#   #   environment:
-#   #     - PYSPARK_DRIVER_PYTHON_OPTS=""
-#   #     - PYSPARK_NO_DRIVER=true
-#   #     - PYSPARK_SUBMIT_ARGS=--jars /usr/local/spark/jars/delta-core_2.12-2.4.0.jar,/usr/local/spark/jars/delta-storage-2.4.0.jar pyspark-shell
-#   #     - JUPYTER_ENABLE_LAB=yes
-#   #   command: jupyter lab --NotebookApp.token='' --NotebookApp.password=''
-#   #   depends_on:
-#   #     - spark-master
-#   #   networks:
-#   #     - bigdata-net
+  jupyter:
+    build:
+      context: ./integrations_mysql_to_psql_and_minio/test_project_with_minio_workable
+      dockerfile: Dockerfile
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./workForSpark:/home/jovyan/work
+    environment:
+      - PYSPARK_DRIVER_PYTHON_OPTS=""
+      - PYSPARK_NO_DRIVER=true
+      - PYSPARK_SUBMIT_ARGS=--jars /usr/local/spark/jars/delta-core_2.12-2.4.0.jar,/usr/local/spark/jars/delta-storage-2.4.0.jar pyspark-shell
+      - JUPYTER_ENABLE_LAB=yes
+    command: jupyter lab --NotebookApp.token='' --NotebookApp.password=''
+    depends_on:
+      - spark-master
+    networks:
+      - bigdata-net
 
 networks:
   bigdata-net:

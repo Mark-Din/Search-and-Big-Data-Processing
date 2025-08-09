@@ -140,3 +140,8 @@ test_folder/
 .cache/
 .__pycache__/
 FastAPI_service/__pycache__/
+
+# files
+*.json
+*.csv
+*.xls*

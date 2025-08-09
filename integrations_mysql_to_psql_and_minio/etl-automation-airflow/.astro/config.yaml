@@ -1,4 +1,4 @@
 postgres:
     port: "5435"
 project:
-    name: airflow-test-2
+    name: etl-automation-airflow

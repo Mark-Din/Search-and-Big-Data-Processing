@@ -49,10 +49,58 @@ services:
       MYSQL_DATABASE: reporting
     volumes:
       - ./my.cnf:/etc/mysql/conf.d/my.cnf
+      - my-datavolume:/var/lib/mysql
     ports:
       - "3307:3306"  # Expose MySQL on port 3306
+    profiles:
+      - search    
     networks:
       - bigdata-net
+
+  elasticsearch:
+    build:
+      context: ./search_system
+      dockerfile: Dockerfile
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true  # Keep security enabled
+      # - xpack.security.http.ssl.enabled=true
+      # - xpack.security.http.ssl.keystore.path=certs/http.p12
+      # - xpack.security.http.ssl.truststore.path=certs/http.p12
+      - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
+    volumes:
+      - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    depends_on:
+      - mysql_db
+    profiles:
+      - search
+    networks:
+      - bigdata-net
+
+  fastapi_search_service:
+    build:
+      context: ./search_system/FastAPI_service
+      dockerfile: Dockerfile
+    container_name: fastapi_search_service
+    volumes:
+      - ./search_system/es_certs:/usr/certs
+      - ./search_system/FastAPI_service/code:/app  # Persistent data storage for FastAPI
+    environment:
+      - ES_USERNAME=elastic
+      - ES_PASSWORD=gAcstb8v-lFCVzCBC__a  # Use the manually set password
+      - ES_HOST=http://elasticsearch:9200
+      - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
+    networks:
+      - bigdata-net
+    depends_on:
+      - elasticsearch
+    profiles:
+      - search
+    ports:
+      - "3002:3002"  # Expose FastAPI on port 8000
 
 #   python_etl:
 #     build:
@@ -71,33 +119,37 @@ services:
 # ----------------------------------
 # AI Attribute Recommendation Service
 # ----------------------------------
-  # pg_vector:
-  #   image: ankane/pgvector:latest
-  #   container_name: pg_vector_container
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: infopower
-  #     POSTGRES_DB: vector_db
-  #   ports:
-  #     - "9100:5432"  # Expose PostgreSQL on port 9100
-  #   volumes:
-  #     - pg_data:/var/lib/postgresql/data  # Persistent data storage for PostgreSQL
-  #   networks:
-  #     - bigdata-net
+  pg_vector:
+    image: ankane/pgvector:latest
+    container_name: pg_vector_container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: infopower
+      POSTGRES_DB: vector_db
+    ports:
+      - "9100:5432"  # Expose PostgreSQL on port 9100
+    volumes:
+      - pg_data:/var/lib/postgresql/data  # Persistent data storage for PostgreSQL
+    profiles:
+      - ai_ml
+    networks:
+      - bigdata-net
 
-  # fastapi_seg_ai_service:
-  #   build:
-  #     context: ./ai_attribute_recommendation
-  #     dockerfile: Dockerfile
-  #   container_name: fastapi_seg_ai_service
-  #   volumes:
-  #     - ./ai_attribute_recommendation/app:/app
-  #   ports:
-  #     - "3003:3002" 
-  #   depends_on:
-  #     - pg_vector
-  #   networks:
-  #     - bigdata-net
+  fastapi_seg_ai_service:
+    build:
+      context: ./ai_attribute_recommendation
+      dockerfile: Dockerfile
+    container_name: fastapi_seg_ai_service
+    volumes:
+      - ./ai_attribute_recommendation/app:/app
+    ports:
+      - "3003:3002" 
+    depends_on:
+      - pg_vector
+    profiles:
+      - ai_ml
+    networks:
+      - bigdata-net
 
   # --------------------
   # MinIO for object storage
@@ -113,6 +165,8 @@ services:
       - MINIO_ROOT_USER=minioadmin
       - MINIO_ROOT_PASSWORD=minioadmin
     command: server /data --console-address ":9001"
+    profiles: 
+      ["storage"]
     networks:
       - bigdata-net
 
@@ -147,6 +201,8 @@ services:
     ports:
       - "7077:7077"
       - "8081:8080"
+    profiles:
+      - spark
     networks:
       - bigdata-net
 
@@ -163,21 +219,25 @@ services:
       - SPARK_WORKER_MEMORY=2G
       - SPARK_WORKER_CORES=2
       - SPARK_MASTER_HOST=spark-master
+    profiles:
+      - spark
     networks:
       - bigdata-net
 
-  # spark-worker-2:
-  #   image: bitnami/spark:3.5.0
-  #   container_name: spark-worker-2
-  #   depends_on:
-  #     - spark-master
-  #   environment:
-  #     - SPARK_MODE=worker
-  #     - SPARK_MASTER_URL=spark://spark-master:7077
-  #     - SPARK_WORKER_CORES=2
-  #     - SPARK_WORKER_MEMORY=2G
-  #   networks:
-  #     - bigdata-net
+  spark-worker-2:
+    image: bitnami/spark:3.5.0
+    container_name: spark-worker-2
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+    profiles:
+      - spark
+    networks:
+      - bigdata-net
 
   jupyter:
     build:
@@ -193,6 +253,8 @@ services:
       - PYSPARK_NO_DRIVER=true
       - PYSPARK_SUBMIT_ARGS=--jars /usr/local/spark/jars/delta-core_2.12-2.4.0.jar,/usr/local/spark/jars/delta-storage-2.4.0.jar pyspark-shell
       - JUPYTER_ENABLE_LAB=yes
+    profiles:
+      - spark
     command: jupyter lab --NotebookApp.token='' --NotebookApp.password=''
     depends_on:
       - spark-master
@@ -207,3 +269,4 @@ volumes:
   postgres_data:
   es_certs:
   pg_data:
+  my-datavolume:

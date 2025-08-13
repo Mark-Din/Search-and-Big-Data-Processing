@@ -41,21 +41,24 @@ services:
 #     ports:
 #       - "3002:3002"  # Expose FastAPI on port 8000
 
-  mysql_db:
-    image: mysql:5.7
-    container_name: mysql_db_container
-    environment:
-      MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
-      MYSQL_DATABASE: reporting
-    volumes:
-      - ./my.cnf:/etc/mysql/conf.d/my.cnf
-      - my-datavolume:/var/lib/mysql
-    ports:
-      - "3307:3306"  # Expose MySQL on port 3306
-    profiles:
-      - search    
-    networks:
-      - bigdata-net
+  # mysql_db:
+  #   image: mysql:5.7
+  #   container_name: mysql_db_container
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
+  #     MYSQL_ROOT_HOST: "%"
+  #     MYSQL_DATABASE: nexva
+  #     MYSQL_CHARSET: utf8
+  #     MYSQL_COLLATION: utf8_general_ci
+  #   volumes:
+  #     - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
+  #     - my-datavolume:/var/lib/mysql
+  #   ports:
+  #     - "3307:3306"  # Expose MySQL on port 3306
+  #   profiles:
+  #     - search    
+  #   networks:
+  #     - bigdata-net
 
   elasticsearch:
     build:
@@ -166,7 +169,7 @@ services:
       - MINIO_ROOT_PASSWORD=minioadmin
     command: server /data --console-address ":9001"
     profiles: 
-      ["storage"]
+       - storage
     networks:
       - bigdata-net
 
@@ -184,6 +187,8 @@ services:
         mc policy set public local/media-bucket;
         exit 0;
       "
+    profiles:
+      - storage
     networks:
       - bigdata-net
 
@@ -194,7 +199,7 @@ services:
     image: bitnami/spark:3.5.0
     container_name: spark-master
     volumes:
-      - ./workForSpark:/home/jovyan/work
+      - ./sparkVolumnTest:/home/jovyan/work
     environment:
       - SPARK_MODE=master
       - SPARK_MASTER_HOST=spark-master
@@ -210,7 +215,7 @@ services:
     image: bitnami/spark:3.5.0
     container_name: spark-worker-1
     volumes:
-      - ./workForSpark:/home/jovyan/work
+      - ./sparkVolumnTest:/home/jovyan/work
     depends_on:
       - spark-master
     environment:
@@ -241,13 +246,13 @@ services:
 
   jupyter:
     build:
-      context: ./integrations_mysql_to_psql_and_minio/test_project_with_minio_workable
+      context: ./integrations_mysql_to_psql_and_minio/spark_jobs
       dockerfile: Dockerfile
     container_name: jupyter
     ports:
       - "8888:8888"
     volumes:
-      - ./workForSpark:/home/jovyan/work
+      - ./sparkVolumnTest:/home/jovyan/work
     environment:
       - PYSPARK_DRIVER_PYTHON_OPTS=""
       - PYSPARK_NO_DRIVER=true

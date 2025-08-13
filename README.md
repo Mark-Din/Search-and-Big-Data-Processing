@@ -43,9 +43,15 @@ astro dev start
 URL: http://localhost:8080
 Enable and run etl_pipeline DAG
 
+4. minio UI
+http://localhost:9001/
+5. Spark UI
+http://localhost:8080/
+
 ## Results
 Pipeline processes dummy_data.csv and loads clean data into PostgreSQL
 ETL execution is fully automated and can be scheduled
 
 ##⚠ Disclaimer
 This project is for demonstration purposes only. It uses synthetic data and does NOT include proprietary business logic or production code.
+

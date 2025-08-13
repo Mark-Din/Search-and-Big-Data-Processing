@@ -2,64 +2,6 @@
 # # search_system
 # # ---------------
 services:
-#   elasticsearch:
-#     build:
-#       context: ./search_system
-#       dockerfile: Dockerfile
-#     environment:
-#       - discovery.type=single-node
-#       - xpack.security.enabled=true  # Keep security enabled
-#       # - xpack.security.http.ssl.enabled=true
-#       # - xpack.security.http.ssl.keystore.path=certs/http.p12
-#       # - xpack.security.http.ssl.truststore.path=certs/http.p12
-#       - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
-#     volumes:
-#       - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
-#     ports:
-#       - "9200:9200"
-#       - "9300:9300"
-#     networks:
-#       - bigdata-net
-
-#   fastapi_search_service:
-#     build:
-#       context: ./search_system/FastAPI_service
-#       dockerfile: Dockerfile
-#     container_name: fastapi_search_service
-#     volumes:
-#       - ./search_system/es_certs:/usr/certs
-#       - ./search_system/FastAPI_service/code:/app  # Persistent data storage for FastAPI
-#     environment:
-#       - ES_USERNAME=elastic
-#       - ES_PASSWORD=gAcstb8v-lFCVzCBC__a  # Use the manually set password
-#       - ES_HOST=http://elasticsearch:9200
-#       - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
-#     networks:
-#       - bigdata-net
-#     depends_on:
-#       - elasticsearch
-#     ports:
-#       - "3002:3002"  # Expose FastAPI on port 8000
-
-  # mysql_db:
-  #   image: mysql:5.7
-  #   container_name: mysql_db_container
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
-  #     MYSQL_ROOT_HOST: "%"
-  #     MYSQL_DATABASE: nexva
-  #     MYSQL_CHARSET: utf8
-  #     MYSQL_COLLATION: utf8_general_ci
-  #   volumes:
-  #     - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
-  #     - my-datavolume:/var/lib/mysql
-  #   ports:
-  #     - "3307:3306"  # Expose MySQL on port 3306
-  #   profiles:
-  #     - search    
-  #   networks:
-  #     - bigdata-net
-
   elasticsearch:
     build:
       context: ./search_system
@@ -76,10 +18,6 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
-    depends_on:
-      - mysql_db
-    profiles:
-      - search
     networks:
       - bigdata-net
 
@@ -100,24 +38,43 @@ services:
       - bigdata-net
     depends_on:
       - elasticsearch
-    profiles:
-      - search
     ports:
       - "3002:3002"  # Expose FastAPI on port 8000
 
-#   python_etl:
-#     build:
-#       context: ./search_system/ETL_process
-#       dockerfile: Dockerfile_python
-#     container_name: etl_container
-#     volumes:
-#       - ./es_certs:/usr/certs
-#       - ./search_system/ETL_process/code:/app  # Persistent data storage for ETL
-#     depends_on:
-#       - elasticsearch
-#       - mysql_db
-#     networks:
-#       - bigdata-net
+  # mysql_db:
+  #   image: mysql:5.7
+  #   container_name: mysql_db_container
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
+  #     MYSQL_ROOT_HOST: "%"
+  #     MYSQL_DATABASE: nexva
+  #     MYSQL_CHARSET: utf8
+  #     MYSQL_COLLATION: utf8_general_ci
+  #   volumes:
+  #     - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
+  #     - my-datavolume:/var/lib/mysql
+  #   ports:
+  #     - "3307:3306"  # Expose MySQL on port 3306
+  #   profiles:
+  #     - search    
+  #   networks:
+  #     - bigdata-net
+
+  # python_etl:
+  #   build:
+  #     context: ./search_system/ETL_process
+  #     dockerfile: Dockerfile_python
+  #   container_name: etl_container
+  #   volumes:
+  #     - ./es_certs:/usr/certs
+  #     - ./search_system/ETL_process/code:/app  # Persistent data storage for ETL
+  #   depends_on:
+  #     - elasticsearch
+  #     - mysql_db
+  #   profiles:
+  #     - search    
+  #   networks:
+  #     - bigdata-net
 
 # ----------------------------------
 # AI Attribute Recommendation Service

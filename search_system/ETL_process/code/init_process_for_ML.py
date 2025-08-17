@@ -13,7 +13,7 @@ from TCSP import read_stopwords_list
 import warnings
 import logging
 import spacy
-from common import initlog
+from common.logger import initlog
 warnings.filterwarnings('ignore')
 
 # nltk.download('punkt')

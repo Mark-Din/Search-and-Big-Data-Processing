@@ -10,7 +10,7 @@ nltk.download('stopwords')
 from collections import Counter
 from nltk.corpus import stopwords
 from connection import ElasticSearchConnectionManager
-from common import initlog
+from common.logger import initlog
 
 logger = initlog(__name__)
 

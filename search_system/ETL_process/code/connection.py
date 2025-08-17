@@ -5,7 +5,7 @@ from elasticsearch.exceptions import ConnectionError, SSLError
 import time
 import json
 
-from common import initlog
+from common.logger import initlog
 logger = initlog('connection')
 
 with open('/app/config.json', 'r') as config:

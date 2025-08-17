@@ -1,7 +1,7 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query, status
 from connection import ElasticSearchConnectionManager
 from typing import Any, Dict
-from common import initlog
+from common.logger import initlog
 
 logger = initlog('analysis')
 

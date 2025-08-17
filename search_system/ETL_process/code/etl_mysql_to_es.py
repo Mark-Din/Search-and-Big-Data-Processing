@@ -6,7 +6,7 @@ import es_mapping
 from etl_log import CreateLog
 from connection import ElasticSearchConnectionManager
 from init_process_for_ML import process_data_for_ml, preprocess_data, vectorize_and_model, process_text
-from common import initlog
+from common.logger import initlog
 
 logger = initlog(__name__)
 

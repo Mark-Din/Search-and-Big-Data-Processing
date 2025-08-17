@@ -8,6 +8,9 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 COPY ./dependencies/* /usr/local/spark/jars/
 
+COPY dist/bdcommon-0.1.0-py3-none-any.whl /tmp/
+RUN pip install --no-cache-dir /tmp/bdcommon-0.1.0-py3-none-any.whl
+
 ENV DEBIAN_FRONTEND=noninteractive
 
 ENV PYSPARK_DRIVER_PYTHON_OPTS=""

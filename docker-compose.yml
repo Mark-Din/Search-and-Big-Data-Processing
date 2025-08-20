@@ -120,6 +120,7 @@ services:
   # --------------------
   minio:
     image: minio/minio
+    container_name: minio
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -161,6 +162,9 @@ services:
     container_name: spark-master
     volumes:
       - ./sparkVolumnTest:/home/jovyan/work
+      - ./spark_jobs/dependencies/mysql-connector-j-8.3.0.jar:/opt/bitnami/spark/jars/mysql-connector-j-8.0.33.jar
+      - ./spark_jobs/dependencies/delta-storage-3.1.0.jar:/opt/bitnami/spark/jars/delta-storage-3.1.0.jar
+      - ./spark_jobs/dependencies/spark-core_2.12-3.1.0.jar:/opt/bitnami/spark/jars/spark-core_2.12-3.1.0.jar
     environment:
       - SPARK_MODE=master
       - SPARK_MASTER_HOST=spark-master
@@ -177,6 +181,9 @@ services:
     container_name: spark-worker-1
     volumes:
       - ./sparkVolumnTest:/home/jovyan/work
+      - ./spark_jobs/dependencies/mysql-connector-j-8.3.0.jar:/opt/bitnami/spark/jars/mysql-connector-j-8.0.33.jar
+      - ./spark_jobs/dependencies/spark-core_2.12-3.1.0.jar:/opt/bitnami/spark/jars/spark-core_2.12-3.1.0.jar
+      - ./spark_jobs/dependencies/spark-core_2.12-3.1.0.jar:/opt/bitnami/spark/jars/spark-core_2.12-3.1.0.jar
     depends_on:
       - spark-master
     environment:
@@ -190,20 +197,23 @@ services:
     networks:
       - bigdata-net
 
-  spark-worker-2:
-    image: bitnami/spark:3.5.0
-    container_name: spark-worker-2
-    depends_on:
-      - spark-master
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_CORES=2
-      - SPARK_WORKER_MEMORY=2G
-    profiles:
-      - spark
-    networks:
-      - bigdata-net
+  # spark-worker-2:
+  #   image: bitnami/spark:3.5.0
+  #   container_name: spark-worker-2
+  #   volumes:
+  #     - ./sparkVolumnTest:/home/jovyan/work
+  #     - ./spark_jars/mysql-connector-j-8.0.33.jar:/opt/bitnami/spark/jars/mysql-connector-j-8.0.33.jar
+  #   depends_on:
+  #     - spark-master
+  #   environment:
+  #     - SPARK_MODE=worker
+  #     - SPARK_MASTER_URL=spark://spark-master:7077
+  #     - SPARK_WORKER_CORES=2
+  #     - SPARK_WORKER_MEMORY=2G
+  #   profiles:
+  #     - spark
+  #   networks:
+  #     - bigdata-net
 
   jupyter:
     build:

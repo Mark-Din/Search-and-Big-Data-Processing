@@ -9,9 +9,9 @@ def spark_session():
         .config("spark.jars.packages",
                 ",".join([
                     # Delta
-                    "io.delta:delta-spark_2.12:3.1.0",
+                    "io.delta:delta-spark_2.12-3.1.0",
                     # MySQL JDBC
-                    "mysql:mysql-connector-java:8.0.33",
+                    "mysql-connector-j-8.3.0",
                     # S3A / MinIO (versions must match your Hadoop)
                     "org.apache.hadoop:hadoop-aws:3.3.2",
                     "com.amazonaws:aws-java-sdk-bundle:1.11.1026",

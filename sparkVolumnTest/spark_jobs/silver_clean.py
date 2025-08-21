@@ -1,8 +1,8 @@
 from pyspark.sql import SparkSession, functions as F
-from common.logger import get_logger
+from common.logger import initlog
 from sparksession import spark_session
 import os
-logger = get_logger(__name__)
+logger = initlog(__name__)
 
 s = spark_session()
 
@@ -47,7 +47,7 @@ def store_in_minio(df):
     # 3) Write Delta to MinIO
     (df.write.format("delta")
        .mode("overwrite")
-       .save("s3a://deltabucket/bronze/wholeCorp_delta"))
+       .save("s3a://deltabucket/bronze/wholeCorp_delta_raw"))
 
 def main():
     try:

@@ -229,7 +229,7 @@ services:
     container_name: jupyter
     ports:
       - "8888:8888"
-      - "4040:4040"
+      - "4041:4040"
     volumes:
       - ./sparkVolumnTest:/home/jovyan/work
     environment:

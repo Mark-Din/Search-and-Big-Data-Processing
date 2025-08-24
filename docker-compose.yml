@@ -163,7 +163,7 @@ services:
       dockerfile: Dockerfile
     container_name: spark-master
     volumes:
-      - ./sparkVolumnTest:/home/jovyan/work
+      - ./spark_volume:/home/jovyan/work
     environment:
       - SPARK_MODE=master
       - SPARK_MASTER_HOST=spark-master
@@ -184,13 +184,13 @@ services:
       dockerfile: Dockerfile
     container_name: spark-worker-1
     volumes:
-      - ./sparkVolumnTest:/home/jovyan/work
+      - ./spark_volume:/home/jovyan/work
     depends_on:
       - spark-master
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_MEMORY=3G
       - SPARK_WORKER_CORES=2
       - SPARK_MASTER_HOST=spark-master
       - PYSPARK_NO_DRIVER=true
@@ -206,7 +206,7 @@ services:
       dockerfile: Dockerfile
     container_name: spark-worker-2
     volumes:
-      - ./sparkVolumnTest:/home/jovyan/work
+      - ./spark_volume:/home/jovyan/work
       - ./spark_jars/mysql-connector-j-8.0.33.jar:/opt/bitnami/spark/jars/mysql-connector-j-8.0.33.jar
     depends_on:
       - spark-master
@@ -214,7 +214,7 @@ services:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
       - SPARK_WORKER_CORES=2
-      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_MEMORY=3G
       - PYSPARK_NO_DRIVER=true
       - PYSPARK_SUBMIT_ARGS=--jars /usr/local/spark/jars/delta-core_2.12-2.4.0.jar,/usr/local/spark/jars/delta-storage-2.4.0.jar pyspark-shell
     profiles:
@@ -231,7 +231,7 @@ services:
       - "8888:8888"
       - "4041:4040"
     volumes:
-      - ./sparkVolumnTest:/home/jovyan/work
+      - ./spark_volume:/home/jovyan/work
     environment:
       - PYSPARK_NO_DRIVER=true
       - PYSPARK_SUBMIT_ARGS=--jars /usr/local/spark/jars/delta-core_2.12-2.4.0.jar,/usr/local/spark/jars/delta-storage-2.4.0.jar pyspark-shell

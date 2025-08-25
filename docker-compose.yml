@@ -207,7 +207,6 @@ services:
     container_name: spark-worker-2
     volumes:
       - ./spark_volume:/home/jovyan/work
-      - ./spark_jars/mysql-connector-j-8.0.33.jar:/opt/bitnami/spark/jars/mysql-connector-j-8.0.33.jar
     depends_on:
       - spark-master
     environment:

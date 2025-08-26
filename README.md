@@ -2,7 +2,7 @@
 End-to-end ETL solution integrating Airflow, Spark, Delta Lake, and object storage (MinIO) for big data workflows.
 
 ## Overview
-This project demonstrates an automated ETL (Extract, Transform, Load) pipeline using Apache Airflow. The pipeline extracts data from a CSV file, performs transformations, and loads the processed data into a PostgreSQL database.
+This project demonstrates an automated ETL (Extract, Transform, Load) pipeline using Apache Airflow. The pipeline extracts data from MySQL, performs transformations, and loads the processed data into a MinIO.
 The goal is to showcase data engineering practices such as workflow automation, scheduling, error handling, and logging.
 
 ## Features
@@ -16,8 +16,9 @@ Dockerized environment for easy deployment
 ## Tech Stack
 Programming: Python 3.x
 Workflow Orchestration: Apache Airflow
-Database: PostgreSQL
-Libraries: Pandas, SQLAlchemy
+Database: MySQL, PostgreSQL
+Object Storage: MinIO
+Libraries: Pandas, SQLAlchemy, PySpark
 Containerization: Docker, Docker Compose
 
 ## Project Structure

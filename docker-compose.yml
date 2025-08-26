@@ -158,74 +158,80 @@ services:
 #   # Spark Cluster
 #   # --------------------
   spark-master:
-    image: bitnami/spark:3.5.0
+    build:
+      context: ./spark_jobs
+      dockerfile: Dockerfile
     container_name: spark-master
     volumes:
-      - ./sparkVolumnTest:/home/jovyan/work
-      - ./spark_jobs/dependencies/mysql-connector-j-8.3.0.jar:/opt/bitnami/spark/jars/mysql-connector-j-8.0.33.jar
-      - ./spark_jobs/dependencies/delta-storage-3.1.0.jar:/opt/bitnami/spark/jars/delta-storage-3.1.0.jar
-      - ./spark_jobs/dependencies/spark-core_2.12-3.1.0.jar:/opt/bitnami/spark/jars/spark-core_2.12-3.1.0.jar
+      - ./spark_volume:/home/jovyan/work
     environment:
       - SPARK_MODE=master
       - SPARK_MASTER_HOST=spark-master
+      - PYSPARK_NO_DRIVER=true
+      - PYSPARK_SUBMIT_ARGS=--jars /usr/local/spark/jars/delta-core_2.12-2.4.0.jar,/usr/local/spark/jars/delta-storage-2.4.0.jar pyspark-shell
     ports:
       - "7077:7077"
       - "8081:8080"
+      - "4040:4040"
     profiles:
       - spark
     networks:
       - bigdata-net
 
   spark-worker-1:
-    image: bitnami/spark:3.5.0
+    build:
+      context: ./spark_jobs
+      dockerfile: Dockerfile
     container_name: spark-worker-1
     volumes:
-      - ./sparkVolumnTest:/home/jovyan/work
-      - ./spark_jobs/dependencies/mysql-connector-j-8.3.0.jar:/opt/bitnami/spark/jars/mysql-connector-j-8.0.33.jar
-      - ./spark_jobs/dependencies/spark-core_2.12-3.1.0.jar:/opt/bitnami/spark/jars/spark-core_2.12-3.1.0.jar
-      - ./spark_jobs/dependencies/spark-core_2.12-3.1.0.jar:/opt/bitnami/spark/jars/spark-core_2.12-3.1.0.jar
+      - ./spark_volume:/home/jovyan/work
     depends_on:
       - spark-master
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_MEMORY=3G
       - SPARK_WORKER_CORES=2
       - SPARK_MASTER_HOST=spark-master
+      - PYSPARK_NO_DRIVER=true
+      - PYSPARK_SUBMIT_ARGS=--jars /usr/local/spark/jars/delta-core_2.12-2.4.0.jar,/usr/local/spark/jars/delta-storage-2.4.0.jar pyspark-shell
     profiles:
       - spark
     networks:
       - bigdata-net
 
-  # spark-worker-2:
-  #   image: bitnami/spark:3.5.0
-  #   container_name: spark-worker-2
-  #   volumes:
-  #     - ./sparkVolumnTest:/home/jovyan/work
-  #     - ./spark_jars/mysql-connector-j-8.0.33.jar:/opt/bitnami/spark/jars/mysql-connector-j-8.0.33.jar
-  #   depends_on:
-  #     - spark-master
-  #   environment:
-  #     - SPARK_MODE=worker
-  #     - SPARK_MASTER_URL=spark://spark-master:7077
-  #     - SPARK_WORKER_CORES=2
-  #     - SPARK_WORKER_MEMORY=2G
-  #   profiles:
-  #     - spark
-  #   networks:
-  #     - bigdata-net
+  spark-worker-2:
+    build:
+      context: ./spark_jobs
+      dockerfile: Dockerfile
+    container_name: spark-worker-2
+    volumes:
+      - ./spark_volume:/home/jovyan/work
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=3G
+      - PYSPARK_NO_DRIVER=true
+      - PYSPARK_SUBMIT_ARGS=--jars /usr/local/spark/jars/delta-core_2.12-2.4.0.jar,/usr/local/spark/jars/delta-storage-2.4.0.jar pyspark-shell
+    profiles:
+      - spark
+    networks:
+      - bigdata-net
 
   jupyter:
     build:
-      context: ./integrations_mysql_to_psql_and_minio/spark_jobs
-      dockerfile: Dockerfile
+      context: ./spark_jobs
+      dockerfile: Dockerfile_jupyter
     container_name: jupyter
     ports:
       - "8888:8888"
+      - "4041:4040"
     volumes:
-      - ./sparkVolumnTest:/home/jovyan/work
+      - ./spark_volume:/home/jovyan/work
     environment:
-      - PYSPARK_DRIVER_PYTHON_OPTS=""
       - PYSPARK_NO_DRIVER=true
       - PYSPARK_SUBMIT_ARGS=--jars /usr/local/spark/jars/delta-core_2.12-2.4.0.jar,/usr/local/spark/jars/delta-storage-2.4.0.jar pyspark-shell
       - JUPYTER_ENABLE_LAB=yes

@@ -1,8 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 import sys
 import os
+import logging
+
+import pandas as pd
 
 # Add your script paths
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'code')))
@@ -10,12 +13,33 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'code
 from main import uuid_generator
 from query_insert import get_data, upsert_data, query
 
+logger = logging.getLogger("airflow.task")
+logger.setLevel(logging.INFO)
+
+# Reuse try except decorator
+def airflow_safe_task(fn):
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:
+            logger.error(f"❌ Task {fn.__name__} failed: {e}", exc_info=True)
+            raise
+    return wrapper
+
+@airflow_safe_task
 def extract_data(**kwargs):
+    logger.info("✅ Extracting data from Nexva...")
     df = get_data()
+
+    if df.empty:
+        logger.warning("No data to process.")
+        return
+    
     kwargs['ti'].xcom_push(key='user_df', value=df.to_json())
 
+@airflow_safe_task
 def load_customer_attributes(**kwargs):
-    import pandas as pd
+    logger.info("✅ Loading customer attributes...")
     user_df = pd.read_json(kwargs['ti'].xcom_pull(task_ids='extract_data', key='user_df'))
 
     attributes = []
@@ -39,15 +63,17 @@ def load_customer_attributes(**kwargs):
     upsert_data("customer_attributes", attributes, ["name"])
     kwargs['ti'].xcom_push(key='attributes', value=attributes)
 
+@airflow_safe_task
 def load_customers(**kwargs):
-    import pandas as pd
+    logger.info("✅ Loading customers...")
     json_data = kwargs['ti'].xcom_pull(task_ids='extract_data', key='user_df')
     user_df = pd.read_json(json_data)
     id_list = [{'id': uid} for uid in user_df.id]
     upsert_data("customers", id_list, ['id'])
 
+@airflow_safe_task
 def load_customer_values(**kwargs):
-    import pandas as pd
+    logger.info("✅ Loading customer values...")
     json_data = kwargs['ti'].xcom_pull(task_ids='extract_data', key='user_df')
     user_df = pd.read_json(json_data)
     col_to_id = {row[0]: row[1] for row in query(user_df)}
@@ -67,7 +93,9 @@ def load_customer_values(**kwargs):
                 })
     upsert_data("customer_values", values, ['id'])
 
+@airflow_safe_task
 def load_user_attribute_categories(**kwargs):
+    logger.info("✅ Loading user attribute categories...")
     name = 'Nexva 屬性'
     attribute_category_id = uuid_generator(name)
     upsert_data("user_attribute_categories", [{
@@ -78,7 +106,9 @@ def load_user_attribute_categories(**kwargs):
     }], ['id'])
     kwargs['ti'].xcom_push(key='attribute_category_id', value=attribute_category_id)
 
+@airflow_safe_task
 def load_user_attributes(**kwargs):
+    logger.info("✅ Loading user attributes...")
     attributes = kwargs['ti'].xcom_pull(task_ids = 'load_customer_attributes', key='attributes')
     attribute_category_id = kwargs['ti'].xcom_pull(task_ids = 'load_user_attribute_categories', key='attribute_category_id')
     user_attributes = []
@@ -94,20 +124,35 @@ def load_user_attributes(**kwargs):
         priority += 1
     upsert_data("user_attributes", user_attributes, ['id'])
 
+default_args = {
+    'owner': 'Mark',
+    'depends_on_past': False,
+    'email_on_failure': True,
+    'retries': 3,  # Retry up to 3 times
+    'retry_delay': timedelta(minutes=5),
+    "start_date": datetime(2025, 1, 30),
+    "email":["m7812252009@gmail.com"]
+}
+
 # DAG definition
 with DAG(
     dag_id='customer_upsert_dag',
     start_date=datetime(2025, 7, 30),
     schedule=None,  # Run manually or define CRON
     catchup=False,
-    default_args={'owner': 'airflow'}
+    default_args=default_args
 ) as dag:
 
-    t1 = PythonOperator(task_id='extract_data', python_callable=extract_data)
-    t2 = PythonOperator(task_id='load_customer_attributes', python_callable=load_customer_attributes)
-    t3 = PythonOperator(task_id='load_customers', python_callable=load_customers)
-    t4 = PythonOperator(task_id='load_customer_values', python_callable=load_customer_values)
-    t5 = PythonOperator(task_id='load_user_attribute_categories', python_callable=load_user_attribute_categories)
-    t6 = PythonOperator(task_id='load_user_attributes', python_callable=load_user_attributes)
+    # Tasks
+    try:
+        t1 = PythonOperator(task_id='extract_data', python_callable=extract_data)
+        t2 = PythonOperator(task_id='load_customer_attributes', python_callable=load_customer_attributes)
+        t3 = PythonOperator(task_id='load_customers', python_callable=load_customers)
+        t4 = PythonOperator(task_id='load_customer_values', python_callable=load_customer_values)
+        t5 = PythonOperator(task_id='load_user_attribute_categories', python_callable=load_user_attribute_categories)
+        t6 = PythonOperator(task_id='load_user_attributes', python_callable=load_user_attributes)
 
-    t1 >> t2 >> [t3, t4] >> t5 >> t6
+        t1 >> t2 >> [t3, t4] >> t5 >> t6
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+        raise e

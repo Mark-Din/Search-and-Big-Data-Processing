@@ -22,11 +22,11 @@ def read_from_mysql(spark):
 
 def bronze_to_silver(s):
     # Read Bronze (from MinIO or local)
-    bronze_path = os.getenv("BRONZE_PATH", "s3a://deltabucket/bronze/wholeCorp_delta")
+    bronze_path = os.getenv("BRONZE_PATH", "s3a://deltabucket/bronze/wholeCorp_delta_raw")
     df = s.read.parquet(bronze_path)
 
     # Coerce types
-    to_int = ["資本額","實收資本總額","員工","年營收"]
+    to_int = ["資本額","實收資本總額","員工"]
     for c in to_int:
         if c in df.columns:
             df = df.withColumn(c, F.regexp_replace(F.col(c), r"[^\d]", "").cast("long"))
@@ -48,6 +48,7 @@ def store_in_minio(df):
     (df.write.format("delta")
        .mode("overwrite")
        .save("s3a://deltabucket/bronze/wholeCorp_delta_raw"))
+
 
 def main():
     try:

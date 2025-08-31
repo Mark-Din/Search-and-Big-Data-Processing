@@ -3,11 +3,9 @@ import re
 import pandas as pd
 import datetime
 from etl_log import CreateLog
-from typing import List
 import nltk
 nltk.download('punkt')
 nltk.download('stopwords')
-from collections import Counter
 from nltk.corpus import stopwords
 from connection import ElasticSearchConnectionManager
 from common.logger import initlog

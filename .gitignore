@@ -145,3 +145,6 @@ FastAPI_service/__pycache__/
 *.json
 *.csv
 *.xls*
+
+# models
+*.joblib

@@ -111,7 +111,6 @@ def etl_process(table_name, es, es_index):
     mysql_conn = ElasticSearchConnectionManager.mysql_connection_nexva() 
     cursor = mysql_conn.cursor(dictionary=True)
 
-
     date_now_python = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     date_now_sql_query = "SELECT now()"
     cursor.execute(date_now_sql_query)
@@ -171,7 +170,7 @@ def create_index_if_not_exists(es, index_name):
         logger.info(f"Index {index_name} already exists.")
     except Exception as e:
         logger.warning(f"Index {index_name} does not exist. Creating new index.")
-        mapping = get_mapping_for_table(index_name)
+        mapping = es_mapping.corp_mapping()
         if mapping:
             es.indices.create(index=index_name, body=mapping)
             logger.info(f"Index {index_name} created with the specified mapping.")
@@ -179,23 +178,11 @@ def create_index_if_not_exists(es, index_name):
             logger.error(f"Failed to create index {index_name}. No valid mapping found.")
 
 
-def get_mapping_for_table(index_name):
-    if index_name == 'useresg':
-        return es_mapping.user_mapping()
-    elif index_name == 'lifecircleesg':
-        return es_mapping.life_mapping()
-    elif index_name == 'articleallgets':
-        return es_mapping.article_mapping()
-    else:
-        logger.error(f"Invalid index name: {index_name}")
-        return None
-
-
 def main():
     logger.info("ETL process started.")
     es = ElasticSearchConnectionManager.get_instance()
     
-    table_name = 'table_name'
+    table_name = 'wholeCorp_delta'
     
     index_name = table_name.lower()
     

@@ -44,22 +44,22 @@ def corp_mapping():
         },        
           "mappings": {
             "properties": {
-              "id": {
+              "統一編號": {
                 "type": "keyword"
               },
-              "account": {
+              "公司名稱": {
                 "type": "keyword"
               },
-              "email": {
+              "負責人": {
                 "type": "keyword"
               },
-              "phone": {
+              "登記地址": {
                 "type": "keyword"
               },
-              "nodebbUid": {
+              "資本額": {
                 "type": "integer"
               },
-              "name": {
+              "營業項目及代碼表": {
                 'type': 'text',
                 'analyzer':'traditional_chinese_analyzer',
                 "fields": {
@@ -69,70 +69,31 @@ def corp_mapping():
                   }
               }
             },
-              "contactName": {
+              "縣市名稱": {
                 "type": "text"
               },
-              "userType": {
-                "type": "keyword"
-              },
-              "avatarImage": {
+              "類別_全": {
                 "type": "text",
-                "index": False 
+                'analyzer': "traditional_chinese_analyzer",
+                "field" : {
+                    "raw": {
+                        "type": "keyword",
+                        "doc_value": False
+                    }
+                }
               },
-              "coverImage": {
-                "type": "text",
-                "index": False  
+              "官網": {
+                "type": "keyword",
               },
-              "experienceESG": {
-                "type": "text"
+              "電話": {
+                "type": "keyword",
               },
-              "experience": {
-                "type": "text"
-              },
-              "education": {
-                "type": "text"
-              },
-              "personalIntroduce": {
-                "type": "text"
-              },
-              "companyName": {
-                "type": "text"
-              },
-              "uniformNumber": {
-                "type": "integer"
-              },
-              "jobTitle": {
-                "type": "text"
-              },
-              "companyAddress": {
-                "type": "text"
-              },
-              "companyTelephone": {
-                "type": "keyword"
-              },
-              "companyTelephoneExtension": {
-                "type": "integer"
-              },
-              "estimatedNumberOfPeople": {
-                "type": "integer"
-              },
-              "trainingObjective": {
-                "type": "text"
-              },
-              "level": {
-                "type": "integer"
-              },
-              "disabled": {
-                "type": "keyword"
-              },
-              "createdAt": {
-                "type": "date",
-                "format": "strict_date_optional_time||epoch_millis"
-              },
-              "updatedAt": {
-                "type": "date",
-                "format": "strict_date_optional_time||epoch_millis"
-      }
+              "features": {
+                  "type": "dense_vector",
+                  "dims": 262147,  # ⚠️ match your vector size
+                  "index": True,
+                  "similarity": "cosine"
+              }
     }
   }
 }

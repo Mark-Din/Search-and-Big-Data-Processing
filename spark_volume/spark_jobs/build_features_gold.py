@@ -2,6 +2,8 @@ import os, json, pathlib
 from pyspark.sql import functions as F
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import RegexTokenizer, StopWordsRemover, HashingTF, IDF, VectorAssembler, StandardScaler
+import boto3
+from urllib.parse import urlparse
 
 zh_stopwords = [
         "的", "了", "在", "是", "我", "有", "和", "就", "不", "人",
@@ -49,7 +51,7 @@ def vectorize(df, zh_stopwords:list=None):
     if zh_stopwords:
         stop = stop.setStopWords(stop.getStopWords() + zh_stopwords)
 
-    tf   = HashingTF(inputCol="tok_clean", outputCol="tf", numFeatures=1<<18)
+    tf   = HashingTF(inputCol="tok_clean", outputCol="tf", numFeatures=1<<15) # numFeatures is for creating dimensions, it means 2**15
     idf  = IDF(inputCol="tf", outputCol="tfidf")
 
     num_cols = [c for c in ["log_資本額","log_實收資本總額"] if c in df.columns]
@@ -64,26 +66,34 @@ def vectorize(df, zh_stopwords:list=None):
     return out, model
 
 # --- Export learned params for Python ETL (no Spark needed later) ---
-def export_params_to_json(model, out_path="s3a://deltabucket/models/sparseVector_params/model_params.json"):
-    stages  = model.stages
-    tfm     = next(s for s in stages if s.__class__.__name__ == "HashingTF")
-    idfm    = next(s for s in stages if s.__class__.__name__ == "IDFModel")
-    scalerm = next(s for s in stages if s.__class__.__name__ == "StandardScalerModel")
+def export_params_to_minio(model, s3a_uri="s3a://deltabucket/models/sparseVector_params/model_params.json"):
+    tfm  = next(s for s in model.stages if s.__class__.__name__ == "HashingTF")
+    scal = next(s for s in model.stages if s.__class__.__name__ == "StandardScalerModel")
 
-    payload = {
+    payload  = {
         "num_features": tfm.getNumFeatures(),
-        "with_mean": scalerm.getWithMean(),
-        "with_std":  scalerm.getWithStd(),
-        "idf": idfm.idf.toArray().tolist(),
-        "std": scalerm.std.toArray().tolist(),
-        "mean": scalerm.mean.toArray().tolist() if scalerm.getWithMean() else None,
-        "dr": None,         # fill later if you add PCA/SVD
-        "kmeans": None      # fill later if you add KMeans
+        "with_mean":    scal.getWithMean(),
+        "with_std":     scal.getWithStd(),
     }
 
-    # Write a single JSON file to MinIO (Spark way)
-    j = json.dumps(payload)
-    model.sparkSession.sparkContext.parallelize([j], 1).saveAsTextFile(out_path)
+    print('payload ', payload )
+    
+    u = urlparse(s3a_uri.replace("s3a://", "s3://"))
+    bucket = u.netloc
+    key    = u.path.lstrip("/")
+    if not key or key.endswith("/"):
+        key = key.rstrip("/") + "/model_params.json"  # default file name
+    
+    s3 = boto3.client(
+        "s3",
+        endpoint_url='http://minio:9000',
+        aws_access_key_id='minioadmin',
+        aws_secret_access_key='minioadmin'
+    )
+
+    s3.put_object(Bucket=bucket, Key=key,
+                  Body=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+                  ContentType="application/json")
 
 def main():
     from sparksession import spark_session
@@ -97,7 +107,7 @@ def main():
         model.write().overwrite().save("s3a://deltabucket/models/sparseVector")
 
         # 2) Export minimal params for Python-only ETL
-        export_params_to_json(model, "s3a://deltabucket/models/sparseVector_params")
+        export_params_to_minio(model)
 
         # 3) Save features to GOLD (optional)
         save_gold(out)

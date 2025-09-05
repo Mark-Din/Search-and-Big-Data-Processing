@@ -19,11 +19,12 @@ from pyspark.ml.linalg import SparseVector, DenseVector
 import pandas as pd
 
 
+
 def read_gold(spark):
     global OUT
 
     GOLD = os.getenv("GOLD_PATH","s3a://deltabucket/gold/wholeCorp_delta")
-    OUT = os.getenv("CLUSTER_PATH","s3a://deltabucket/gold/wholeCorp_clusters_with_vector")
+    OUT = os.getenv("CLUSTER_PATH","s3a://deltabucket/gold/wholeCorp_clusters")
 
     return spark.read.format("delta").load(GOLD)
 
@@ -54,6 +55,8 @@ def fit_predict(data_whole):
             break
 
     X_sample = to_csr(sample_rows)            # CSR (n_sample, num_features)
+    print(X_sample)
+    
     svd = TruncatedSVD(n_components=100, random_state=42).fit(X_sample)
 
     # --- Stage 2: fit MiniBatchKMeans on reduced features
@@ -72,9 +75,9 @@ def fit_predict(data_whole):
         if len(batch_features) >= 2000:
             Xb = to_csr(batch_features)
             Xr = svd.transform(Xb)
-            Xr_vector.append(Xr)
+            Xr_vector.extend(Xr)
+            
             kmeans.partial_fit(Xr)
-
             preds = kmeans.predict(Xr)            # ndarray
             ids.extend(batch_ids)                  # flatten ids
             labels.extend(preds.tolist())          # flatten labels
@@ -83,8 +86,8 @@ def fit_predict(data_whole):
     if batch_features:
         Xb = to_csr(batch_features)
         Xr = svd.transform(Xb)
-        Xr_vector.append(Xr)
-
+        Xr_vector.extend(Xr)
+        
         kmeans.partial_fit(Xr)
         preds = kmeans.predict(Xr)
         ids.extend(batch_ids)
@@ -92,35 +95,56 @@ def fit_predict(data_whole):
 
     pdf = pd.DataFrame({"統一編號": ids, "cluster": labels, "Xr_vector":Xr_vector})
 
-    return pdf, svd, kmeans
+    return pdf, svd, kmeans, Xr_vector
 
 
 def save_(pdf, spark, kmeans, svd):
 
-    spark.createDataFrame(pdf).write.format("delta").mode("overwrite").save(OUT)
-
-    # s3 = boto3.client(
-    #     "s3",
-    #     endpoint_url = 'http://minio:9000',
-    #     aws_access_key_id="minioadmin",
-    #     aws_secret_access_key="minioadmin"
-    # )
-
-    # # save locally
-    # joblib.dump(svd, "/tmp/svd.pkl")
-    # joblib.dump(kmeans, "/tmp/kmeans.pkl")
+    # For storing dataframe with vector
+    pdf["統一編號"] = pdf["統一編號"].astype(str)
+    pdf["Xr_vector"] = pdf["Xr_vector"].apply(
+        lambda v: [float(x) for x in (v.tolist() if isinstance(v, np.ndarray) else v)]
+    )
     
-    # # upload to MinIO
-    # s3.upload_file("/tmp/svd.pkl", "deltabucket", "models/sk_svd.pkl")
-    # s3.upload_file("/tmp/kmeans.pkl", "deltabucket", "models/sk_kmeans.pkl")
+    schema = StructType([
+        StructField("統一編號", StringType(), False),
+        StructField("cluster", IntegerType(), True),
+        StructField("Xr_vector", ArrayType(DoubleType()), True),
+    ])
+    
+    sdf = spark.createDataFrame(pdf.to_dict(orient="records"), schema=schema)
+    sdf.write.format("delta").mode("overwrite").save(OUT)
+
+    # For storing models
+    s3 = boto3.client(
+        "s3",
+        endpoint_url = 'http://minio:9000',
+        aws_access_key_id="minioadmin",
+        aws_secret_access_key="minioadmin"
+    )
+
+    # save locally
+    joblib.dump(svd, "/tmp/svd.pkl")
+    joblib.dump(kmeans, "/tmp/kmeans.pkl")
+    
+    # upload to MinIO
+    s3.upload_file("/tmp/svd.pkl", "deltabucket", "models/sk_svd.pkl")
+    s3.upload_file("/tmp/kmeans.pkl", "deltabucket", "models/sk_kmeans.pkl")
+
+    
 
 def main():
     from sparksession import spark_session
     s = None
     try:
+        print('script start')
         s = spark_session()
         df = read_gold(s)
         pdf, svd, kmeans = fit_predict(df)
         save_(pdf, s, kmeans, svd)
     except Exception as e:
         print(f"Error in spark job: {e}")
+
+
+if __name__ == '__main__':
+    main()

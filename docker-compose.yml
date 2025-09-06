@@ -45,6 +45,22 @@ services:
     ports:
       - "3002:3002"  # Expose FastAPI on port 8000
 
+  pg_vector:
+    image: ankane/pgvector:latest
+    container_name: pg_vector_container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: infopower
+      POSTGRES_DB: vector_db
+    ports:
+      - "9100:5432"  # Expose PostgreSQL on port 9100
+    volumes:
+      - pg_data:/var/lib/postgresql/data  # Persistent data storage for PostgreSQL
+    profiles:
+      - search    
+    networks:
+      - bigdata-net
+
   # mysql_db:
   #   image: mysql:5.7
   #   container_name: mysql_db_container
@@ -83,21 +99,7 @@ services:
 # ----------------------------------
 # AI Attribute Recommendation Service
 # ----------------------------------
-  pg_vector:
-    image: ankane/pgvector:latest
-    container_name: pg_vector_container
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: infopower
-      POSTGRES_DB: vector_db
-    ports:
-      - "9100:5432"  # Expose PostgreSQL on port 9100
-    volumes:
-      - pg_data:/var/lib/postgresql/data  # Persistent data storage for PostgreSQL
-    profiles:
-      - ai_ml
-    networks:
-      - bigdata-net
+
 
   fastapi_seg_ai_service:
     build:

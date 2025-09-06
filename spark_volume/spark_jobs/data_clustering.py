@@ -19,12 +19,11 @@ from pyspark.ml.linalg import SparseVector, DenseVector
 import pandas as pd
 
 
-
 def read_gold(spark):
     global OUT
 
     GOLD = os.getenv("GOLD_PATH","s3a://deltabucket/gold/wholeCorp_delta")
-    OUT = os.getenv("CLUSTER_PATH","s3a://deltabucket/gold/wholeCorp_clusters")
+    OUT = os.getenv("CLUSTER_PATH","s3a://deltabucket/gold/wholeCorp_clusters_vector")
 
     return spark.read.format("delta").load(GOLD)
 
@@ -93,29 +92,64 @@ def fit_predict(data_whole):
         ids.extend(batch_ids)
         labels.extend(preds.tolist())
 
-    pdf = pd.DataFrame({"統一編號": ids, "cluster": labels, "Xr_vector":Xr_vector})
+    rows = [
+        Row(
+            統一編號=i,
+            cluster=c,
+            Xr_vector=x.tolist()
+        ) for i, c, x in zip(ids, labels, Xr_vector)
+    ]
+    pdf = s.createDataFrame(rows)
 
     return pdf, svd, kmeans, Xr_vector
 
-
-def save_(pdf, spark, kmeans, svd):
-
-    # For storing dataframe with vector
-    pdf["統一編號"] = pdf["統一編號"].astype(str)
-    pdf["Xr_vector"] = pdf["Xr_vector"].apply(
-        lambda v: [float(x) for x in (v.tolist() if isinstance(v, np.ndarray) else v)]
+def to_pg(spark, pdf):
+    pg_url = "jdbc:postgresql://pg_vector:5432/vector_db"
+    
+    # Check if table exists and create if not
+    create_table_if_not_exists(
+        dbname="vector_db",
+        user="postgres",
+        password="infopower",
+        host="pg_vector",   # must match docker-compose service name
+        port=5432,
+        table_name="wholecorp_clusters_vector"
     )
     
-    schema = StructType([
-        StructField("統一編號", StringType(), False),
-        StructField("cluster", IntegerType(), True),
-        StructField("Xr_vector", ArrayType(DoubleType()), True),
-    ])
+    pg_table = "wholecorp_clusters_vector"
+    pg_properties = {
+        "user": "postgres",
+        "password": "infopower",
+        "driver": "org.postgresql.Driver"
+    }
+    # 4. Write DataFrame to PostgreSQL
+    # The 'mode' specifies the behavior if the table already exists.
+    # "overwrite": Drops and recreates the table.
+    # "append": Adds data to the existing table.
+    # "ignore": Does nothing if the table exists.
+    # "error" or "errorifexists": Throws an error if the table exists (default).
+    pdf.write.jdbc(
+        url=pg_url,
+        table=pg_table,
+        mode="overwrite",
+        properties=pg_properties
+    )
     
-    sdf = spark.createDataFrame(pdf.to_dict(orient="records"), schema=schema)
-    sdf.write.format("delta").mode("overwrite").save(OUT)
+    print(f"Successfully wrote DataFrame to PostgreSQL table '{pg_table}'.")
+    
+    # You can also read it back to verify
+    print("Reading data back from PostgreSQL:")
+    read_df = spark.read.jdbc(url=pg_url, table=pg_table, properties=pg_properties)
+    read_df.show()
+    
+    # Stop the SparkSession
+    spark.stop()
+    
+    
+def save_(pdf, spark, kmeans, svd):
 
-    # For storing models
+    to_pg(spark, pdf)
+    
     s3 = boto3.client(
         "s3",
         endpoint_url = 'http://minio:9000',
@@ -131,7 +165,6 @@ def save_(pdf, spark, kmeans, svd):
     s3.upload_file("/tmp/svd.pkl", "deltabucket", "models/sk_svd.pkl")
     s3.upload_file("/tmp/kmeans.pkl", "deltabucket", "models/sk_kmeans.pkl")
 
-    
 
 def main():
     from sparksession import spark_session

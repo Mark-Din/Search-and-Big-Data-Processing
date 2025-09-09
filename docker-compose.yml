@@ -15,6 +15,7 @@ services:
       - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
     volumes:
       - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
+      - ./es_volume/data:/usr/share/elasticsearch/data
     profiles:
       - search    
     ports:
@@ -45,56 +46,40 @@ services:
     ports:
       - "3002:3002"  # Expose FastAPI on port 8000
 
-  pg_vector:
-    image: ankane/pgvector:latest
-    container_name: pg_vector_container
+  # pg_vector:
+  #   image: ankane/pgvector:latest
+  #   container_name: pg_vector_container
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: infopower
+  #     POSTGRES_DB: vector_db
+  #   ports:
+  #     - "9100:5432"  # Expose PostgreSQL on port 9100
+  #   volumes:
+  #     - pg_data:/var/lib/postgresql/data  # Persistent data storage for PostgreSQL
+  #   profiles:
+  #     - search    
+  #   networks:
+  #     - bigdata-net
+
+  mysql_db:
+    image: mysql:5.7
+    container_name: mysql_db_container
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: infopower
-      POSTGRES_DB: vector_db
-    ports:
-      - "9100:5432"  # Expose PostgreSQL on port 9100
+      MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: whole_corp
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_general_ci
     volumes:
-      - pg_data:/var/lib/postgresql/data  # Persistent data storage for PostgreSQL
+      - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./mysql_volume/data:/var/lib/mysql
+    ports:
+      - "3307:3306"  # Expose MySQL on port 3306
     profiles:
       - search    
     networks:
       - bigdata-net
-
-  # mysql_db:
-  #   image: mysql:5.7
-  #   container_name: mysql_db_container
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
-  #     MYSQL_ROOT_HOST: "%"
-  #     MYSQL_DATABASE: nexva
-  #     MYSQL_CHARSET: utf8
-  #     MYSQL_COLLATION: utf8_general_ci
-  #   volumes:
-  #     - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
-  #     - my-datavolume:/var/lib/mysql
-  #   ports:
-  #     - "3307:3306"  # Expose MySQL on port 3306
-  #   profiles:
-  #     - search    
-  #   networks:
-  #     - bigdata-net
-
-  # python_etl:
-  #   build:
-  #     context: ./search_system/ETL_process
-  #     dockerfile: Dockerfile_python
-  #   container_name: etl_container
-  #   volumes:
-  #     - ./es_certs:/usr/certs
-  #     - ./search_system/ETL_process/code:/app  # Persistent data storage for ETL
-  #   depends_on:
-  #     - elasticsearch
-  #     - mysql_db
-  #   profiles:
-  #     - search    
-  #   networks:
-  #     - bigdata-net
 
 # ----------------------------------
 # AI Attribute Recommendation Service
@@ -234,6 +219,7 @@ services:
     volumes:
       - ./spark_volume:/home/jovyan/work
     environment:
+      - GRANT_SUDO=yes
       - PYSPARK_NO_DRIVER=true
       - PYSPARK_SUBMIT_ARGS=--jars /usr/local/spark/jars/delta-core_2.12-2.4.0.jar,/usr/local/spark/jars/delta-storage-2.4.0.jar pyspark-shell
       - JUPYTER_ENABLE_LAB=yes

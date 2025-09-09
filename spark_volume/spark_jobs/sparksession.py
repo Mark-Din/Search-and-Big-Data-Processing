@@ -35,7 +35,7 @@ def spark_session():
         # .config("spark.executor.memory", "2g")
         # .config("spark.executor.memoryOverhead", "1536m")
         # .config("spark.network.timeout", "600s")
-        .config("spark.executor.cores", "1")           # 1 task per executor (more stable for trees)
+        .config("spark.executor.cores", "2")           # 1 task per executor (more stable for trees)
         .config("spark.executor.memory", "3g")
         .config("spark.executor.memoryOverhead", "1g")  # or omit in Standalone
         .config("spark.sql.shuffle.partitions", "50")

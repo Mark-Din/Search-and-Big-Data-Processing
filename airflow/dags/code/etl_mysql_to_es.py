@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import datetime, boto3
 import es_mapping
-from etl_log import CreateLog
 from connection import ElasticSearchConnectionManager
 import sys
 
@@ -74,10 +73,6 @@ def update_data_to_es(es, cursor, es_index, table_name):
         df = pd.DataFrame(batch)
         df = df.where(pd.notnull(df), None)  # Replace NaN with None
         df = df.replace({np.nan: None})  # Replace NaN with None
-
-        if table_name.lower() == 'articleallgets':
-            logger.info(f"Processing ML for table: {table_name}.")
-            df = ml_process(df)
 
         batch = df.to_dict(orient='records')
 

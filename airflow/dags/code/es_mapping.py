@@ -114,7 +114,7 @@ def corp_mapping():
           },
           "vector": {
             "type": "dense_vector",
-            "dims": 32768    # // must match your model output
+            "dims": 100    # // must match your model output
           }
         }
       }

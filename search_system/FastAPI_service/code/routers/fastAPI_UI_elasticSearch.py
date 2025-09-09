@@ -122,8 +122,6 @@ async def set_search_params(request: Request):
 @router.post("/search", response_class=HTMLResponse)
 async def perform_search(request: Request,
                         query_1: str = '',
-                        query_2: str = '',
-                        query_3: str = '',
                         location: str = '', 
                         min_date: str = None, 
                         max_date: str = None, 
@@ -134,17 +132,11 @@ async def perform_search(request: Request,
     # Tokenize the queries
     
     if query_1 != '': query_1 = [q for q in tokenization(query_1) if q != 'undefined']
-    if query_2 != 'undefined': query_2 = [q for q in tokenization(query_2) if q != 'undefined']
-    if query_3 != 'undefined': query_3 = [q for q in tokenization(query_3) if q != 'undefined']
 
-    print(f'=========query_1: {query_1}=========')
-    print(f'=========query_2: {query_2}=========')
-    print(f'=========query_3: {query_3}=========')
+    logger.info(f'=========query_1: {query_1}=========')
 
-    logger.info(f'=========query_after_tokenization: {query_1, query_2, query_3}=========')
-    
     if query_1 != '':
-        search_params = all_params(query_1, query_2, query_3, location, min_date, max_date, min_capital, max_capital, page_number , page_size = 10)
+        search_params = all_params(query_1, location, min_date, max_date, min_capital, max_capital, page_number , page_size = 10)
         results, total_hits = search_query(search_params)  # Assume search_query processes these params
         logger.info(f'=========search_params: {search_params}===========')
         logger.info('==================results: %s==================', results)

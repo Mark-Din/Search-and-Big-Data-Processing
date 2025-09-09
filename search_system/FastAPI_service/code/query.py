@@ -1,4 +1,4 @@
-def all_params(query_1, query_2, query_3, location, min_date, max_date, min_capital, max_capital, page_number, page_size=10):
+def all_params(query, location, min_date, max_date, min_capital, max_capital, page_number, page_size=10):
     # print(f'=========query_1: {query_1}=========')
     # print(f'=========query_2: {query_2}=========')
     # print(f'=========query_3: {query_3}=========')
@@ -18,38 +18,35 @@ def all_params(query_1, query_2, query_3, location, min_date, max_date, min_capi
     }
     
     # Add query conditions for query_1 and query_2
-    for query in [query_1, query_2, query_3]:
-        if query == "undefined" or not query:
-            continue
-        if isinstance(query, list):
-          for sub_query in query:
-              query_condition = {
-                  "bool": {
-                      "should": [
-                          {"term": {"公司名稱.keyword": {"value": sub_query}}},
-                          {"match": {"財政營業項目": {"query": sub_query, "analyzer": "traditional_chinese_analyzer", "boost": 2}}},
-                          {"match": {"類別": {"query": sub_query, "analyzer": "traditional_chinese_analyzer", "boost": 3}}},
-                          {"match": {"營業項目及代碼表": {"query": sub_query, "analyzer": "traditional_chinese_analyzer"}}},
-                          {"function_score": {"query": {"match": {"公司名稱": sub_query}}, "boost": 5, "boost_mode": "multiply"}}
-                      ],
-                      "minimum_should_match": 1
-                  }
-              }
-              query_param["query"]["bool"]["must"].append(query_condition)
-        else:
+    if isinstance(query, list):
+      for sub_query in query:
           query_condition = {
               "bool": {
                   "should": [
-                      {"term": {"公司名稱.keyword": {"value": query}}},
-                      {"match": {"財政營業項目": {"query": query, "analyzer": "traditional_chinese_analyzer", "boost": 2}}},
-                      {"match": {"類別": {"query": query, "analyzer": "traditional_chinese_analyzer", "boost": 3}}},
-                      {"match": {"營業項目及代碼表": {"query": query, "analyzer": "traditional_chinese_analyzer"}}},
-                      {"function_score": {"query": {"match": {"公司名稱": query}}, "boost": 5, "boost_mode": "multiply"}}
+                      {"term": {"公司名稱.keyword": {"value": sub_query}}},
+                      {"match": {"財政營業項目": {"query": sub_query, "analyzer": "traditional_chinese_analyzer", "boost": 2}}},
+                      {"match": {"類別": {"query": sub_query, "analyzer": "traditional_chinese_analyzer", "boost": 3}}},
+                      {"match": {"營業項目及代碼表": {"query": sub_query, "analyzer": "traditional_chinese_analyzer"}}},
+                      {"function_score": {"query": {"match": {"公司名稱": sub_query}}, "boost": 5, "boost_mode": "multiply"}}
                   ],
                   "minimum_should_match": 1
               }
           }
           query_param["query"]["bool"]["must"].append(query_condition)
+    else:
+      query_condition = {
+          "bool": {
+              "should": [
+                  {"term": {"公司名稱.keyword": {"value": query}}},
+                  {"match": {"財政營業項目": {"query": query, "analyzer": "traditional_chinese_analyzer", "boost": 2}}},
+                  {"match": {"類別": {"query": query, "analyzer": "traditional_chinese_analyzer", "boost": 3}}},
+                  {"match": {"營業項目及代碼表": {"query": query, "analyzer": "traditional_chinese_analyzer"}}},
+                  {"function_score": {"query": {"match": {"公司名稱": query}}, "boost": 5, "boost_mode": "multiply"}}
+              ],
+              "minimum_should_match": 1
+          }
+      }
+      query_param["query"]["bool"]["must"].append(query_condition)
     
     # Add conditions for filters
     if min_date:

@@ -5,8 +5,10 @@ import datetime, boto3
 import es_mapping
 from etl_log import CreateLog
 from connection import ElasticSearchConnectionManager
-from init_process_for_ML import PythonVectorizer
-from common.logger import initlog
+import sys
+
+sys.path.append(r'C:\Users\mark.ding\big-data-ai-integration-platform\common')
+from logger import initlog
 
 logger = initlog(__name__)
 
@@ -80,7 +82,7 @@ def update_data_to_es(es, cursor, es_index, table_name):
         batch = df.to_dict(orient='records')
 
         for row in batch:
-            source_id = row['id']
+            source_id = row['統一編號']
             # logger.info(f"Updating document with source ID {source_id}...")
             try:
                 doc_exists = search_and_update_document(es, es_index, source_id, row)
@@ -108,7 +110,7 @@ def etl_process(table_name, es, es_index):
     logger.info(f"Starting ETL process for table: {table_name}.")
     
     # Create MySQL connection
-    mysql_conn = ElasticSearchConnectionManager.mysql_connection_nexva() 
+    mysql_conn = ElasticSearchConnectionManager.mysql_connection_whole_corp() 
     cursor = mysql_conn.cursor(dictionary=True)
 
     date_now_python = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -125,7 +127,7 @@ def etl_process(table_name, es, es_index):
         logger.info("Date time is the same: %s", date_now_python)
 
     # Query to fetch updated records
-    sql_query_updatedAt = f"SELECT * FROM {table_name} where updatedAt > DATE_SUB(now(), INTERVAL 5 MINUTE)"
+    sql_query_updatedAt = f"SELECT * FROM {table_name}"
     cursor.execute(sql_query_updatedAt)
 
     # Update data in Elasticsearch
@@ -182,7 +184,7 @@ def main():
     logger.info("ETL process started.")
     es = ElasticSearchConnectionManager.get_instance()
     
-    table_name = 'wholeCorp_delta'
+    table_name = 'whole_corp'
     
     index_name = table_name.lower()
     

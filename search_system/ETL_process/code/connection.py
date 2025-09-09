@@ -4,17 +4,19 @@ from ssl import create_default_context, CERT_NONE
 from elasticsearch.exceptions import ConnectionError, SSLError
 import time
 import json
+import sys
 
-from common.logger import initlog
+sys.path.append(r'C:\Users\mark.ding\big-data-ai-integration-platform\common')
+from logger import initlog
 logger = initlog('connection')
 
-with open('/app/config.json', 'r') as config:
+with open('./config.json', 'r') as config:
     config_json = json.loads(config.read())
 
 class ElasticSearchConnectionManager:
     _instance = None
     _es_nodes = [
-                    {"ip": config_json['ES_HOST'], "cafile": config_json['ES_CA_CERT']} # for docker
+                    {"ip": config_json['ES_HOST_local'], "cafile": config_json['ES_CA_CERT']} # for docker
                 ]
     _max_attempts = 2
 
@@ -52,14 +54,13 @@ class ElasticSearchConnectionManager:
 
     # Function to create a MySQL connection
     @staticmethod
-    def mysql_connection_nexva():
+    def mysql_connection_whole_corp():
         try:
-            conn = connect(host='mysql_container',
-                port='3306',
-                user='root',
-                password='!QAZ2wsx',
-                database='nexva'
-            )
+            conn = connect(host='localhost',
+                   port=3307,
+                   user='root',
+                   password='!QAZ2wsx',
+                   database='whole_corp')
         except:
             conn = connect(host='mysql_container',
                 port='3306',

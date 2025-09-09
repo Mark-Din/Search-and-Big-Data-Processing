@@ -28,7 +28,10 @@ def corp_mapping():
                                         "從", "這樣的", "不能", "他的", "我們的", "自", "這邊", "那邊",
                                         "對於", "所有", "能夠", "請", "給", "在此", "上面", "以下",
                                         "儘管", "不需要", "不管", "與此同時", "關於", "有關", "將",
-                                        "沒事", "沒關係", "這邊", "那邊", "有時候", "有時", "為", "可能性"
+                                        "沒事", "沒關係", "這邊", "那邊", "有時候", "有時", "為", "可能性",
+                                        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 
+                                        'm', 'n', 'o','p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 
+                                        'y', 'z'
                                     ]
  
                     }
@@ -42,61 +45,79 @@ def corp_mapping():
                 }
             }
         },        
-          "mappings": {
-            "properties": {
-              "統一編號": {
-                "type": "keyword"
-              },
-              "公司名稱": {
-                "type": "keyword"
-              },
-              "負責人": {
-                "type": "keyword"
-              },
-              "登記地址": {
-                "type": "keyword"
-              },
-              "資本額": {
-                "type": "integer"
-              },
-              "營業項目及代碼表": {
-                'type': 'text',
-                'analyzer':'traditional_chinese_analyzer',
-                "fields": {
-                    "raw": { 
-                        "type": "keyword",
-                        "doc_values": True
-                  }
-              }
-            },
-              "縣市名稱": {
-                "type": "text"
-              },
-              "類別_全": {
+           "mappings": {
+        "properties": {
+          "統一編號": {
+            "type": "keyword"
+          },
+          "公司名稱":  {
                 "type": "text",
-                'analyzer': "traditional_chinese_analyzer",
-                "field" : {
+                "analyzer": "traditional_chinese_analyzer",
+                "fields": {
                     "raw": {
                         "type": "keyword",
-                        "doc_value": False
+                        "doc_values": True
                     }
+
                 }
-              },
-              "官網": {
-                "type": "keyword",
-              },
-              "電話": {
-                "type": "keyword",
-              },
-              "features": {
-                  "type": "dense_vector",
-                  "dims": 262147,  # ⚠️ match your vector size
-                  "index": True,
-                  "similarity": "cosine"
+            },
+          "負責人": {
+            "type": "text",
+            "fields": {
+              "keyword": { "type": "keyword" }
+            }
+          },
+          "登記地址": {
+            "type": "text"
+          },
+          "資本額": {
+            "type": "double"
+          },
+          "營業項目及代碼表":  {
+          "type": "text",
+          "analyzer": "traditional_chinese_analyzer",
+          "fields": {
+              "raw": {
+                  "type": "keyword",
+                  "doc_values": True
               }
+            }
+          },
+          "類別_全":  {
+          "type": "text",
+          "analyzer": "traditional_chinese_analyzer",
+          "fields": {
+              "raw": {
+                  "type": "keyword",
+                  "doc_values": True
+              }
+            }
+          },
+          "縣市名稱": {
+            "type": "keyword"
+          },
+          "區域名稱": {
+            "type": "keyword"
+          },
+          "縣市區域": {
+            "type": "keyword"
+          },
+          "官網": {
+            "type": "keyword",
+            "index": False
+          },
+          "電話": {
+            "type": "keyword"
+          },
+          "cluster": {
+            "type": "keyword"
+          },
+          "vector": {
+            "type": "dense_vector",
+            "dims": 32768    # // must match your model output
+          }
+        }
+      }
     }
-  }
-}
 
     return body
-

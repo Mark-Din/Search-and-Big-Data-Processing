@@ -33,9 +33,9 @@ def fetch_data(cursor, batch_size=1000):
         yield cleaned_rows
 
 # Search and update document in Elasticsearch
-def search_and_update_document(es, index, source_id, update_body):
+def search_and_update_field(es, index, source_id, vector_val, cluster_val):
     try:
-        search_query = {"query": {"term": {"id": source_id}}}
+        search_query = {"query": {"term": {"統一編號": source_id}}}
         search_response = es.search(index=index, body=search_query)
         hits = search_response['hits']['hits']
         
@@ -45,8 +45,11 @@ def search_and_update_document(es, index, source_id, update_body):
 
         for hit in hits:
             doc_id = hit['_id']
-            response = es.update(index=index, id=doc_id, body={"doc": update_body})
-            # logger.info(f"Document with source ID {source_id} updated: {response}")
+            response = es.update(index=index, id=doc_id, body={"doc": {
+                "vector": vector_val,
+                "cluster" :cluster_val
+            }})
+            logger.debug(f"Document with source ID {source_id} updated: {response}")
             return True
 
     except Exception as e:
@@ -80,7 +83,7 @@ def update_data_to_es(es, cursor, es_index, table_name):
             source_id = row['統一編號']
             # logger.info(f"Updating document with source ID {source_id}...")
             try:
-                doc_exists = search_and_update_document(es, es_index, source_id, row)
+                doc_exists = search_and_update_field(es, es_index, source_id, row.get('vector'), row.get('cluster'))
                 if not doc_exists:
                     actions.append({"_index": es_index, "_source": row})
                     create_data_count += 1
@@ -186,9 +189,6 @@ def main():
     create_index_if_not_exists(es, index_name)
     
     update_data_count, create_data_count = etl_process(table_name, es, index_name)
-    
-    if update_data_count > 0 or create_data_count > 0:
-        CreateLog(table_name, update_data_count, create_data_count).success()
     
     logger.info(f"Data update for {table_name} completed, with update_data_count: {update_data_count}, create_data_count: {create_data_count}")
     

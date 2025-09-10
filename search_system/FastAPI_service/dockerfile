@@ -39,4 +39,8 @@ RUN pip install --user --no-cache-dir -r requirements.txt
 EXPOSE 3002
 
 # Run main.py when the container launches
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3002", "--reload"]
+# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3002", "--reload"]
+
+
+# Run streamlit and fastapi using bash script
+CMD ["bash", "start_services.sh"]

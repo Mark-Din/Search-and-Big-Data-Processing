@@ -5,13 +5,12 @@ from elasticsearch.exceptions import ConnectionError, SSLError
 import time
 import json
 import sys
+from conf import config_es as config_json
 
-sys.path.append(r'C:\Users\mark.ding\big-data-ai-integration-platform\common')
+sys.path.append(r'D:\markding_git\\big-data-ai-integration-platform\common')
 from logger import initlog
 logger = initlog('connection')
-
-with open('./config.json', 'r') as config:
-    config_json = json.loads(config.read())
+import os
 
 class ElasticSearchConnectionManager:
     _instance = None

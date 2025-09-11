@@ -4,12 +4,10 @@ from sparksession import spark_session
 import os
 logger = initlog(__name__)
 
-s = spark_session()
-
 def read_from_mysql(spark):
     # 2) Read MySQL
     return (spark.read.format("jdbc")
-      .option("url", "jdbc:mysql://mysql-business-only:3306/whole_corp"
+      .option("url", "jdbc:mysql://mysql_db_container:3306/whole_corp"
                       "?useUnicode=true&characterEncoding=utf8"
                       "&serverTimezone=Asia/Taipei"
                       "&useSSL=false&allowPublicKeyRetrieval=true")
@@ -38,7 +36,13 @@ def bronze_to_silver(s):
     for c, t in df.dtypes:
         if t == "string":
             df = df.withColumn(c, F.trim(F.col(c)))
+            
+    # Drop rows with nulls in critical columns
+    critical_cols = ["公司名稱", "統一編號"]
+    df = df.dropna(subset=critical_cols)
 
+    df = df.filter(~df['統一編號'].rlike('.*[A-Za-z].*'))
+    
     silver_path = os.getenv("SILVER_PATH", "s3a://deltabucket/silver/wholeCorp_delta")
     df.write.format("delta").mode("overwrite").save(silver_path)
 
@@ -58,10 +62,12 @@ def main():
         bronze_to_silver(s)
         s.stop()
     except Exception as e:
-        logger.error(f"Error in spark job: {e}")
+        print(e)
     finally:
-        if 's' in locals():
+        try:
             s.stop()
+        except:
+            pass
             
 if __name__ == "__main__":
     main()

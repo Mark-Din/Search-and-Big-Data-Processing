@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Response
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.middleware.cors import CORSMiddleware
-from routers import fastAPI_UI_elasticSearch, fastapi_QR
+from routers import fastAPI_UI_elasticSearch
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 app = FastAPI()
 
@@ -28,7 +28,6 @@ def health_check():
 # Router for search
 app.include_router(fastAPI_UI_elasticSearch.router)
 # Router for quickreport
-app.include_router(fastapi_QR.router)
 
 
 if __name__ == "__main__":

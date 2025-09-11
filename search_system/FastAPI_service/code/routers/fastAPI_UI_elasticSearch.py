@@ -7,22 +7,19 @@ import numpy as np
 import pandas as pd
 from fastapi import FastAPI, Request, APIRouter, HTTPException, Depends, Query
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from pathlib import Path
 import locale
 
 from pydantic import BaseModel
 
 # Custom local imports
-from logs.logging_config import logger
+# from logging_config import logger
 from connection import ElasticSearchConnectionManager
 from query import all_params, init_param, recommend_params
 
 # Configuration
 locale.setlocale(locale.LC_ALL, 'zh_TW.UTF-8')
-TEMPLATES_DIR = Path(__file__).parent / "templates"
 router = APIRouter(tags=["search"])
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 class CompanyData(BaseModel):
     公司名稱: str

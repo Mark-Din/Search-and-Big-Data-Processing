@@ -20,6 +20,9 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY ./code /app
 COPY ./code/requirements.txt /app/requirements.txt
+COPY start_services.sh /start_services.sh
+
+RUN chmod +x /start_services.sh
 
 # Create the logs directory and set permissions
 RUN mkdir -p /app/logs && \
@@ -33,7 +36,8 @@ USER appuser
 ENV PATH="/home/appuser/.local/bin:${PATH}"
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --user --no-cache-dir -r requirements.txt
+# Could run --no-cache-dir for 
+RUN pip install --user -r requirements.txt
 
 # Make port 3002 available to the world outside this container
 EXPOSE 3002
@@ -43,4 +47,4 @@ EXPOSE 3002
 
 
 # Run streamlit and fastapi using bash script
-CMD ["bash", "start_services.sh"]
+CMD ["/start_services.sh"]

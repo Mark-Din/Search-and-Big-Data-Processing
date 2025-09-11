@@ -1,10 +1,6 @@
 import logging
 import sys
 import os
-import time
-
-import pandas as pd
-import re
 
 
 class CustomError(Exception):

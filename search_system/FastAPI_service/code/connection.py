@@ -1,21 +1,14 @@
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionError, SSLError
-from ssl import create_default_context, CERT_NONE
 import os
-import time
-import logging
 
-from pymongo import MongoClient
-from common.logger import initlog
-logger = initlog('connection')
+import logging
+logger = logging.getLogger(__name__)
 
 
 class ElasticSearchConnectionManager:
     _instance = None
-    _es_nodes = [
-                    {"ip": os.getenv('ES_HOST'), "cafile": os.getenv('ES_CA_CERT')}, # for docker
-                    {"ip": "https://172.105.226.161:9200", "cafile": r'C:\Users\infopower\ESG_Backends\FastAPI_service\http_ca.crt'} # for local test
-                ]
+    _es_nodes = {"ip": os.getenv('ES_HOST'), "cafile": os.getenv('ES_CA_CERT')} # for docker
     _max_attempts = 2
 
     def __new__(cls, *args, **kwargs):
@@ -30,25 +23,24 @@ class ElasticSearchConnectionManager:
     @staticmethod
     def _create_es_connection():
         for attempt in range(ElasticSearchConnectionManager._max_attempts):
-            for node in ElasticSearchConnectionManager._es_nodes:
-                logger.info(f"Attempting to connect to Elasticsearch at {node['ip']} with CA file {node['cafile']} (Attempt {attempt + 1})")
-                try:
-                    # context = create_default_context(cafile=node['cafile'])
-                    # context.check_hostname = False
-                    # context.verify_mode = CERT_NONE
+            node = ElasticSearchConnectionManager._es_nodes
+            logger.info(f"Attempting to connect to Elasticsearch at {node['ip']} with CA file {node['cafile']})")
+            try:
+                # context = create_default_context(cafile=node['cafile'])
+                # context.check_hostname = False
+                # context.verify_mode = CERT_NONE
 
-                    es = Elasticsearch(
-                        [node['ip']],
-                        http_auth=(os.getenv("ES_USERNAME"), os.getenv("ES_PASSWORD")),
-                        # ssl_context=context,
-                        verify_certs=False
-                    )
-                    if es.ping():
-                        logger.info(f"Elasticsearch connection established to {node['ip']}.")
-                        return es
-                except (ConnectionError, SSLError, FileNotFoundError) as e:
-                    logger.error(f"Failed to connect to Elasticsearch at {node['ip']} on attempt {attempt + 1}: {e}")
-            time.sleep(0.5)
+                es = Elasticsearch(
+                    [node['ip']],
+                    http_auth=(os.getenv("ES_USERNAME"), os.getenv("ES_PASSWORD")),
+                    # ssl_context=context,
+                    verify_certs=False
+                )
+                if es.ping():
+                    logger.info(f"Elasticsearch connection established to {node['ip']}.")
+                    return es
+            except (ConnectionError, SSLError, FileNotFoundError) as e:
+                logger.error(f"Failed to connect to Elasticsearch at {node['ip']} on attempt {attempt + 1}: {e}")
 
         raise ConnectionError("Failed to connect to Elasticsearch after several attempts.")
 

@@ -21,7 +21,7 @@ def read_from_mysql(spark):
 def bronze_to_silver(s):
     # Read Bronze (from MinIO or local)
     bronze_path = os.getenv("BRONZE_PATH", "s3a://deltabucket/bronze/wholeCorp_delta_raw")
-    df = s.read.parquet(bronze_path)
+    df = s.read.format('delta').load(bronze_path)
 
     # Coerce types
     to_int = ["資本額","實收資本總額","員工"]

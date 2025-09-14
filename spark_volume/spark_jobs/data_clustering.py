@@ -18,9 +18,43 @@ def read_gold(spark):
 
     return spark.read.format("delta").load(GOLD)
 
-
+# For small data < 5M rows
 def to_mysql(ids, labels, Xr_vector, spark):
+
+    # Convert to pandas DataFrame
+    pdf = pd.DataFrame({
+        "統一編號": ids,
+        "cluster": labels,
+        "vector": [json.dumps(vec) for vec in Xr_vector]
+    })
+
+    # Create connection engine
+    engine = create_engine("mysql+pymysql://root:!QAZ2wsx@localhost:3306/whole_corp")
+
+    # Insert in batches with upsert
+    insert_sql = """
+    INSERT INTO wholecorp_clusters_vector (統一編號, cluster, vector)
+    VALUES (:id, :cluster, :vector)
+    ON DUPLICATE KEY UPDATE
+        cluster = VALUES(cluster),
+        vector  = VALUES(vector)
+    """
+
+    with engine.begin() as conn:
+        for start in range(0, len(pdf), batch_size):
+            batch = pdf.iloc[start:start+batch_size]
+            conn.execute(
+                text(insert_sql),
+                [
+                    {"id": r["統一編號"], "cluster": int(r["cluster"]), "vector": r["vector"]}
+                    for _, r in batch.iterrows()
+                ]
+            )
+
+    print(f"✅ Upserted {len(pdf)} rows into MySQL")
     
+    
+def to_mysql_spark(ids, labels, Xr_vector, spark):
     rows = [
         Row(
             統一編號=i,

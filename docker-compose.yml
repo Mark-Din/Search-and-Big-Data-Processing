@@ -67,6 +67,28 @@ services:
     networks:
       - bigdata-net
 
+  # # For custome purpose
+  # mysql_db:
+  #   build:
+  #     context: ./sql
+  #     dockerfile: dockerfile_mysql
+  #   container_name: mysql_db_container
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
+  #     MYSQL_ROOT_HOST: "%"
+  #     MYSQL_DATABASE: whole_corp
+  #     MYSQL_CHARSET: utf8mb4
+  #     MYSQL_COLLATION: utf8mb4_general_ci
+  #   volumes:
+  #     - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
+  #     - ./mysql_volume/data:/var/lib/mysql
+  #   ports:
+  #     - "3307:3306"  # Expose MySQL on port 3306
+  #   profiles:
+  #     - search    
+  #   networks:
+  #     - bigdata-net
+
 # ----------------------------------
 # AI Attribute Recommendation Service
 # ----------------------------------

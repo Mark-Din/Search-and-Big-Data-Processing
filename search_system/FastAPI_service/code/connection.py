@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class ElasticSearchConnectionManager:
     _instance = None
-    _es_nodes = {"ip": os.getenv('ES_HOST'), "cafile": os.getenv('ES_CA_CERT')} # for docker
+    _es_nodes = {"ip": os.getenv('ES_HOST', 'http://localhost:9200'), "cafile": os.getenv('ES_CA_CERT')} # for docker
     _max_attempts = 2
 
     def __new__(cls, *args, **kwargs):
@@ -29,10 +29,11 @@ class ElasticSearchConnectionManager:
                 # context = create_default_context(cafile=node['cafile'])
                 # context.check_hostname = False
                 # context.verify_mode = CERT_NONE
-
+                http_auth=(os.getenv("ES_USERNAME", 'elastic'), os.getenv("ES_PASSWORD",'gAcstb8v-lFCVzCBC__a'))
+                print(http_auth)
                 es = Elasticsearch(
                     [node['ip']],
-                    http_auth=(os.getenv("ES_USERNAME"), os.getenv("ES_PASSWORD")),
+                    http_auth=http_auth,
                     # ssl_context=context,
                     verify_certs=False
                 )
@@ -45,15 +46,4 @@ class ElasticSearchConnectionManager:
         raise ConnectionError("Failed to connect to Elasticsearch after several attempts.")
 
         # For QuickReport service to connect to MongoDB
-    @staticmethod
-    def create_mongo_connection():
-        try:
-            client = MongoClient("mongodb://root:infopower@172.234.84.110:27016/?authSource=admin")
-            db = client["reporting"]
-            collection = db["shareReport"]
-            logger.info("MongoDB connection established.")
-            return collection
-        except Exception as e:
-            logger.error(f"Failed to connect to MongoDB: {e}")
-            raise
         

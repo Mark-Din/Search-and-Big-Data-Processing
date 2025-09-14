@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession, functions as F
-from common.logger import initlog
+from common.init_log import initlog
 from sparksession import spark_session
 import os
 logger = initlog(__name__)

@@ -33,7 +33,7 @@ class CustomError(Exception):
 #     return logger
 
 
-def initlog(name: str | None = None) -> logging.Logger:
+def initlog(name: str = None) -> logging.Logger:
     log = logging.getLogger(name)
     if any(h for h in log.handlers):
         # Airflow (and uvicorn, gunicorn) usually pre-configure handlers.

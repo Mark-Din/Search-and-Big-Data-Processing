@@ -17,7 +17,7 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"]   # Allows all headers
 )
-
+ 
 
 # Health check endpoint
 @app.get("/healthy")

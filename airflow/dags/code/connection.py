@@ -8,7 +8,7 @@ import sys
 from conf import config_es as config_json
 
 sys.path.append(r'D:\markding_git\\big-data-ai-integration-platform\common')
-from logger import initlog
+# from logger import initlog
 logger = initlog('connection')
 import os
 

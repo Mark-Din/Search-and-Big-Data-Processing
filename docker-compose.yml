@@ -2,27 +2,27 @@
 # # search_system
 # # ---------------
 services:
-  # elasticsearch:
-  #   build:
-  #     context: ./search_system
-  #     dockerfile: Dockerfile_es
-  #   environment:
-  #     - discovery.type=single-node
-  #     - xpack.security.enabled=true  # Keep security enabled
-  #     # - xpack.security.http.ssl.enabled=true
-  #     # - xpack.security.http.ssl.keystore.path=certs/http.p12
-  #     # - xpack.security.http.ssl.truststore.path=certs/http.p12
-  #     - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
-  #   volumes:
-  #     - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
-  #     - ./es_volume/data:/usr/share/elasticsearch/data
-  #   profiles:
-  #     - search    
-  #   ports:
-  #     - "9200:9200"
-  #     - "9300:9300"
-  #   networks:
-  #     - bigdata-net
+  elasticsearch:
+    build:
+      context: ./search_system
+      dockerfile: Dockerfile_es
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true  # Keep security enabled
+      # - xpack.security.http.ssl.enabled=true
+      # - xpack.security.http.ssl.keystore.path=certs/http.p12
+      # - xpack.security.http.ssl.truststore.path=certs/http.p12
+      - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
+    volumes:
+      - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
+      - ./es_volume/data:/usr/share/elasticsearch/data
+    profiles:
+      - search    
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - bigdata-net
 
   fastapi_search_service:
     build:
@@ -39,12 +39,12 @@ services:
       - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
     networks:
       - bigdata-net
-    # profiles:
-    #   - search    
-    # depends_on:
-    #   - elasticsearch
+    profiles:
+      - search    
+    depends_on:
+      - elasticsearch
     ports:
-      - "3002:3002"  # Expose FastAPI on port 8000
+      - "3002:3002"  # Expose FastAPI on port 3002
       - "8501:8501"
 
 

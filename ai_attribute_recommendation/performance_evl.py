@@ -1,7 +1,7 @@
 import cProfile
 import pstats
 import io
-from common.logger import init_log
+from common.init_log import init_log
 
 logger = init_log('performance_test')
 

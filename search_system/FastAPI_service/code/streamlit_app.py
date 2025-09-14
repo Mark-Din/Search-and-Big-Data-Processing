@@ -5,28 +5,34 @@ import re
 import pandas as pd
 import streamlit as st
 import requests
-from common import initlog  # Custom logger
-from performance_test import profile_function
+# from common import initlog  # Custom logger
+from common.init_log import initlog
 import httpx  # httpx is a fully featured HTTP client for Python 3, which provides sync and async APIs, and support for both HTTP/1.1 and HTTP/2.
 logger = initlog('search_interface')
 import warnings
-from text_analyzing import TextAnalyzer
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
 @st.cache_data
 def get_indices():
-    response = requests.get("http://127.0.0.1:8000/get_indices/")
+    response = requests.get("http://127.0.0.1:3002/get_indices/")
     response.raise_for_status()  # Raise an error for HTTP error responses
     return response.json()
 
 async def search_for_each_index(client, index, query):
+    logger.info(f'query111:====, {query}')
     # Request to search within the selected index
-    response = await client.get("http://127.0.0.1:8000/keyword_search/", params={"index_name": index, 'query': query})
+    response = await client.post(
+                                "http://127.0.0.1:3002/search",
+                                params={'query': query}
+                            )
+    if response.status_code != 200:
+        print("Error:", response.status_code, response.text)
     response.raise_for_status()  # Raise an error for HTTP error responses
     return response.json()
 
 async def main(query):
+    logger.info(f'query:====, {query}')
     if not query:
         st.warning("Please enter a search query.")
         return
@@ -44,6 +50,7 @@ async def main(query):
             pattern = re.compile(r'^(?!.*log)')
             # Filter the list
             indices = [i for i in indices if pattern.match(i) and not i.startswith('.') and not i.startswith('_')]
+            logger.info(f'indices:====, {indices}')
 
             async with httpx.AsyncClient(timeout=60) as client:  # Reuse this client
                 tasks = [search_for_each_index(client, index, query) for index in indices]  # Pass the correct index name here

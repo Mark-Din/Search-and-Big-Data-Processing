@@ -13,7 +13,9 @@ import locale
 from pydantic import BaseModel
 
 # Custom local imports
-# from logging_config import logger
+from common.init_log import initlog
+
+logger = initlog('fastapi')
 from connection import ElasticSearchConnectionManager
 from query import all_params, init_param, recommend_params
 
@@ -34,17 +36,20 @@ class CompanyData(BaseModel):
     實收資本總額: Optional[str] = None
     attributes_vector: list
 
+global INDEX_NAME
+
+INDEX_NAME = 'whole_corp'
 
 # Function to format a number as currency
 def format_currency(number):
-    formatted_amount = locale.format_string('%.f',number, grouping=True)
+    formatted_amount = locale.format_string('%.f',float(number), grouping=True)
     return f'NT${formatted_amount}'
 
 
 def tokenization(text) -> list:
     es = ElasticSearchConnectionManager._create_es_connection()
     """Tokenize a text string."""
-    analysis_text = es.indices.analyze(index='smb_recommended', body={"text": text, "analyzer": "traditional_chinese_analyzer"})
+    analysis_text = es.indices.analyze(index=INDEX_NAME, body={"text": text, "analyzer": "traditional_chinese_analyzer"})
     analyzed_tokens_list = [token['token'] for token in analysis_text['tokens']]
     return analyzed_tokens_list
 
@@ -68,7 +73,7 @@ def search_query(search_params=None):
         logger.info('No search parameters provided')
         return results, total_hits  # Return empty results and 0 hits
     try:
-        index_name = "smb_recommended"
+        index_name = INDEX_NAME
         response = search(index_name, search_params)
         # logger.info('response: %s', response)
 
@@ -80,6 +85,7 @@ def search_query(search_params=None):
         for hit in results_list:
             hits = {key: hit['_source'][key] for key in hit['_source'] if key in hit['_source']}
             if '資本額' in hits:
+                print("hits['資本額']:============", hits['資本額'])
                 hits['資本額'] = format_currency(hits['資本額'])
             if '類別' in hits:
                 hits['類別'] = hits['類別'].split(',')[0]
@@ -89,18 +95,31 @@ def search_query(search_params=None):
 
         total_hits = response['hits']['total']['value']  # This line gets the total number of hits
     except Exception as e:
-        logger.error(f"Error during search: {e}")
+        logger.error(f"Error during search: {e}", exc_info=True)
         return results, total_hits  # Return whatever was gathered before the error
 
     return results, total_hits  
 
 
+@router.get("/get_indices", response_class=JSONResponse)
+async def perform_index_search(
+        es: ElasticSearchConnectionManager = Depends(ElasticSearchConnectionManager.get_instance)
+):
+    try:
+        indices = es.indices.get_alias(index="*,-.*")
+        print('indices=================:', indices)
+        logger.info(f'=========indices: {list(indices.keys())}=========')
+        return JSONResponse(list(indices.keys()))
+    except Exception as e:
+        logger.error(f"Error fetching indices: {e}", exc_info=True)
+        return JSONResponse({"error": str(e)}, status_code=500)
+    
 # API Routes
 @router.post("/init_values", response_class=JSONResponse)
 async def set_search_params(request: Request):
     """Initialize search parameters."""
     search_params = init_param()
-    response = search("smb_recommended", search_params)  
+    response = search(INDEX_NAME, search_params)  
 
     # Extract min and max date from the aggregation results
     min_date = response['aggregations']['min_date']['value_as_string']  
@@ -118,7 +137,7 @@ async def set_search_params(request: Request):
 
 @router.post("/search", response_class=HTMLResponse)
 async def perform_search(request: Request,
-                        query_1: str = '',
+                        query: str = '',
                         location: str = '', 
                         min_date: str = None, 
                         max_date: str = None, 
@@ -128,12 +147,12 @@ async def perform_search(request: Request,
     
     # Tokenize the queries
     
-    if query_1 != '': query_1 = [q for q in tokenization(query_1) if q != 'undefined']
+    if query != '': query = [q for q in tokenization(query) if q != 'undefined']
 
-    logger.info(f'=========query_1: {query_1}=========')
+    logger.info(f'=========query: {query}=========')
 
-    if query_1 != '':
-        search_params = all_params(query_1, location, min_date, max_date, min_capital, max_capital, page_number , page_size = 10)
+    if query != '':
+        search_params = all_params(query, location, min_date, max_date, min_capital, max_capital, page_number , page_size = 10)
         results, total_hits = search_query(search_params)  # Assume search_query processes these params
         logger.info(f'=========search_params: {search_params}===========')
         logger.info('==================results: %s==================', results)

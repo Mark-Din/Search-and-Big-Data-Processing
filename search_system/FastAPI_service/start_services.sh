@@ -1,6 +1,6 @@
 #!/bin/bash
 
 # Start FastAPI service in the background
-uvicorn /app/main:app --host 0.0.0.0 --port 3002 --reload &
+uvicorn main:app --host 0.0.0.0 --port 3002 --reload &
 # Start Streamlit service
-streamlit run /app/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0

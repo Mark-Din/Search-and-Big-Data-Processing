@@ -13,7 +13,7 @@ import hashlib
 from concurrent.futures import ThreadPoolExecutor
 
 from prompts import prompt_attribute, system_message_attribute, prompt_explanation, system_message_explanation
-from common.logger import init_log
+from common.init_log import init_log
 from database import Database
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect

@@ -17,7 +17,7 @@ from common.init_log import initlog
 
 logger = initlog('fastapi')
 from connection import ElasticSearchConnectionManager
-from query import all_params, init_param, recommend_params
+from query import all_params, init_param, recommend_params, search_company_params
 
 # Configuration
 locale.setlocale(locale.LC_ALL, 'zh_TW.UTF-8')
@@ -34,7 +34,8 @@ class CompanyData(BaseModel):
     類別: str
     營業項目及代碼表: Optional[str] = None
     實收資本總額: Optional[str] = None
-    attributes_vector: list
+    cluster: str
+    vector: list
 
 global INDEX_NAME
 
@@ -55,26 +56,26 @@ def tokenization(text) -> list:
 
 
 # Elasticsearch Integration Functions
-def search(index_name, search_param):
+def search(index_name, search_param, es):
     """Perform a search query on Elasticsearch."""
     try:
         return es.search(index=index_name, body=search_param)
     except Exception as e:
-        es = ElasticSearchConnectionManager._create_es_connection()
+        # es = ElasticSearchConnectionManager._create_es_connection()
         return es.search(index=index_name, body=search_param)
 
 
-def search_query(search_params=None):
+def search_query(es, search_params=None):
     """Query Elasticsearch and process the results."""
     results = []
     total_hits = 0  # Default total hits to 0
 
     if search_params is None:
-        logger.info('No search parameters provided')
+        logger.warning('No search parameters provided')
         return results, total_hits  # Return empty results and 0 hits
     try:
         index_name = INDEX_NAME
-        response = search(index_name, search_params)
+        response = search(index_name, search_params, es)
         # logger.info('response: %s', response)
 
         if not response['hits']['hits']:
@@ -135,15 +136,16 @@ async def set_search_params(request: Request):
     })
 
 
-@router.post("/search", response_class=HTMLResponse)
-async def perform_search(request: Request,
+@router.post("/full_search", response_class=HTMLResponse)
+async def full_search(request: Request,
                         query: str = '',
                         location: str = '', 
                         min_date: str = None, 
                         max_date: str = None, 
                         min_capital: int = None, 
                         max_capital: int = None,
-                        page_number: int = 1):
+                        page_number: int = 1,
+                        es: ElasticSearchConnectionManager = Depends(ElasticSearchConnectionManager.get_instance)):
     
     # Tokenize the queries
     
@@ -153,9 +155,10 @@ async def perform_search(request: Request,
 
     if query != '':
         search_params = all_params(query, location, min_date, max_date, min_capital, max_capital, page_number , page_size = 10)
-        results, total_hits = search_query(search_params)  # Assume search_query processes these params
-        logger.info(f'=========search_params: {search_params}===========')
-        logger.info('==================results: %s==================', results)
+        logger.debug(f'search_params:========={search_params}')
+        results, total_hits = search_query(es, search_params)  # Assume search_query processes these params
+        logger.debug(f'=========search_params: {search_params}===========')
+        logger.debug('==================results: %s==================', results)
     else:
         results = []
         total_hits = 0
@@ -163,22 +166,31 @@ async def perform_search(request: Request,
     if total_hits > 10000:
         total_hits = 10000
         
-    logger.info('=========total_hits: %s=========', total_hits)
-    logger.info('=========location: %s=========', location)
+    logger.debug('=========total_hits: %s=========', total_hits)
+    logger.debug('=========location: %s=========', location)
 
     # Return the search results along with the request information
     return JSONResponse(content={"results": results, "total_hits": total_hits})
 
 
 @router.post("/recommend_search")
-async def recommend_system(company_data: CompanyData, es: ElasticSearchConnectionManager = Depends(ElasticSearchConnectionManager.get_instance)):
+async def recommend_system(companyName: str = '', es: ElasticSearchConnectionManager = Depends(ElasticSearchConnectionManager.get_instance)):
 
     try:
         # Extract the search parameters
-        search_params = recommend_params(company_data.類別, company_data.attributes_vector)
-        results, total_hits = search_query(search_params)  # Assume search_query processes these params
-        print(f'=========results&total_hits:{results} , {total_hits}=========')
-        print(f'=========search_params: {search_params}===========')
+        company_param = search_company_params(companyName)
+        company_result, company_total_hits = search_query(es, company_param)  # Assume search_query processes these params
+
+        # Extract vector and cluseter from the first result
+        vector = company_result[0]['vector']
+        cluster = company_result[0]['cluster']
+
+        search_params = recommend_params(vector, cluster)
+
+        logger.info(f'=========search_params: {search_params}=========')
+        results, total_hits = search_query(es, search_params)  # Assume search_query processes these params
+        logger.debug(f'=========results&total_hits:{results} , {total_hits}=========')
+        logger.debug(f'=========search_params: {search_params}===========')
         # Return extracted fields
         return JSONResponse(content={"results": results, "total_hits": total_hits})
     

@@ -23,7 +23,7 @@ async def search_for_each_index(client, index, query):
     logger.info(f'query111:====, {query}')
     # Request to search within the selected index
     response = await client.post(
-                                "http://127.0.0.1:3002/search",
+                                "http://127.0.0.1:3002/full_search",
                                 params={'query': query}
                             )
     if response.status_code != 200:
@@ -31,11 +31,25 @@ async def search_for_each_index(client, index, query):
     response.raise_for_status()  # Raise an error for HTTP error responses
     return response.json()
 
-async def main(query):
+
+async def search_for_similarity(client, name):
+    logger.info(f'query111:====, {query}')
+    # Request to search within the selected index
+    response = await client.post(
+                                "http://127.0.0.1:3002/recommend_search",
+                                json={'companyName': name}
+                            )
+    if response.status_code != 200:
+        print("Error:", response.status_code, response.text)
+    response.raise_for_status()  # Raise an error for HTTP error responses
+    return response.json()
+
+
+async def fulli_search(query):
     logger.info(f'query:====, {query}')
     if not query:
         st.warning("Please enter a search query.")
-        return
+        return [], []   # return empty lists instead of None
 
     # Initialize session state variables if they don't exist
     if 'query' not in st.session_state or query != st.session_state['query']:
@@ -55,15 +69,13 @@ async def main(query):
             async with httpx.AsyncClient(timeout=60) as client:  # Reuse this client
                 tasks = [search_for_each_index(client, index, query) for index in indices]  # Pass the correct index name here
                 results = await asyncio.gather(*tasks)
-                for index, result in zip(indices, results):
-                    if result and result['total_hits'] > 0:
-                        total_hits = result['total_hits']
-                        st.write(f"Results for index: {index}, total_hits: {total_hits}")
-                        st.write(pd.DataFrame(result['results']))
-                        st.session_state['results'][index] = {'total_hits': total_hits, 'data': result['results']}
+                
+                logger.info(f'indices: {indices}, results: {results}')
+                return indices, results
 
         except requests.exceptions.RequestException as e:
             st.error(f"HTTP Request failed: {e}") 
+            return [], []   # make sure to return something
     else:
         if st.session_state['results']:
             for index, result in st.session_state['results'].items():
@@ -71,7 +83,27 @@ async def main(query):
                     st.write(f"Results for index: {index}, total_hits: {result['total_hits']}")
                     st.write(pd.DataFrame(result['data']))
 
+    return [], []   # default safe return
 
+
+async def sim_for_company():
+
+    company_for_sim = st.text_input('try to find similarity? Enter company').strip().replace(' ', '')
+
+
+async def main(query):
+
+    indices, results = await fulli_search(query)
+
+    if results:
+        sim_for_company()
+
+    for index, result in zip(indices, results):
+        if result and result['total_hits'] > 0:
+            total_hits = result['total_hits']
+            st.write(f"Results for index: {index}, total_hits: {total_hits}")
+            st.write(pd.DataFrame(result['results']))
+            st.session_state['results'][index] = {'total_hits': total_hits, 'data': result['results']}
 
 def init_sidebar():
     # Initialize a session state variable that tracks the sidebar state (either 'expanded' or 'collapsed').

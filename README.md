@@ -2,19 +2,16 @@
 End-to-end ETL solution integrating Airflow, Spark, Delta Lake, and object storage (MinIO) for big data workflows.
 
 ## Overview
-This project demonstrates an automated ETL (Extract, Transform, Load) pipeline using Apache Airflow. The pipeline extracts data from MySQL, performs transformations, and loads the processed data into a MinIO. This project has streamlit, fastapi and elasticsearch for overall and similarity searh.
-The goal is to showcase data engineering practices such as workflow automation, scheduling, error handling, and logging. Plus you can find this easily within your data.
+“This project demonstrates an automated ETL … This project has streamlit, fastapi and elasticsearch for overall and similarity searh.”
+Suggest splitting into two sentences and fix “searh” → “search”.
 
 ## Features
-Main storage type: MySQL
-Automated ETL workflow using Apache Airflow DAGs
-Extract data from CSV (dummy data provided)
-Transform data with Pandas (cleaning, type casting)
-Load data into MySQL
-Error handling & logging for pipeline reliability
-Dockerized environment for easy deployment
-vectorize and cluster data for search
-Use Elasticserach to extract data with vector build-in field type
+- **Automated ETL** using Apache Airflow DAGs  
+- **Extract** data from CSV (dummy data provided), loaded to MySQL first  
+- **Transform** with Pandas (cleaning, type casting), if data is big then use PySpark
+- **Load** into MySQL  
+- **Search**: vectorization & clustering with Elasticsearch 
+- **Environment**: Dockerized environment for easy deployment 
 
 ## Tech Stack
 Programming: Python 3.x
@@ -24,13 +21,11 @@ Object Storage: MinIO
 Libraries: Pandas, SQLAlchemy, PySpark
 Containerization: Docker, Docker Compose
 
-## Project Structure
-
 ## Architecture
 ![alt text](<workflow_architecture.png>)
-For regular ETL : Web APP → MySQL→ Extract (Airflow Task) → Transform (Pandas) → Load with structured data(PostgreSQL)
+For regular ETL : Web APP → MySQL→ Extract (Airflow Task) → Transform (Pandas) → Load with structured data(MySQL)
                                                           → Save format (Delta format) → Load with structured/unstructured data(MinIO)
-For big data/ML process : MySQL → Transform (Apache Spark) → Load with structured data(PostgreSQL)
+For big data/ML process : MySQL → Transform (Apache Spark) → Load with structured data(MySQL)
 
 ## How to Run
 1. Clone the Repository
@@ -46,15 +41,21 @@ astro dev start
 URL: http://localhost:8080
 Enable and run etl_pipeline DAG
 
-4. minio UI
+4. Start other services
+```bash
+docker-compose up --build
+```
+
+5. minio UI
 http://localhost:9001/
-5. Spark UI
+
+6. Spark UI
 http://localhost:8080/
 
 ## Results
 Pipeline processes dummy_data.csv and loads clean data into mysql
 ETL execution is fully automated and can be scheduled
 
-##⚠ Disclaimer
+## ⚠ Disclaimer
 This project is for demonstration purposes only. It uses synthetic data and does NOT include proprietary business logic or production code.
 

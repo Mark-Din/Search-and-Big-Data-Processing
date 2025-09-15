@@ -2,6 +2,28 @@
 # # search_system
 # # ---------------
 services:
+  # For custome purpose
+  mysql_db:
+    build:
+      context: ./sql
+      dockerfile: Dockerfile
+    container_name: mysql_db_container
+    environment:
+      MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: whole_corp
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_general_ci
+    volumes:
+      - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - .volumes/mysql_volume/data:/var/lib/mysql
+    ports:
+      - "3307:3306"  # Expose MySQL on port 3306
+    profiles:
+      - search    
+    networks:
+      - bigdata-net
+      
   elasticsearch:
     build:
       context: ./search_system
@@ -15,9 +37,11 @@ services:
       - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
     volumes:
       - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
-      - ./es_volume/data:/usr/share/elasticsearch/data
+      - ./volumes/es_volume/data:/usr/share/elasticsearch/data
     profiles:
       - search    
+    depends_on:
+      - mysql_db
     ports:
       - "9200:9200"
       - "9300:9300"
@@ -46,84 +70,6 @@ services:
     ports:
       - "3002:3002"  # Expose FastAPI on port 3002
       - "8501:8501"
-
-
-  mysql_db:
-    image: mysql:5.7
-    container_name: mysql_db_container
-    environment:
-      MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
-      MYSQL_ROOT_HOST: "%"
-      MYSQL_DATABASE: whole_corp
-      MYSQL_CHARSET: utf8mb4
-      MYSQL_COLLATION: utf8mb4_general_ci
-    volumes:
-      - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
-      - ./mysql_volume/data:/var/lib/mysql
-    ports:
-      - "3307:3306"  # Expose MySQL on port 3306
-    profiles:
-      - search    
-    networks:
-      - bigdata-net
-
-  # # For custome purpose
-  # mysql_db:
-  #   build:
-  #     context: ./sql
-  #     dockerfile: dockerfile_mysql
-  #   container_name: mysql_db_container
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
-  #     MYSQL_ROOT_HOST: "%"
-  #     MYSQL_DATABASE: whole_corp
-  #     MYSQL_CHARSET: utf8mb4
-  #     MYSQL_COLLATION: utf8mb4_general_ci
-  #   volumes:
-  #     - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
-  #     - ./mysql_volume/data:/var/lib/mysql
-  #   ports:
-  #     - "3307:3306"  # Expose MySQL on port 3306
-  #   profiles:
-  #     - search    
-  #   networks:
-  #     - bigdata-net
-
-# ----------------------------------
-# AI Attribute Recommendation Service
-# ----------------------------------
-  # fastapi_seg_ai_service:
-  #   build:
-  #     context: ./ai_attribute_recommendation
-  #     dockerfile: Dockerfile
-  #   container_name: fastapi_seg_ai_service
-  #   volumes:
-  #     - ./ai_attribute_recommendation/app:/app
-  #   ports:
-  #     - "3003:3002" 
-  #   depends_on:
-  #     - pg_vector
-  #   profiles:
-  #     - ai_ml
-  #   networks:
-  #     - bigdata-net
-
-
-  # pg_vector:
-  #   image: ankane/pgvector:latest
-  #   container_name: pg_vector_container
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: infopower
-  #     POSTGRES_DB: vector_db
-  #   ports:
-  #     - "9100:5432"  # Expose PostgreSQL on port 9100
-  #   volumes:
-  #     - pg_data:/var/lib/postgresql/data  # Persistent data storage for PostgreSQL
-  #   profiles:
-  #     - search    
-  #   networks:
-  #     - bigdata-net
 
 
   # --------------------
@@ -174,7 +120,7 @@ services:
       dockerfile: Dockerfile
     container_name: spark-master
     volumes:
-      - ./spark_volume:/home/jovyan/work
+      - ./volumes/spark_volume:/home/jovyan/work
     environment:
       - SPARK_MODE=master
       - SPARK_MASTER_HOST=spark-master
@@ -195,7 +141,7 @@ services:
       dockerfile: Dockerfile
     container_name: spark-worker-1
     volumes:
-      - ./spark_volume:/home/jovyan/work
+      - ./volumes/spark_volume:/home/jovyan/work
     depends_on:
       - spark-master
     environment:
@@ -217,7 +163,7 @@ services:
       dockerfile: Dockerfile
     container_name: spark-worker-2
     volumes:
-      - ./spark_volume:/home/jovyan/work
+      - ./volumes/spark_volume:/home/jovyan/work
     depends_on:
       - spark-master
     environment:
@@ -241,7 +187,7 @@ services:
       - "8888:8888"
       - "4041:4040"
     volumes:
-      - ./spark_volume:/home/jovyan/work
+      - ./volumes/spark_volume:/home/jovyan/work
     environment:
       - GRANT_SUDO=yes
       - PYSPARK_NO_DRIVER=true

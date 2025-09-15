@@ -173,13 +173,13 @@ async def full_search(request: Request,
     return JSONResponse(content={"results": results, "total_hits": total_hits})
 
 
-@router.post("/recommend_search")
+@router.get("/recommend_search")
 async def recommend_system(companyName: str = '', es: ElasticSearchConnectionManager = Depends(ElasticSearchConnectionManager.get_instance)):
 
     try:
         # Extract the search parameters
         company_param = search_company_params(companyName)
-        company_result, company_total_hits = search_query(es, company_param)  # Assume search_query processes these params
+        company_result, _ = search_query(es, company_param)  # Assume search_query processes these params
 
         # Extract vector and cluseter from the first result
         vector = company_result[0]['vector']

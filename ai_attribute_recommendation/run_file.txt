@@ -1,1 +1,0 @@
-C:\Users\infopower\SegDB_attribute_recommendation\segaienv\Scripts\activate

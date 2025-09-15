@@ -88,6 +88,9 @@ def recommend_params(vector, cluster):
         "query": {
             "script_score": {
                 "query": {
+					# "bool":{
+					# 	"must": [{"exists": {"field": "vector"}}]
+					# }
                     "term": { "cluster": str(cluster) }   # ensure string match
                 },
                 "script": {
@@ -102,7 +105,6 @@ def recommend_params(vector, cluster):
             }
         }
     }
-
 
 
 def init_param():

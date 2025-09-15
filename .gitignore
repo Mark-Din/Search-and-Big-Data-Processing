@@ -77,7 +77,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-# *.ipynb
+*.ipynb
 
 # IPython
 profile_default/
@@ -150,5 +150,5 @@ FastAPI_service/__pycache__/
 *.joblib
 
 # volume
-es_volume/*
-mysql_volume/*
+volumes/*
+

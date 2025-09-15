@@ -1,3 +1,0 @@
-cd C:\Users\infopower\SegDB_attribute_recommendation
-segaienv\Scripts\activate
-celery -A routers.seg_recommend_ai.celery worker --loglevel=info -P gevent

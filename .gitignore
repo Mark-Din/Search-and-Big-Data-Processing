@@ -150,5 +150,6 @@ FastAPI_service/__pycache__/
 *.joblib
 
 # volume
-volumes/*
+volumes/es_data/*
+volumes/mysql_data/*
 

@@ -152,4 +152,5 @@ FastAPI_service/__pycache__/
 # volume
 volumes/es_data/*
 volumes/mysql_data/*
+volumes/minio-data/*
 

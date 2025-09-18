@@ -4,12 +4,12 @@ FROM bitnami/spark:3.5.0
 USER root
 
 COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt
 
 COPY ./dependencies/* /opt/bitnami/spark/jars/
 
-COPY ./dist/bdcommon-0.1.0-py3-none-any.whl /tmp/
-RUN pip install --no-cache-dir /tmp/bdcommon-0.1.0-py3-none-any.whl
+# COPY ./dist/bdcommon-0.1.0-py3-none-any.whl /tmp/
+# RUN pip install --no-cache-dir /tmp/bdcommon-0.1.0-py3-none-any.whl
 
 ENV DEBIAN_FRONTEND=noninteractive
 

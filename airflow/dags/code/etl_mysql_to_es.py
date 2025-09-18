@@ -6,10 +6,9 @@ import es_mapping
 from connection import ElasticSearchConnectionManager
 import sys
 
-sys.path.append(r'C:\Users\mark.ding\big-data-ai-integration-platform\common')
-from logger import initlog
+import logging
 
-logger = initlog(__name__)
+logger = logging.getLogger(__name__)
 
 # JSON serializer for datetime and bytearray objects
 def json_serial(obj):
@@ -133,34 +132,6 @@ def etl_process(table_name, es, es_index):
     return update_data_count, create_data_count
 
 
-def ml_process(df):
-
-    # Get sparse vectorizer from minio
-    
-    # Get kmeans and svd from minio
-    s3 = boto3.client(
-        "s3",
-        endpoint_url = 'http://minio:9000',
-        aws_access_key_id="minioadmin",
-        aws_secret_access_key="minioadmin"
-    )
-    s3.download_file(" deltabucket", "models/sparseVector", "/tmp/sk_vectorizer.pkl")
-
-    logger.info("Starting ML processing.")
-
-    df['scaled_data'] = PythonVectorizer.fit_transform(df)
-    
-    # Modeling
-    data, vectorizer, nmf_model, pca, kmeans, df_encoded = vectorize_and_model(data, scaler)
-    
-    final_df = course_df.copy(deep=True)
-    final_df['attributes_vector'] = df_encoded.apply(lambda row: row.tolist(), axis=1)
-    final_df = final_df.where(pd.notnull(final_df), None)
-
-    logger.info("ML processing completed.")
-    return final_df
-
-
 def create_index_if_not_exists(es, index_name):
     try:
         es.indices.get_mapping(index=index_name)
@@ -186,9 +157,6 @@ def main():
     create_index_if_not_exists(es, index_name)
     
     update_data_count, create_data_count = etl_process(table_name, es, index_name)
-    
-    if update_data_count > 0 or create_data_count > 0:
-        CreateLog(table_name, update_data_count, create_data_count).success()
     
     logger.info(f"Data update for {table_name} completed, with update_data_count: {update_data_count}, create_data_count: {create_data_count}")
     

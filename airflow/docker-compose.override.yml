@@ -1,8 +1,6 @@
-version: "3.8"
-
 networks:
-  astro_custom_net:
-    driver: bridge
+  bigdata-net:
+    external: true
     ipam:
       config:
         - subnet: 172.30.0.0/16
@@ -14,22 +12,23 @@ services:
 
   scheduler:
     networks:
-      - astro_custom_net
+      - bigdata-net
 
   dag-processor:
     networks:
-      - astro_custom_net
+      - bigdata-net
 
   triggerer:
     networks:
-      - astro_custom_net
+      - bigdata-net
 
   postgres:
     networks:
-      - astro_custom_net
+      - bigdata-net
 
   api-server:
     networks:
-      - astro_custom_net
+      - bigdata-net
     # ports:
     #   - 0.0.0.0:8080:8080
+

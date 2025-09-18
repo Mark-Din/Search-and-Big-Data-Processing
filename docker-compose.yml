@@ -16,7 +16,7 @@ services:
       MYSQL_COLLATION: utf8mb4_general_ci
     volumes:
       - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
-      - .volumes/mysql_data:/var/lib/mysql
+      - ./volumes/mysql_data:/var/lib/mysql
     ports:
       - "3307:3306"  # Expose MySQL on port 3306
     profiles:
@@ -24,52 +24,52 @@ services:
     networks:
       - bigdata-net
       
-  elasticsearch:
-    build:
-      context: ./search_system
-      dockerfile: Dockerfile_es
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=true  # Keep security enabled
-      # - xpack.security.http.ssl.enabled=true
-      # - xpack.security.http.ssl.keystore.path=certs/http.p12
-      # - xpack.security.http.ssl.truststore.path=certs/http.p12
-      - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
-    volumes:
-      - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
-      - ./volumes/es_data:/usr/share/elasticsearch/data
-    profiles:
-      - search    
-    depends_on:
-      - mysql_db
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    networks:
-      - bigdata-net
+  # elasticsearch:
+  #   build:
+  #     context: ./search_system
+  #     dockerfile: Dockerfile_es
+  #   environment:
+  #     - discovery.type=single-node
+  #     - xpack.security.enabled=true  # Keep security enabled
+  #     # - xpack.security.http.ssl.enabled=true
+  #     # - xpack.security.http.ssl.keystore.path=certs/http.p12
+  #     # - xpack.security.http.ssl.truststore.path=certs/http.p12
+  #     - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
+  #   volumes:
+  #     - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
+  #     - ./volumes/es_data:/usr/share/elasticsearch/data
+  #   profiles:
+  #     - search    
+  #   depends_on:
+  #     - mysql_db
+  #   ports:
+  #     - "9200:9200"
+  #     - "9300:9300"
+  #   networks:
+  #     - bigdata-net
 
-  fastapi_search_service:
-    build:
-      context: ./search_system/FastAPI_service
-      dockerfile: Dockerfile
-    container_name: fastapi_search_service
-    volumes:
-      - ./search_system/es_certs:/usr/certs
-      - ./search_system/FastAPI_service/code:/app  # Persistent data storage for FastAPI
-    environment:
-      - ES_USERNAME=elastic
-      - ES_PASSWORD=gAcstb8v-lFCVzCBC__a  # Use the manually set password
-      - ES_HOST=http://elasticsearch:9200
-      - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
-    networks:
-      - bigdata-net
-    profiles:
-      - search    
-    depends_on:
-      - elasticsearch
-    ports:
-      - "3002:3002"  # Expose FastAPI on port 3002
-      - "8501:8501"
+  # fastapi_search_service:
+  #   build:
+  #     context: ./search_system/FastAPI_service
+  #     dockerfile: Dockerfile
+  #   container_name: fastapi_search_service
+  #   volumes:
+  #     - ./search_system/es_certs:/usr/certs
+  #     - ./search_system/FastAPI_service/code:/app  # Persistent data storage for FastAPI
+  #   environment:
+  #     - ES_USERNAME=elastic
+  #     - ES_PASSWORD=gAcstb8v-lFCVzCBC__a  # Use the manually set password
+  #     - ES_HOST=http://elasticsearch:9200
+  #     - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
+  #   networks:
+  #     - bigdata-net
+  #   profiles:
+  #     - search    
+  #   depends_on:
+  #     - elasticsearch
+  #   ports:
+  #     - "3002:3002"  # Expose FastAPI on port 3002
+  #     - "8501:8501"
 
 
   # --------------------
@@ -111,23 +111,29 @@ services:
     networks:
       - bigdata-net
 
-#   # --------------------
-#   # Spark Cluster
-#   # --------------------
+  # --------------------
+  # Spark Cluster
+  # --------------------
   spark-master:
     build:
       context: ./spark_jobs
       dockerfile: Dockerfile
     container_name: spark-master
     volumes:
-      - ./volumes/spark_volume:/home/jovyan/work
+      - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab # For jupyterlab to test spark
+      - ./airflow/include/spark_jobs:/usr/local/airflow/include/spark_jobs # For airflow to talk to spark
     environment:
       - SPARK_MODE=master
       - SPARK_MASTER_HOST=spark-master
       - PYSPARK_NO_DRIVER=true
       - PYSPARK_SUBMIT_ARGS=--jars /usr/local/spark/jars/delta-core_2.12-2.4.0.jar,/usr/local/spark/jars/delta-storage-2.4.0.jar pyspark-shell
+      - SPARK_MASTER_REST_ENABLED=true
+      - SPARK_MASTER_WEBUI_PORT=8080
+      - SPARK_MASTER_PORT=7077
+      - SPARK_MASTER_REST_PORT=6066
     ports:
       - "7077:7077"
+      - "6066:6066"   # REST endpoint
       - "8081:8080"
       - "4040:4040"
     profiles:
@@ -141,7 +147,8 @@ services:
       dockerfile: Dockerfile
     container_name: spark-worker-1
     volumes:
-      - ./volumes/spark_volume:/home/jovyan/work
+      - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab
+      - ./airflow/include/spark_jobs:/usr/local/airflow/include/spark_jobs
     depends_on:
       - spark-master
     environment:
@@ -163,7 +170,8 @@ services:
       dockerfile: Dockerfile
     container_name: spark-worker-2
     volumes:
-      - ./volumes/spark_volume:/home/jovyan/work
+      - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab
+      - ./airflow/include/spark_jobs:/usr/local/airflow/include/spark_jobs
     depends_on:
       - spark-master
     environment:
@@ -187,7 +195,7 @@ services:
       - "8888:8888"
       - "4041:4040"
     volumes:
-      - ./volumes/spark_volume:/home/jovyan/work
+      - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab
     environment:
       - GRANT_SUDO=yes
       - PYSPARK_NO_DRIVER=true
@@ -203,3 +211,4 @@ services:
 
 networks:
   bigdata-net:
+    external: true

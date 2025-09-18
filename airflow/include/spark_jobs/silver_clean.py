@@ -1,8 +1,10 @@
 from pyspark.sql import SparkSession, functions as F
-from common.init_log import initlog
 from sparksession import spark_session
 import os
-logger = initlog(__name__)
+import logging
+
+logger = logging.getLogger("silver_clean")
+logger.setLevel(logging.INFO)
 
 def read_from_mysql(spark):
     # 2) Read MySQL
@@ -55,19 +57,24 @@ def store_in_minio(df):
 
 
 def main():
+    s = None
     try:
+        print(">>> Starting read_from_mysql")
         s = spark_session()
+        print(">>> Starting store_in_minio")
         df = read_from_mysql(s)
+        print(">>> Starting bronze_to_silver")
         store_in_minio(df)
         bronze_to_silver(s)
-        s.stop()
     except Exception as e:
-        print(e)
+        logger.error("❌ ETL job failed:", e, exc_info=True)
+        raise   # re-raise so Airflow marks it failed
     finally:
-        try:
-            s.stop()
-        except:
-            pass
-            
+        if s:
+            try:
+                s.stop()
+            except:
+                pass
+        
 if __name__ == "__main__":
     main()

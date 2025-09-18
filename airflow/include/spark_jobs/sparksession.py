@@ -2,7 +2,7 @@ from pyspark.sql import SparkSession
 
 def spark_session():
     # Stop any old session so new configs take effect in notebooks
-    return (
+    spark = (
         SparkSession.builder
         .appName("MySQL_to_Delta_on_MinIO")
         .master("spark://spark-master:7077")
@@ -11,7 +11,7 @@ def spark_session():
                     # Delta
                     "io.delta:delta-spark_2.12:3.1.0",
                     # MySQL JDBC
-                    "mysql:mysql-connector-java:8.0.33",
+                    # "mysql:mysql-connector-j-8.3.0",
                     # S3A / MinIO (versions must match your Hadoop)
                     "org.apache.hadoop:hadoop-aws:3.3.2",
                     "com.amazonaws:aws-java-sdk-bundle:1.11.1026",
@@ -43,3 +43,6 @@ def spark_session():
         .config("spark.network.timeout", "600s")
         .getOrCreate()
     )
+    spark.sparkContext.setLogLevel("WARN")
+
+    return spark

@@ -23,6 +23,7 @@ Containerization: Docker, Docker Compose
 
 ## Architecture
 ![alt text](<workflow_architecture.png>)
+From mysql to MinIO => Using Spark ETL for about twice a week 
 For regular ETL : Web APP → MySQL→ Extract (Airflow Task) → Transform (Pandas) → Load with structured data(MySQL)
                                                           → Save format (Delta format) → Load with structured/unstructured data(MinIO)
 For big data/ML process : MySQL → Transform (Apache Spark) → Load with structured data(MySQL)

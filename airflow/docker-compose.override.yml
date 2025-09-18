@@ -11,6 +11,8 @@ services:
   # DO NOT redefine them unless you're modifying image/build etc.
 
   scheduler:
+    volumes:
+      - ../spark_jobs/dependencies:/usr/local/airflow/jars   # mount JDBC jars here
     networks:
       - bigdata-net
 

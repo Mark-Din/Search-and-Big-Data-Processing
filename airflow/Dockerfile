@@ -13,6 +13,7 @@ RUN apt update && \
 ENV JAVA_HOME /usr/lib/jvm/java-17-openjdk-amd64 
 RUN export JAVA_HOME
 
-RUN mkdir -p /mnt/spark-tmp/local && chmod -R 777 /mnt/spark-tmp
-
+RUN mkdir -p /mnt/spark-tmp/local /usr/local/airflow/jars && \
+    chmod -R 777 /mnt/spark-tmp /usr/local/airflow/jars 
+    
 USER astro

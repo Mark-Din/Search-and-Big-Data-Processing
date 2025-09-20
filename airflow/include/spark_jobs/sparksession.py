@@ -2,7 +2,7 @@ from pyspark.sql import SparkSession
 
 def spark_session():
     # Stop any old session so new configs take effect in notebooks
-    spark = (
+    return (
         SparkSession.builder
         .appName("MySQL_to_Delta_on_MinIO")
         .master("spark://spark-master:7077")
@@ -11,7 +11,7 @@ def spark_session():
                     # Delta
                     "io.delta:delta-spark_2.12:3.1.0",
                     # MySQL JDBC
-                    # "mysql:mysql-connector-j-8.3.0",
+                    "mysql:mysql-connector-java:8.0.33",
                     # S3A / MinIO (versions must match your Hadoop)
                     "org.apache.hadoop:hadoop-aws:3.3.2",
                     "com.amazonaws:aws-java-sdk-bundle:1.11.1026",
@@ -35,14 +35,11 @@ def spark_session():
         # .config("spark.executor.memory", "2g")
         # .config("spark.executor.memoryOverhead", "1536m")
         # .config("spark.network.timeout", "600s")
-        .config("spark.executor.cores", "2")           # 1 task per executor (more stable for trees)
+        .config("spark.executor.cores", "1")           # 1 task per executor (more stable for trees)
         .config("spark.executor.memory", "3g")
         .config("spark.executor.memoryOverhead", "1g")  # or omit in Standalone
         .config("spark.sql.shuffle.partitions", "50")
-        .config("spark.local.dir", "/mnt/spark-tmp/local") # For giving it much more space to run CV
+        # .config("spark.local.dir", "/mnt/spark-tmp/local") # For giving it much more space to run CV
         .config("spark.network.timeout", "600s")
         .getOrCreate()
     )
-    spark.sparkContext.setLogLevel("WARN")
-
-    return spark

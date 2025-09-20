@@ -154,3 +154,5 @@ volumes/es_data/*
 volumes/mysql_data/*
 volumes/minio-data/*
 
+# big jar files
+aws-java-sdk-bundle-1.11.1026.jar

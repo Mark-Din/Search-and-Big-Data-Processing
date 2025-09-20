@@ -5,3 +5,4 @@ s3fs
 apache-airflow-providers-common-compat>=1.6.0
 apache-airflow-providers-apache-spark
 pyspark==3.5.0
+delta-spark==3.1.0

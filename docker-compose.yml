@@ -130,12 +130,11 @@ services:
       - SPARK_MASTER_REST_ENABLED=true
       - SPARK_MASTER_WEBUI_PORT=8080
       - SPARK_MASTER_PORT=7077
-      - SPARK_MASTER_REST_PORT=6066
+      # - SPARK_MASTER_REST_PORT=6066
     ports:
       - "7077:7077"
       # - "6066:6066"   # REST endpoint
       - "8081:8080"
-      - "4040:4040"
     profiles:
       - spark
     networks:
@@ -202,7 +201,6 @@ services:
       - JUPYTER_ENABLE_LAB=yes
     ports:
       - "8888:8888"
-      - "4041:4040"
     profiles:
       - spark
     command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --ip=0.0.0.0

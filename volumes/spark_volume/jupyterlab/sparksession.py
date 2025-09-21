@@ -28,7 +28,7 @@ def spark_session():
         .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
         .config("spark.ui.port", "4040")                 # fix the port
         .config("spark.driver.bindAddress", "0.0.0.0")   # listen on all ifaces
-        .config("spark.driver.host", "scheduler")          # OR "spark-master" – the container's DNS name
+        .config("spark.driver.host", "jupyter")          # OR "spark-master" – the container's DNS name
         .config("spark.ui.showConsoleProgress", "true")
         # Resources
         # .config("spark.executor.cores", "2")

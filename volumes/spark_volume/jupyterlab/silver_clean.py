@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession, functions as F
+from sparksession import spark_session
 import os
 import logging
-from sparksession import spark_session
 
 logger = logging.getLogger("silver_clean")
 logger.setLevel(logging.INFO)
@@ -62,11 +62,11 @@ def main():
         print(">>> Starting read_from_mysql")
         s = spark_session()
         print(f"count:====== {s.range(10).count()}")
-        print(">>> Starting store_in_minio")
-        df = read_from_mysql(s)
-        print(">>> Starting bronze_to_silver")
-        store_in_minio(df)
-        bronze_to_silver(s)
+        # print(">>> Starting store_in_minio")
+        # df = read_from_mysql(s)
+        # print(">>> Starting bronze_to_silver")
+        # store_in_minio(df)
+        # bronze_to_silver(s)
     except Exception as e:
         logger.error("❌ ETL job failed:", e, exc_info=True)
         raise   # re-raise so Airflow marks it failed

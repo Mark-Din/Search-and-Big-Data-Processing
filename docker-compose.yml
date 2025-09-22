@@ -192,7 +192,7 @@ services:
       dockerfile: spark_jobs/Dockerfile_jupyter
     container_name: jupyter
     volumes:
-      - ./airflow/include/dependencies:/home/jovyan/work/dependencies
+      # - ./airflow/include/dependencies:/home/jovyan/work/dependencies
       - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyter
     environment:
       - GRANT_SUDO=yes

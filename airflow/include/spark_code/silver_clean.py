@@ -61,14 +61,14 @@ def main():
     try:
         print(">>> Starting read_from_mysql")
         s = spark_session()
-        print(f"count:====== {s.range(10).count()}")
         print(">>> Starting store_in_minio")
         df = read_from_mysql(s)
+        print(f'dataframe ===== {df.head(2)}')
         print(">>> Starting bronze_to_silver")
         store_in_minio(df)
         bronze_to_silver(s)
     except Exception as e:
-        logger.error("❌ ETL job failed:", e, exc_info=True)
+        logger.error(f"❌ ETL job failed: {e}", exc_info=True)
         raise   # re-raise so Airflow marks it failed
     finally:
         if s:

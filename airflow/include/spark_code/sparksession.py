@@ -13,8 +13,8 @@ def spark_session():
                     # MySQL JDBC
                     # "mysql:mysql-connector-java:8.0.33",
                     # S3A / MinIO (versions must match your Hadoop)
-                    # "org.apache.hadoop:hadoop-aws:3.3.2",
-                    # "com.amazonaws:aws-java-sdk-bundle:1.11.1026",
+                    "org.apache.hadoop:hadoop-aws:3.3.2",  # It is for 
+                    "com.amazonaws:aws-java-sdk-bundle:1.11.1026",
                 ]))
         # Delta integration
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")

@@ -1,10 +1,9 @@
 from elasticsearch import helpers
 import numpy as np
 import pandas as pd
-import datetime, boto3
-import es_mapping
-from connection import ElasticSearchConnectionManager
-import sys
+import datetime
+from include.python_code import es_mapping
+from include.python_code.connection import ElasticSearchConnectionManager
 
 import logging
 
@@ -19,7 +18,7 @@ def json_serial(obj):
     raise TypeError(f"Type {type(obj)} not serializable")
 
 # Fetch data from MySQL in batches
-def fetch_data(cursor, batch_size=1000):
+def fetch_data(cursor, batch_size=10000):
     while True:
         rows = cursor.fetchmany(batch_size)
         if not rows:
@@ -60,6 +59,7 @@ def elastic_import(es, actions):
     except Exception as e:
         logger.error(f"Bulk import errors: {e}")
 
+
 # Update data in Elasticsearch
 def update_data_to_es(es, cursor, es_index, table_name):
     updated_count = 0
@@ -99,6 +99,7 @@ def update_data_to_es(es, cursor, es_index, table_name):
     logger.info(f"[{table_name}] total documents updated: {updated_count}, and created: {create_data_count}")
     return updated_count, create_data_count
 
+
 # Main function to handle the ETL process
 def etl_process(table_name, es, es_index):
     logger.info(f"Starting ETL process for table: {table_name}.")
@@ -121,7 +122,7 @@ def etl_process(table_name, es, es_index):
         logger.info("Date time is the same: %s", date_now_python)
 
     # Query to fetch updated records
-    sql_query_updatedAt = f"SELECT * FROM {table_name}"
+    sql_query_updatedAt = f"SELECT * FROM {table_name} where updatedAt > DATE_SUB(now(), INTERVAL 15 MINUTE)"
     cursor.execute(sql_query_updatedAt)
 
     # Update data in Elasticsearch

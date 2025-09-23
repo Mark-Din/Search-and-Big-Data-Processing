@@ -3,10 +3,20 @@ from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOpe
 from datetime import datetime, timedelta
 import os
 
+default_args = {
+    'owner': 'Mark',
+    'depends_on_past': True,
+    'email_on_failure': True,
+    'retries': 3,  # Retry up to 3 times
+    'retry_delay': timedelta(minutes=5),
+    "start_date": datetime(2025, 1, 30),
+    "email":["m7812252009@gmail.com"]
+}
+
 with DAG(
-    dag_id="customer_upsert_dag",
+    dag_id="spark_dag",
     start_date=datetime(2025, 9, 22),
-    schedule= None, #"@daily",
+    schedule= "@daily",
     catchup=False,
 ) as dag:
 

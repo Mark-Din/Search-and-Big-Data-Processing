@@ -125,7 +125,7 @@ def staging_to_real():
     cursor = conn.cursor()
 
     upsert_sql = f"""
-    INSERT INTO wholecorp_clusters_vector (統一編號, cluster, vector)
+    INSERT INTO wholecorp_clusters (統一編號, cluster, vector)
     SELECT 統一編號, cluster, vector FROM staging_clusters_vector
     ON DUPLICATE KEY UPDATE
         cluster = VALUES(cluster),

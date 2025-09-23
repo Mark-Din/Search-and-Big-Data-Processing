@@ -3,7 +3,6 @@ End-to-end ETL solution integrating Airflow, Spark, Delta Lake, and object stora
 
 ## Overview
 “This project demonstrates an automated ETL … This project has streamlit, fastapi and elasticsearch for overall and similarity searh.”
-Suggest splitting into two sentences and fix “searh” → “search”.
 
 ## Features
 - **Automated ETL** using Apache Airflow DAGs  
@@ -19,10 +18,12 @@ Workflow Orchestration: Apache Airflow
 Database: MySQL, Elasticsearch
 Object Storage: MinIO
 Libraries: Pandas, SQLAlchemy, PySpark
+Dependencies : All dependencies are needed for spark running, hadoop-aws-3.3.2.jar is specially for airflow only
 Containerization: Docker, Docker Compose
 
 ## Architecture
 ![alt text](<workflow_architecture.png>)
+Data should be in mysql by default as user's input.
 From mysql to MinIO => Using Spark ETL for about twice a week 
 For regular ETL : Web APP → MySQL→ Extract (Airflow Task) → Transform (Pandas) → Load with structured data(MySQL)
                                                           → Save format (Delta format) → Load with structured/unstructured data(MinIO)

@@ -6,3 +6,16 @@ apache-airflow-providers-common-compat>=1.6.0
 apache-airflow-providers-apache-spark
 pyspark==3.5.0
 delta-spark==3.1.0
+setuptools
+
+mysql-connector-python
+sqlalchemy
+pandas
+apache-airflow
+boto3
+paramiko
+pyarrow
+
+scikit-learn
+scipy
+# s3fs

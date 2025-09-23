@@ -1,15 +1,13 @@
 from elasticsearch import helpers
 import numpy as np
 import pandas as pd
-import datetime, boto3
-import es_mapping
-from connection import ElasticSearchConnectionManager
-import sys
+import datetime
+from include.python_code import es_mapping
+from include.python_code.connection import ElasticSearchConnectionManager
 
-sys.path.append(r'C:\Users\mark.ding\big-data-ai-integration-platform\common')
-from logger import initlog
+import logging
 
-logger = initlog(__name__)
+logger = logging.getLogger(__name__)
 
 # JSON serializer for datetime and bytearray objects
 def json_serial(obj):
@@ -20,7 +18,7 @@ def json_serial(obj):
     raise TypeError(f"Type {type(obj)} not serializable")
 
 # Fetch data from MySQL in batches
-def fetch_data(cursor, batch_size=1000):
+def fetch_data(cursor, batch_size=10000):
     while True:
         rows = cursor.fetchmany(batch_size)
         if not rows:
@@ -85,9 +83,10 @@ def update_data_to_es(es, cursor, es_index, table_name):
             try:
                 doc_exists = search_and_update_field(es, es_index, source_id, row.get('vector'), row.get('cluster'))
                 if not doc_exists:
-                    actions.append({"_index": es_index, "_source": row})
-                    create_data_count += 1
-                    logger.debug(f"Document with source ID {source_id} created.")
+                    continue
+                    # actions.append({"_index": es_index, "_source": row})
+                    # create_data_count += 1
+                    # logger.debug(f"Document with source ID {source_id} created.")
                 else:
                     updated_count += 1
                     logger.debug(f"Document with source ID {source_id} updated.")
@@ -134,34 +133,6 @@ def etl_process(table_name, es, es_index):
     mysql_conn.close()
     logger.info(f"ETL process for table: {table_name} completed with {update_data_count} updates and {create_data_count} creations.")
     return update_data_count, create_data_count
-
-
-# def ml_process(df):
-
-#     # Get sparse vectorizer from minio
-    
-#     # Get kmeans and svd from minio
-#     s3 = boto3.client(
-#         "s3",
-#         endpoint_url = 'http://minio:9000',
-#         aws_access_key_id="minioadmin",
-#         aws_secret_access_key="minioadmin"
-#     )
-#     s3.download_file(" deltabucket", "models/sparseVector", "/tmp/sk_vectorizer.pkl")
-
-#     logger.info("Starting ML processing.")
-
-#     df['scaled_data'] = PythonVectorizer.fit_transform(df)
-    
-#     # Modeling
-#     data, vectorizer, nmf_model, pca, kmeans, df_encoded = vectorize_and_model(data, scaler)
-    
-#     final_df = course_df.copy(deep=True)
-#     final_df['attributes_vector'] = df_encoded.apply(lambda row: row.tolist(), axis=1)
-#     final_df = final_df.where(pd.notnull(final_df), None)
-
-#     logger.info("ML processing completed.")
-#     return final_df
 
 
 def create_index_if_not_exists(es, index_name):

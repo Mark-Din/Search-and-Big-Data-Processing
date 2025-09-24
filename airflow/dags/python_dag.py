@@ -4,6 +4,11 @@ from datetime import datetime, timedelta
 from include.python_code.etl_mysql_to_es import main as etl_mysql_to_es_main
 from include.python_code.etl_mysql_to_es_cluster import main as etl_mysql_to_es_cluster_main    
 
+import logging
+
+# Turn down elasticsearch-py logs
+logging.getLogger("elastic_transport.transport").setLevel(logging.WARNING)
+logging.getLogger("elasticsearch").setLevel(logging.WARNING)
 
 default_args = {
     'owner': 'Mark',

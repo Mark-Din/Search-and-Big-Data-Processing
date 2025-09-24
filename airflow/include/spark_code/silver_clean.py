@@ -45,14 +45,17 @@ def bronze_to_silver(s):
 
     df = df.filter(~df['統一編號'].rlike('.*[A-Za-z].*'))
     
+    df_without_date = df.drop('updatedAt')
+    
     silver_path = os.getenv("SILVER_PATH", "s3a://deltabucket/silver/wholeCorp_delta")
-    df.write.format("delta").mode("overwrite").save(silver_path)
+    df_without_date.write.format("delta").mode("overwrite").save(silver_path)
 
 
 def store_in_minio(df):
     # 3) Write Delta to MinIO
     (df.write.format("delta")
        .mode("overwrite")
+       .option("overwriteSchema", "true")
        .save("s3a://deltabucket/bronze/wholeCorp_delta_raw"))
 
 

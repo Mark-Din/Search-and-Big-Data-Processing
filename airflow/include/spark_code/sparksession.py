@@ -42,4 +42,4 @@ def spark_session():
         # .config("spark.local.dir", "/mnt/spark-tmp/local") # For giving it much more space to run CV
         .config("spark.network.timeout", "600s")
         .getOrCreate()
-    )
+    ).sparkContext.setLogLevel("ERROR")

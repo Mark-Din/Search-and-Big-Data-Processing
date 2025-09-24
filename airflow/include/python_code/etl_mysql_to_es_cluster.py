@@ -38,7 +38,7 @@ def search_and_update_field(es, index, source_id, vector_val, cluster_val):
         hits = search_response['hits']['hits']
         
         if not hits:
-            logger.info(f"Document with source ID {source_id} does not exist.")
+            logger.debug(f"Document with source ID {source_id} does not exist.")
             return False
 
         for hit in hits:
@@ -68,6 +68,7 @@ def update_data_to_es(es, cursor, es_index, table_name):
     create_data_count = 0
     actions = []
 
+    logger.info("Start Import Process")
     for batch in fetch_data(cursor):
         logger.debug(f"Processing batch with {len(batch)} records.")
         

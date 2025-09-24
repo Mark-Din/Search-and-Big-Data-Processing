@@ -1,6 +1,6 @@
 from mysql.connector import connect
 from elasticsearch import Elasticsearch
-from ssl import create_default_context, CERT_NONE
+# from ssl import create_default_context, CERT_NONE
 from elasticsearch.exceptions import ConnectionError, SSLError
 import time
 from include.python_code.conf import config_es as config_json
@@ -55,7 +55,8 @@ class ElasticSearchConnectionManager:
             port='3306',
             user='root',
             password='!QAZ2wsx',
-            database='whole_corp'
+            database='whole_corp',
+            connection_timeout=600
         )
             
         return conn

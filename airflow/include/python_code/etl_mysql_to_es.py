@@ -122,7 +122,7 @@ def etl_process(table_name, es, es_index):
         logger.info("Date time is the same: %s", date_now_python)
 
     # Query to fetch updated records
-    sql_query_updatedAt = f"SELECT * FROM {table_name} where updatedAt > DATE_SUB(now(), INTERVAL 15 MINUTE)"
+    sql_query_updatedAt = f"SELECT * FROM {table_name}_ where updatedAt > DATE_SUB(now(), INTERVAL 15 MINUTE)"
     cursor.execute(sql_query_updatedAt)
 
     # Update data in Elasticsearch

@@ -15,10 +15,8 @@ logger = initlog(__name__)
 
 
 def read_gold(spark):
-    global OUT
-
+    
     GOLD = os.getenv("GOLD_PATH","s3a://deltabucket/gold/wholeCorp_delta")
-    OUT = os.getenv("CLUSTER_PATH","s3a://deltabucket/gold/wholeCorp_clusters")
 
     return spark.read.format("delta").load(GOLD)
 
@@ -74,7 +72,7 @@ def to_mysql(ids, labels, Xr_vector, spark, batch_size):
 #     sdf = spark.createDataFrame(rows)
     
 #     mysql_url = "jdbc:mysql://mysql_db_container:3306/whole_corp"
-#     mysql_table = "wholecorp_clusters_vector"
+#     mysql_table = "wholecorp_clusters_vector_vector"
 
 #     mysql_properties = {
 #         "user": "root",
@@ -125,7 +123,7 @@ def staging_to_real():
     cursor = conn.cursor()
 
     upsert_sql = f"""
-    INSERT INTO wholecorp_clusters (統一編號, cluster, vector)
+    INSERT INTO wholecorp_clusters_vector (統一編號, cluster, vector)
     SELECT 統一編號, cluster, vector FROM staging_clusters_vector
     ON DUPLICATE KEY UPDATE
         cluster = VALUES(cluster),
@@ -172,46 +170,47 @@ def fit_predict(data_whole, s, sample_frac=0.005, sample_cap=5000, batch_size=50
     
         svd = TruncatedSVD(n_components=100, random_state=42).fit(X_sample)
     
-        # # # --- Stage 2: incremental clustering
-        # kmeans = MiniBatchKMeans(
-        #     n_clusters=15,
-        #     random_state=42,
-        #     batch_size=batch_size,
-        #     verbose=1,
-        #     n_init='auto'
-        # )
-    
-        # batch_features, batch_ids = [], []
+        if os.path.exists("/tmp/kmeans_model.pkl"):  # Only for development speedup, not for production. Because new data should retrain the model.
+            print(f'Loading kmean model')
+            kmeans = joblib.load("/tmp/kmeans_model.pkl")
+        else:
+            # # --- Stage 2: incremental clustering
+            kmeans = MiniBatchKMeans(
+                n_clusters=15,
+                random_state=42,
+                batch_size=batch_size,
+                verbose=1,
+                n_init='auto'
+            )
         
-        # count = 0
-        # # --- Pass 1: training only
-        # for row in data_whole.select("統一編號", "features").toLocalIterator():
-        #     batch_features.append(row["features"])
-        #     batch_ids.append(row["統一編號"])
+            batch_features, batch_ids = [], []
             
-        #     if len(batch_features) >= batch_size:
-        #         # print(f"Training batch {count}")
-        #         Xb = to_csr(batch_features)
-        #         Xr = svd.transform(Xb)
-        
-        #         kmeans.partial_fit(Xr)
-        
-        #         batch_features.clear(); batch_ids.clear()
-        #         count += batch_size
-        
-        # # train on leftovers
-        # if batch_features:
-        #     Xb = to_csr(batch_features)
-        #     Xr = svd.transform(Xb)
-        #     kmeans.partial_fit(Xr)
+            count = 0
+            # --- Pass 1: training only
+            for row in data_whole.select("統一編號", "features").toLocalIterator():
+                batch_features.append(row["features"])
+                batch_ids.append(row["統一編號"])
+                
+                if len(batch_features) >= batch_size:
+                    # print(f"Training batch {count}")
+                    Xb = to_csr(batch_features)
+                    Xr = svd.transform(Xb)
+            
+                    kmeans.partial_fit(Xr)
+            
+                    batch_features.clear(); batch_ids.clear()
+                    count += batch_size
+            
+            # train on leftovers
+            if batch_features:
+                Xb = to_csr(batch_features)
+                Xr = svd.transform(Xb)
+                kmeans.partial_fit(Xr)
     
-        # # Save kmeans model after training
-        # joblib.dump(kmeans, "/tmp/kmeans_model.pkl")
-        # print("KMeans model saved to /tmp/kmeans_model.pkl")
+            # Save kmeans model after training
+            joblib.dump(kmeans, "/tmp/kmeans_model.pkl")
+            print("KMeans model saved to /tmp/kmeans_model.pkl")
     
-        print(f'Loading kmean model')
-        kmeans = joblib.load("/tmp/kmeans_model.pkl")
-        
         # --- Pass 2: prediction with final centers
         batch_features, batch_ids = [], []  # reset before 2nd loop
         batch_count = 1
@@ -280,12 +279,18 @@ def main():
     try:
         print('script start')
         s = spark_session()
+        print(">>> Starting read_gold")
         df = read_gold(s)
-        svd, kmeans = fit_predict(df)
+        print(">>> Starting fit_predict")
+        svd, kmeans = fit_predict(df,s)
+        print(">>> Starting save_")
         save_(kmeans, svd)
     except Exception as e:
-        print(f"Error in spark job: {e}")
-
+        logger.error(f"Error in spark job: {e}", exc_info=True)
+        import sys
+        sys.exit(1)
+    finally:
+        if s: s.stop()
 
 if __name__ == '__main__':
     main()

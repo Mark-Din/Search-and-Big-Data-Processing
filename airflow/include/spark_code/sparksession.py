@@ -1,6 +1,8 @@
 from pyspark.sql import SparkSession
+import os
 
 def spark_session():
+    driver_host = os.getenv("SPARK_DRIVER_HOST", "scheduler")
     # Stop any old session so new configs take effect in notebooks
     return (
         SparkSession.builder
@@ -28,7 +30,7 @@ def spark_session():
         .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
         .config("spark.ui.port", "4040")                 # fix the port
         .config("spark.driver.bindAddress", "0.0.0.0")   # listen on all ifaces
-        .config("spark.driver.host", "scheduler")          # OR "spark-master" – the container's DNS name
+        .config("spark.driver.host", "172.30.0.2")          # OR "spark-master" – the container's DNS name
         .config("spark.ui.showConsoleProgress", "true")
         # Resources
         # .config("spark.executor.cores", "2")
@@ -42,4 +44,4 @@ def spark_session():
         # .config("spark.local.dir", "/mnt/spark-tmp/local") # For giving it much more space to run CV
         .config("spark.network.timeout", "600s")
         .getOrCreate()
-    ).sparkContext.setLogLevel("ERROR")
+    )

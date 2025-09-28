@@ -5,18 +5,16 @@ services:
   # For custome purpose
   mysql_db:
     build:
-      context: ./sql
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: sql/Dockerfile
     container_name: mysql_db_container
     environment:
       MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
       MYSQL_ROOT_HOST: "%"
       MYSQL_DATABASE: whole_corp
-      MYSQL_CHARSET: utf8mb4
-      MYSQL_COLLATION: utf8mb4_general_ci
     volumes:
-      - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
-      - ./volumes/mysql_data:/var/lib/mysql
+      # - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - mysql_data:/var/lib/mysql
     ports:
       - "3307:3306"  # Expose MySQL on port 3306
     profiles:
@@ -24,29 +22,29 @@ services:
     networks:
       - bigdata-net
       
-  # elasticsearch:
-  #   build:
-  #     context: ./search_system
-  #     dockerfile: Dockerfile_es
-  #   environment:
-  #     - discovery.type=single-node
-  #     - xpack.security.enabled=true  # Keep security enabled
-  #     # - xpack.security.http.ssl.enabled=true
-  #     # - xpack.security.http.ssl.keystore.path=certs/http.p12
-  #     # - xpack.security.http.ssl.truststore.path=certs/http.p12
-  #     - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
-  #   volumes:
-  #     - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
-  #     - ./volumes/es_data:/usr/share/elasticsearch/data
-  #   profiles:
-  #     - search    
-  #   depends_on:
-  #     - mysql_db
-  #   ports:
-  #     - "9200:9200"
-  #     - "9300:9300"
-  #   networks:
-  #     - bigdata-net
+  elasticsearch:
+    build:
+      context: ./search_system
+      dockerfile: Dockerfile_es
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true  # Keep security enabled
+      # - xpack.security.http.ssl.enabled=true
+      # - xpack.security.http.ssl.keystore.path=certs/http.p12
+      # - xpack.security.http.ssl.truststore.path=certs/http.p12
+      - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
+    volumes:
+      - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
+      - ./volumes/es_data:/usr/share/elasticsearch/data
+    profiles:
+      - search    
+    depends_on:
+      - mysql_db
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - bigdata-net
 
   # fastapi_search_service:
   #   build:

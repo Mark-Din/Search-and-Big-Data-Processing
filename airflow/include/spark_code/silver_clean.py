@@ -13,7 +13,7 @@ def read_from_mysql(spark):
                       "?useUnicode=true&characterEncoding=utf8"
                       "&serverTimezone=Asia/Taipei"
                       "&useSSL=false&allowPublicKeyRetrieval=true")
-      .option("dbtable", "whole_corp")
+      .option("dbtable", "whole_corp_")
       .option("user", "root")
       .option("password", "!QAZ2wsx")
       .option("driver", "com.mysql.cj.jdbc.Driver")
@@ -64,6 +64,7 @@ def main():
     try:
         print(">>> Starting read_from_mysql")
         s = spark_session()
+        print(f'Session{s}')
         print(">>> Starting store_in_minio")
         df = read_from_mysql(s)
         print(f'dataframe ===== {df.head(2)}')
@@ -72,6 +73,8 @@ def main():
         bronze_to_silver(s)
     except Exception as e:
         logger.error(f"❌ ETL job failed: {e}", exc_info=True)
+        import sys
+        sys.exit(1)
         raise   # re-raise so Airflow marks it failed
     finally:
         if s:

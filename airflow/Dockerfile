@@ -1,5 +1,6 @@
 # Dockerfile
-FROM astrocrpublic.azurecr.io/runtime:3.0-6
+# FROM astrocrpublic.azurecr.io/runtime:3.0-6
+FROM quay.io/astronomer/astro-runtime:12.8.0-python-3.11
 
 USER root
 

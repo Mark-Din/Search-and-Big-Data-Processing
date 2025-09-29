@@ -119,7 +119,7 @@ services:
     container_name: spark-master
     volumes:
       - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab # For jupyterlab to test spark
-      - ./airflow/include/spark_jobs:/usr/local/airflow/include/spark_jobs # For airflow to talk to spark
+      - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
     environment:
       - SPARK_MODE=master
       - SPARK_MASTER_HOST=spark-master
@@ -144,8 +144,7 @@ services:
       dockerfile: spark_jobs/Dockerfile
     container_name: spark-worker-1
     volumes:
-      # - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab
-      - ./airflow/include/spark_jobs:/usr/local/airflow/include/spark_jobs
+        - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
     depends_on:
       - spark-master
     environment:
@@ -167,8 +166,7 @@ services:
       dockerfile: spark_jobs/Dockerfile
     container_name: spark-worker-2
     volumes:
-      # - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab
-      - ./airflow/include/spark_jobs:/usr/local/airflow/include/spark_jobs
+      - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
     depends_on:
       - spark-master
     environment:
@@ -207,6 +205,29 @@ services:
     networks:
       - bigdata-net
 
+  kafka:
+    build:
+      context: .
+      dockerfile: spark_jobs/Dockerfile_kafka
+    container_name: kafka
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_NODE_ID=1                         # 👈 required unique ID
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    ports:
+      - "9092:9092"
+    depends_on:
+      - spark-master
+    profiles:
+      - spark
+    networks:
+      - bigdata-net
 
 networks:
   bigdata-net:

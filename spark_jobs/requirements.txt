@@ -12,3 +12,5 @@ pyarrow
 scikit-learn
 scipy
 # s3fs
+
+elasticsearch==8.19.0

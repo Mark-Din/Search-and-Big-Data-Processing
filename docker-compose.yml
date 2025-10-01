@@ -234,6 +234,26 @@ services:
     networks:
       - bigdata-net
 
+  kafka-connect:
+    image: debezium/connect:2.6
+    container_name: kafka-connect
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: connect-configs
+      OFFSET_STORAGE_TOPIC: connect-offsets
+      STATUS_STORAGE_TOPIC: connect-status
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+    ports:
+      - "8083:8083"  # REST API for managing connectors
+    depends_on:
+      - kafka
+    networks:
+      - bigdata-net
+
 networks:
   bigdata-net:
     external: true

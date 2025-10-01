@@ -2,6 +2,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, from_json
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType
 
+from elasticsearch import Elasticsearch, helpers
+
 # 1. Spark session
 def spark_session():
     return (
@@ -20,21 +22,25 @@ def spark_session():
 spark = spark_session()
 
 # # 2. Define schema of CDC event
+schema = StructType([
+    StructField("統一編號", StringType()),     # company id
+    StructField("公司名稱", StringType()),     # company name
+    StructField("負責人", StringType()),    # address
+    StructField("登記地址", StringType()),    # address
+    StructField("資本額", DoubleType()),    # capital amount
+    StructField("營業項目及代碼表", StringType()),    # address
+    StructField("類別_全", StringType()),    # address
+    StructField("縣市名稱", StringType()),    # address
+    StructField("區域名稱", StringType()),    # address
+    StructField("縣市區域", StringType()),    # address
+    StructField("官網", StringType()),    # address
+    StructField("cluster", StringType()),    # address
+    StructField("vector", StringType()),    # address
+    StructField("updatedAt", StringType())   # timestamp
+])
+
 # schema = StructType([
-#     StructField("統一編號", StringType()),         # company id
-#     StructField("公司名稱", StringType()),       # company name
-#     StructField("負責人", StringType()),    # address
-#     StructField("登記地址", StringType()),    # address
-#     StructField("資本額", DoubleType()),    # capital amount
-#     StructField("營業項目及代碼表", StringType()),    # address
-#     StructField("類別_全", StringType()),    # address
-#     StructField("縣市名稱", StringType()),    # address
-#     StructField("區域名稱", StringType()),    # address
-#     StructField("縣市區域", StringType()),    # address
-#     StructField("官網", StringType()),    # address
-#     StructField("cluster", StringType()),    # address
-#     StructField("vector", StringType()),    # address
-#     StructField("updatedAt", StringType())   # timestamp
+#     StructField("統一編號", StringType())
 # ])
 
 # 3. Read CDC events from Kafka
@@ -47,21 +53,20 @@ kafka_df = (
     .load()
 )
 
-print(f"Kafka DF {kafka_df}")
-# # 4. Parse Kafka messages
-# json_df = kafka_df.selectExpr("CAST(value AS STRING)") \
-#     .select(from_json(col("value"), schema).alias("data")) \
-#     .select("data.*")
+# 4. Cast value to string
+json_df = kafka_df.selectExpr("CAST(value AS STRING) as json_str")
 
-# # Make sure that 統一編號 always exists
-# json_df = json_df.filter(col("統一編號").isNotNull())
+# 5. Parse JSON into columns
+json_df = json_df.select(from_json(col("json_str"), schema).alias("data")).select("data.*")
 
-# 4. Parse Kafka messages using foreachBatch
+# 6. Filter out nulls
+json_df = json_df.filter(col("統一編號").isNotNull())
+
+# 7. Parse Kafka messages using foreachBatch
 def write_to_es(batch_df, batch_id):
     docs = [row.asDict() for row in batch_df.collect()]
     print(f"Batch {batch_id} with {len(docs)} documents {docs}")
     if docs:
-        from elasticsearch import Elasticsearch, helpers
         es = Elasticsearch(
             ["http://elasticsearch:9200"],
             http_auth=("elastic", "gAcstb8v-lFCVzCBC__a")
@@ -74,11 +79,12 @@ def write_to_es(batch_df, batch_id):
             }
             for doc in docs
         ]
-        helpers.bulk(es, actions)
+        print(f'actions:=============={actions}')
+        # helpers.bulk(es, actions)
 
-# 6. Write to Elasticsearch (streaming sink)
+# 8. Write to Elasticsearch (streaming sink)
 query = (
-    kafka_df.writeStream
+    json_df.writeStream
     .foreachBatch(write_to_es) # Use foreachBatch instead of direct ES sink for solving jar matching issue
     .option("checkpointLocation", "/tmp/checkpoints/kafka_to_es")
     .outputMode("append")

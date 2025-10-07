@@ -12,6 +12,12 @@ services:
       MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
       MYSQL_ROOT_HOST: "%"
       MYSQL_DATABASE: whole_corp
+    command: [
+      "--server-id=1",
+      "--log-bin=mysql-bin",
+      "--binlog-format=ROW",
+      "--binlog-row-image=FULL"
+    ]
     volumes:
       # - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
       - mysql_data:/var/lib/mysql
@@ -205,8 +211,11 @@ services:
     networks:
       - bigdata-net
 
+  # --------------------
+  # Kafka
+  # --------------------
   kafka:
-    image: confluentinc/cp-kafka:7.5.0
+    image: confluentinc/cp-kafka:7.6.0
     container_name: kafka
     environment:
       # KRaft mode enabled
@@ -227,10 +236,10 @@ services:
       CLUSTER_ID: it0xCINPS5ayG7l_DQRpDA
     ports:
       - "9092:9092"
-    depends_on:
-      - spark-master
+    # depends_on:
+    #   - spark-master
     profiles:
-      - spark
+      - streaming
     networks:
       - bigdata-net
 
@@ -251,10 +260,10 @@ services:
       CONNECT_PLUGIN_PATH: /usr/share/confluent-hub-components
     ports:
       - "8083:8083"  # REST API for managing connectors
-    # depends_on:
-    #   - kafka
-    # profiles:
-    #   - spark
+    depends_on:
+      - kafka
+    profiles:
+      - streaming
     networks:
       - bigdata-net
 

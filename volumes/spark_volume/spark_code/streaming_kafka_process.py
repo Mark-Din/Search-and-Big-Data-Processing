@@ -10,11 +10,11 @@ def spark_session():
     SparkSession.builder
     .appName("test")
     .master("spark://spark-master:7077")
+    .config("spark.executorEnv.LANG", "zh_TW.UTF-8") \
+    .config("spark.executorEnv.LC_ALL", "zh_TW.UTF-8") \
+    .config("spark.driver.extraJavaOptions", "-Dfile.encoding=UTF-8") \
+    .config("spark.executor.extraJavaOptions", "-Dfile.encoding=UTF-8")
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-    .config("spark.jars.packages",
-        # "org.elasticsearch:elasticsearch-spark-30_2.12:8.11.0,"
-        "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,"
-        "mysql:mysql-connector-java:8.0.33")
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
     .getOrCreate()
     )
@@ -34,14 +34,21 @@ schema = StructType([
     StructField("區域名稱", StringType()),    # address
     StructField("縣市區域", StringType()),    # address
     StructField("官網", StringType()),    # address
-    StructField("cluster", StringType()),    # address
-    StructField("vector", StringType()),    # address
+    # StructField("cluster", StringType()),    # address
+    # StructField("vector", StringType()),    # address
     StructField("updatedAt", StringType())   # timestamp
 ])
 
-# schema = StructType([
-#     StructField("統一編號", StringType())
-# ])
+outer_schema = StructType([
+    StructField("schema", StringType()),
+    StructField("payload", StructType([
+        StructField("before", StringType()),
+        StructField("after", StringType()),
+        StructField("source", StringType()),
+        StructField("op", StringType()),
+        StructField("ts_ms", StringType())
+    ]))
+])
 
 # 3. Read CDC events from Kafka
 kafka_df = (
@@ -51,16 +58,31 @@ kafka_df = (
     .option("subscribe", "mysql.whole_corp.whole_corp_")
     .option("startingOffsets", "latest")
     .load()
+    .selectExpr("CAST(value AS STRING) as json_str")
 )
 
-# 4. Cast value to string
-json_df = kafka_df.selectExpr("CAST(value AS STRING) as json_str")
+print('schema')
+kafka_df.printSchema()
 
-# 5. Parse JSON into columns
-json_df = json_df.select(from_json(col("json_str"), schema).alias("data")).select("data.*")
+# Step 5. Parse 'payload.after'
+parsed_df = kafka_df.select(from_json(col("json_str"), outer_schema).alias("data"))
 
-# 6. Filter out nulls
-json_df = json_df.filter(col("統一編號").isNotNull())
+after_df = parsed_df.select("data.payload.after")
+
+final_df = after_df.select(from_json(col("after"), schema).alias("data")).select("data.*")
+
+# Step 6. Filter out nulls
+final_df = final_df.filter(col("統一編號").isNotNull())
+
+# Debug preview: show streaming rows in console like .show()
+final_df.writeStream \
+    .format("console") \
+    .outputMode("append") \
+    .option("truncate", "false") \
+    .start()
+
+print("final_df after filtering nulls:")
+final_df.printSchema()
 
 # 7. Parse Kafka messages using foreachBatch
 def write_to_es(batch_df, batch_id):
@@ -80,11 +102,11 @@ def write_to_es(batch_df, batch_id):
             for doc in docs
         ]
         print(f'actions:=============={actions}')
-        # helpers.bulk(es, actions)
+        helpers.bulk(es, actions)
 
 # 8. Write to Elasticsearch (streaming sink)
 query = (
-    json_df.writeStream
+    final_df.writeStream
     .foreachBatch(write_to_es) # Use foreachBatch instead of direct ES sink for solving jar matching issue
     .option("checkpointLocation", "/tmp/checkpoints/kafka_to_es")
     .outputMode("append")

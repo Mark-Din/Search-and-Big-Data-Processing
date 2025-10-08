@@ -9,6 +9,7 @@ End-to-end ETL solution integrating Airflow, Spark, Delta Lake, and object stora
 - **Extract** data from CSV (dummy data provided), loaded to MySQL first  
 - **Transform** with Pandas (cleaning, type casting), if data is big then use PySpark
 - **Load** into MySQL  
+- **Data streaming** data from MySQL to ES for regular sync
 - **Search**: vectorization & clustering with Elasticsearch 
 - **Environment**: Dockerized environment for easy deployment 
 
@@ -18,6 +19,7 @@ Workflow Orchestration: Apache Airflow
 Database: MySQL, Elasticsearch
 Object Storage: MinIO
 Libraries: Pandas, SQLAlchemy, PySpark
+Data streaming: Kafka
 Dependencies : All dependencies are needed for spark running, hadoop-aws-3.3.2.jar is specially for airflow only
 Containerization: Docker, Docker Compose
 
@@ -28,6 +30,7 @@ From mysql to MinIO => Using Spark ETL for about twice a week
 For regular ETL : Web APP → MySQL→ Extract (Airflow Task) → Transform (Pandas) → Load with structured data(MySQL)
                                                           → Save format (Delta format) → Load with structured/unstructured data(MinIO)
 For big data/ML process : MySQL → Transform (Apache Spark) → Load with structured data(MySQL)
+Data streaming will in process: MuSQL → ES
 
 ## How to Run
 1. Clone the Repository

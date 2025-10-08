@@ -116,6 +116,60 @@ services:
       - bigdata-net
 
   # --------------------
+  # Kafka
+  # --------------------
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: kafka
+    environment:
+      # KRaft mode enabled
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      # Listeners
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+
+      # Basic settings
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+      CLUSTER_ID: it0xCINPS5ayG7l_DQRpDA
+    ports:
+      - "9092:9092"
+    profiles:
+      - streaming
+    networks:
+      - bigdata-net
+
+  kafka-connect:
+    build: 
+      context: .
+      dockerfile: kafka/Dockerfile
+    container_name: kafka-connect
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
+      CONNECT_GROUP_ID: "connect-cluster"
+      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: connect-status
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_PLUGIN_PATH: /usr/share/confluent-hub-components
+    ports:
+      - "8083:8083"  # REST API for managing connectors
+    depends_on:
+      - kafka
+    profiles:
+      - streaming
+    networks:
+      - bigdata-net
+
+  # --------------------
   # Spark Cluster
   # --------------------
   spark-master:
@@ -123,6 +177,21 @@ services:
       context: .   # root of repo
       dockerfile: spark_jobs/Dockerfile
     container_name: spark-master
+    command: >
+      bash -c "
+      until nc -z kafka 9092; do
+        echo 'Waiting for kfaka to be ready....';
+        sleep 5;
+      done;
+      echo 'Kafka is ready Starting Spark job..'
+      spark-master \
+        --deploy-mode client \
+        --conf spark.executor.cores=1 \
+        --conf spark.executor.memory=1G \
+        --conf spark.cores.max=2 \
+        --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-token-provider-kafka-0-10_2.12:3.5.1,org.apache.kafka:kafka-clients:3.5.1,mysql:mysql-connector-java:8.0.33 \
+        /opt/bitnami/spark/work-dir/streaming_kafka_process.py
+      "
     volumes:
       - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab # For jupyterlab to test spark
       - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
@@ -139,6 +208,11 @@ services:
       - "7077:7077"
       # - "6066:6066"   # REST endpoint
       - "8081:8080"
+    depends_on:
+      - kafka
+      - kafka-connect
+      - elasticsearch
+      - mysql_db
     profiles:
       - spark
     networks:
@@ -156,7 +230,7 @@ services:
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=3G
+      - SPARK_WORKER_MEMORY=4G
       - SPARK_WORKER_CORES=2
       - SPARK_MASTER_HOST=spark-master
       - PYSPARK_NO_DRIVER=true
@@ -178,7 +252,7 @@ services:
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=3G
+      - SPARK_WORKER_MEMORY=4G
       - SPARK_WORKER_CORES=2
       - SPARK_MASTER_HOST=spark-master
       - PYSPARK_NO_DRIVER=true
@@ -208,62 +282,6 @@ services:
     command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --ip=0.0.0.0
     depends_on:
       - spark-master
-    networks:
-      - bigdata-net
-
-  # --------------------
-  # Kafka
-  # --------------------
-  kafka:
-    image: confluentinc/cp-kafka:7.6.0
-    container_name: kafka
-    environment:
-      # KRaft mode enabled
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-
-      # Listeners
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-
-      # Basic settings
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-
-      CLUSTER_ID: it0xCINPS5ayG7l_DQRpDA
-    ports:
-      - "9092:9092"
-    # depends_on:
-    #   - spark-master
-    profiles:
-      - streaming
-    networks:
-      - bigdata-net
-
-  kafka-connect:
-    build: 
-      context: .
-      dockerfile: kafka/Dockerfile
-    container_name: kafka-connect
-    environment:
-      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
-      CONNECT_GROUP_ID: "connect-cluster"
-      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
-      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
-      CONNECT_STATUS_STORAGE_TOPIC: connect-status
-      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
-      CONNECT_PLUGIN_PATH: /usr/share/confluent-hub-components
-    ports:
-      - "8083:8083"  # REST API for managing connectors
-    depends_on:
-      - kafka
-    profiles:
-      - streaming
     networks:
       - bigdata-net
 

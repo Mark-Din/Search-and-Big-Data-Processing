@@ -119,7 +119,9 @@ services:
   # Kafka
   # --------------------
   kafka:
-    image: confluentinc/cp-kafka:7.6.0
+    build:
+      context: .
+      dockerfile: kafka/Dockerfile
     container_name: kafka
     environment:
       # KRaft mode enabled
@@ -145,10 +147,26 @@ services:
     networks:
       - bigdata-net
 
+  kafka-python-consumer:
+    build:
+      context: .
+      dockerfile: kafka/Dockerfile_python_consumer
+    container_name: kafka_python_consumer
+    # volumes:
+    #   - ./volumes/python_kafka:/app
+    depends_on:
+      - kafka
+      # - elasticsearch
+    profiles:
+      - streaming
+    networks:
+      - bigdata-net
+
+
   kafka-connect:
     build: 
       context: .
-      dockerfile: kafka/Dockerfile
+      dockerfile: kafka/Dockerfile_connect
     container_name: kafka-connect
     environment:
       CONNECT_BOOTSTRAP_SERVERS: kafka:9092

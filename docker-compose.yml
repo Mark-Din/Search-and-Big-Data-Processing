@@ -52,28 +52,28 @@ services:
     networks:
       - bigdata-net
 
-  # fastapi_search_service:
-  #   build:
-  #     context: ./search_system/FastAPI_service
-  #     dockerfile: Dockerfile
-  #   container_name: fastapi_search_service
-  #   volumes:
-  #     - ./search_system/es_certs:/usr/certs
-  #     - ./search_system/FastAPI_service/code:/app  # Persistent data storage for FastAPI
-  #   environment:
-  #     - ES_USERNAME=elastic
-  #     - ES_PASSWORD=gAcstb8v-lFCVzCBC__a  # Use the manually set password
-  #     - ES_HOST=http://elasticsearch:9200
-  #     - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
-  #   networks:
-  #     - bigdata-net
-  #   profiles:
-  #     - search    
-  #   depends_on:
-  #     - elasticsearch
-  #   ports:
-  #     - "3002:3002"  # Expose FastAPI on port 3002
-  #     - "8501:8501"
+  fastapi_search_service:
+    build:
+      context: ./search_system/FastAPI_service
+      dockerfile: Dockerfile
+    container_name: fastapi_search_service
+    volumes:
+      - ./search_system/es_certs:/usr/certs
+      - ./search_system/FastAPI_service/code:/app  # Persistent data storage for FastAPI
+    environment:
+      - ES_USERNAME=elastic
+      - ES_PASSWORD=gAcstb8v-lFCVzCBC__a  # Use the manually set password
+      - ES_HOST=http://elasticsearch:9200
+      - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
+    networks:
+      - bigdata-net
+    profiles:
+      - search    
+    depends_on:
+      - elasticsearch
+    ports:
+      - "3002:3002"  # Expose FastAPI on port 3002
+      - "8501:8501"
 
 
   # --------------------
@@ -152,8 +152,6 @@ services:
       context: .
       dockerfile: kafka/Dockerfile_python_consumer
     container_name: kafka_python_consumer
-    # volumes:
-    #   - ./volumes/python_kafka:/app
     depends_on:
       - kafka
       # - elasticsearch
@@ -306,3 +304,4 @@ services:
 networks:
   bigdata-net:
     external: true
+    

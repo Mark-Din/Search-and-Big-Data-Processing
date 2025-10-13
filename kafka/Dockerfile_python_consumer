@@ -5,10 +5,10 @@ USER root
 WORKDIR /app
 
 COPY ./kafka/run_py_script.sh /app/run_py_script.sh
-COPY ./volumes/python_kafka/kafka_processing.py /app/kafka_processing.py
+COPY ./kafka/python_kafka/kafka_processing.py /app/kafka_processing.py
 
 RUN chmod -x /app/run_py_script.sh
 
-RUN pip install kafka-python elasticsearch
+RUN pip install kafka-python "elasticsearch==8.12.0" 
 
 CMD ["/bin/bash", "/app/run_py_script.sh"]

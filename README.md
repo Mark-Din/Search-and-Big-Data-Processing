@@ -24,7 +24,7 @@ Dependencies : All dependencies are needed for spark running, hadoop-aws-3.3.2.j
 Containerization: Docker, Docker Compose
 
 ## Architecture
-![image](https://hackmd.io/_uploads/ByCrfCoaxg.png)\
+<img width="1128" height="789" alt="image" src="https://github.com/user-attachments/assets/5cc71350-e0ec-493e-812b-bde19aab556e" /> \
 Data should be in mysql by default as user's input.\
 From mysql to MinIO => Using Spark ETL for about twice a week \
 For regular ETL : Web APP → MySQL→ Extract (Airflow Task) → Transform (Pandas) → Load with structured data(MySQL) → Save format (Delta format) → Load with structured/unstructured data(MinIO)\

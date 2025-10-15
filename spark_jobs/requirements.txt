@@ -13,4 +13,6 @@ scikit-learn
 scipy
 # s3fs
 
-elasticsearch==8.19.0
+google-re2==1.0.0 
+
+elasticsearch==8.13.0

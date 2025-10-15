@@ -4,7 +4,7 @@ import json
 from elasticsearch import Elasticsearch, helpers
 import logging
 
-logger = logging.getlogger.info(__name__)
+logger = logging.getLogger(__name__)
 
 def safe_json_deserializer(m):
     if not m:

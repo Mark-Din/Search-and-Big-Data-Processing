@@ -194,20 +194,7 @@ services:
       dockerfile: spark_jobs/Dockerfile
     container_name: spark-master
     command: >
-      bash -c "
-      until nc -z kafka 9092; do
-        echo 'Waiting for kfaka to be ready....';
-        sleep 5;
-      done;
-      echo 'Kafka is ready Starting Spark job..'
-      spark-master \
-        --deploy-mode client \
-        --conf spark.executor.cores=1 \
-        --conf spark.executor.memory=1G \
-        --conf spark.cores.max=2 \
-        --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-token-provider-kafka-0-10_2.12:3.5.1,org.apache.kafka:kafka-clients:3.5.1,mysql:mysql-connector-java:8.0.33 \
-        /opt/bitnami/spark/work-dir/streaming_kafka_process.py
-      "
+      bash -c "/opt/spark/sbin/start-master.sh && tail -f /dev/null"
     volumes:
       - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab # For jupyterlab to test spark
       - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
@@ -224,11 +211,11 @@ services:
       - "7077:7077"
       # - "6066:6066"   # REST endpoint
       - "8081:8080"
-    depends_on:
-      - kafka
-      - kafka-connect
-      - elasticsearch
-      - mysql_db
+    # depends_on:
+    #   - kafka
+    #   - kafka-connect
+    #   - elasticsearch
+    #   - mysql_db
     profiles:
       - spark
     networks:
@@ -243,6 +230,8 @@ services:
         - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
     depends_on:
       - spark-master
+    command: >
+      bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
@@ -263,6 +252,8 @@ services:
     container_name: spark-worker-2
     volumes:
       - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
+    command: >
+      bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
     depends_on:
       - spark-master
     environment:
@@ -278,28 +269,33 @@ services:
     networks:
       - bigdata-net
 
-  jupyter:
-    build:
-      context: .
-      dockerfile: spark_jobs/Dockerfile_jupyter
-    container_name: jupyter
-    volumes:
-      # - ./airflow/include/dependencies:/home/jovyan/work/dependencies
-      - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyter
-    environment:
-      - GRANT_SUDO=yes
-      - PYSPARK_NO_DRIVER=true
-      - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
-      - JUPYTER_ENABLE_LAB=yes
-    ports:
-      - "8888:8888"
-    profiles:
-      - spark
-    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --ip=0.0.0.0
-    depends_on:
-      - spark-master
-    networks:
-      - bigdata-net
+  # jupyter:
+  #   build:
+  #     context: .
+  #     dockerfile: spark_jobs/Dockerfile_jupyter
+  #   container_name: jupyter
+  #   volumes:
+  #     # - ./airflow/include/dependencies:/home/jovyan/work/dependencies
+  #     - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyter
+  #   environment:
+  #     - GRANT_SUDO=yes
+  #     - PYSPARK_NO_DRIVER=true
+  #     - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
+  #     - JUPYTER_ENABLE_LAB=yes
+  #   ports:
+  #     - "8888:8888"
+  #   profiles:
+  #     - spark
+  #   command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --ip=0.0.0.0
+  #   depends_on:
+  #     - spark-master
+  #   networks:
+  #     - bigdata-net
+
+
+volumes:
+  mysql_data:
+    external: true
 
 networks:
   bigdata-net:

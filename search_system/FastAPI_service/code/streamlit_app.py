@@ -19,7 +19,7 @@ def get_indices():
     response.raise_for_status()  # Raise an error for HTTP error responses
     return response.json()
 
-async def search_for_each_index(client, index, query):
+async def search_for_each_index(client, query):
     logger.info(f'query111:====, {query}')
     # Request to search within the selected index
     response = await client.post(
@@ -59,20 +59,20 @@ async def fulli_search(query):
         st.session_state['search'] = True
 
         try:
-            indices = get_indices()
+            # indices = get_indices()
 
             # Regular expression to match strings that do not contain the word "log"
-            pattern = re.compile(r'^(?!.*log)')
+            # pattern = re.compile(r'^(?!.*log)')
             # Filter the list
-            indices = [i for i in indices if pattern.match(i) and not i.startswith('.') and not i.startswith('_')]
-            logger.info(f'indices:====, {indices}')
+            # indices = [i for i in indices if pattern.match(i) and not i.startswith('.') and not i.startswith('_')]
+            # logger.info(f'indices:====, {indices}')
 
             async with httpx.AsyncClient(timeout=60) as client:  # Reuse this client
-                tasks = [search_for_each_index(client, index, query) for index in indices]  # Pass the correct index name here
-                results = await asyncio.gather(*tasks)
+                tasks = search_for_each_index(client, query)   # Pass the correct index name here
+                results = await asyncio.gather(tasks)
                 
                 # logger.info(f'indices: {indices}, results: {results}')
-                return indices, results
+                return 'whole_corp', results
 
         except requests.exceptions.RequestException as e:
             st.error(f"HTTP Request failed: {e}") 
@@ -120,7 +120,8 @@ async def main(query):
             st.write(f"Similarity search results for company: {company_for_sim}, total_hits: {total_hits}")
             st.write(pd.DataFrame(result['results']))
             st.session_state['results']['similarity_search'] = {'total_hits': total_hits, 'data': result['results']}
-
+        else:
+            st.write(f'No data found')
 def init_sidebar():
     # Initialize a session state variable that tracks the sidebar state (either 'expanded' or 'collapsed').
     if 'sidebar_state' not in st.session_state:

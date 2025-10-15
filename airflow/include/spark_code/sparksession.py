@@ -8,16 +8,16 @@ def spark_session():
         SparkSession.builder
         .appName("MySQL_to_Delta_on_MinIO")
         .master("spark://spark-master:7077")
-        .config("spark.jars.packages",
-                ",".join([
-                    # Delta
-                    "io.delta:delta-spark_2.12:3.1.0",
-                    # MySQL JDBC
-                    # "mysql:mysql-connector-java:8.0.33",
-                    # S3A / MinIO (versions must match your Hadoop)
-                    "org.apache.hadoop:hadoop-aws:3.3.2",  # It is for 
-                    "com.amazonaws:aws-java-sdk-bundle:1.11.1026",
-                ]))
+        # .config("spark.jars.packages",
+        #         ",".join([
+        #             # Delta
+        #             "io.delta:delta-spark_2.12:3.1.0",
+        #             # MySQL JDBC
+        #             # "mysql:mysql-connector-java:8.0.33",
+        #             # S3A / MinIO (versions must match your Hadoop)
+        #             "org.apache.hadoop:hadoop-aws:3.3.2",  # It is for 
+        #             "com.amazonaws:aws-java-sdk-bundle:1.11.1026",
+        #         ]))
         # Delta integration
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")

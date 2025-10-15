@@ -58,6 +58,7 @@ def tokenization(text) -> list:
 # Elasticsearch Integration Functions
 def search(index_name, search_param, es):
     """Perform a search query on Elasticsearch."""
+    logger.info(f'index_name==========={index_name}')
     try:
         return es.search(index=index_name, body=search_param)
     except Exception as e:
@@ -181,18 +182,24 @@ async def recommend_system(companyName: str = '', es: ElasticSearchConnectionMan
         company_param = search_company_params(companyName)
         company_result, _ = search_query(es, company_param)  # Assume search_query processes these params
 
+
+        logger.info(f'company_result:========{company_result}')
         # Extract vector and cluseter from the first result
-        vector = company_result[0]['vector']
-        cluster = company_result[0]['cluster']
+        
+        if 'vector' in company_result:
+            vector = company_result[0]['vector']
+            cluster = company_result[0]['cluster']
 
-        search_params = recommend_params(vector, cluster)
+            search_params = recommend_params(vector, cluster)
 
-        logger.info(f'=========search_params: {search_params}=========')
-        results, total_hits = search_query(es, search_params)  # Assume search_query processes these params
-        logger.debug(f'=========results&total_hits:{results} , {total_hits}=========')
-        logger.debug(f'=========search_params: {search_params}===========')
-        # Return extracted fields
-        return JSONResponse(content={"results": results, "total_hits": total_hits})
-    
+            logger.info(f'=========search_params: {search_params}=========')
+            results, total_hits = search_query(es, search_params)  # Assume search_query processes these params
+            logger.debug(f'=========results&total_hits:{results} , {total_hits}=========')
+            logger.debug(f'=========search_params: {search_params}===========')
+            # Return extracted fields
+            return JSONResponse(content={"results": results, "total_hits": total_hits})
+        else:
+            return JSONResponse(content={"results": [], "total_hits": 0})
+
     except AttributeError as e:
         raise HTTPException(status_code=400, detail=f"Invalid data format: {e}")

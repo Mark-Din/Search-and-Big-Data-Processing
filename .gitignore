@@ -143,7 +143,7 @@ FastAPI_service/__pycache__/
 
 # files
 *.json
-*.csv
+# *.csv
 *.xls*
 
 # models

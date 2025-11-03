@@ -3,32 +3,34 @@
 # # ---------------
 services:
   # For custome purpose
-  mysql_db:
-    extends:
-      file: ../../platform/docker-compose.base.yml
-      service: mysql_db
-    volumes:
-      - ./sql:/docker-entrypoint-initdb.d       # ✅ project-specific init.sql
-      - ./volumes/mysql_data:/var/lib/mysql
-    profiles: 
-       - search
+  # mysql_db:
+  #   extends:
+  #     file: ../../platform/docker-compose.base.yml
+  #     service: mysql_db
+  #   volumes:
+  #     - ./sql:/docker-entrypoint-initdb.d       # ✅ project-specific init.sql
+  #     - ./volumes/mysql_data:/var/lib/mysql
+  #   profiles: 
+  #      - search
       
-  elasticsearch:
-    extends:
-      file: ../../platform/docker-compose.base.yml
-      service: elasticsearch
-    volumes:
-      - ./volumes/es_data:/usr/share/elasticsearch/data
-    profiles: 
-       - search
+  # elasticsearch:
+  #   extends:
+  #     file: ../../platform/docker-compose.base.yml
+  #     service: elasticsearch
+  #   volumes:
+  #     - ./volumes/es_data:/usr/share/elasticsearch/data
+  #   profiles: 
+  #      - search
        
   fastapi_search_service:
     extends:
       file: ../../platform/docker-compose.base.yml
       service: fastapi_search_service
     build:
-      context: ./search_system_code
-      dockerfile: ../../platform/search_system/FastAPI_service/Dockerfile   # ✅ Dockerfile stored here
+      context: ../..                                # repo root
+      dockerfile: platform/search_system/FastAPI_service/Dockerfile
+      args:
+        PROJECT_CODE_PATH: projects/arxiv_lakehouse/search_system_code
     volumes:
       - ./search_system_code:/app  # Persistent data storage for FastAPI
     profiles: 

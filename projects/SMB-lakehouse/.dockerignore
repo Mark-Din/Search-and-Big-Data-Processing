@@ -1,0 +1,47 @@
+# Ignore Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+env/
+venv/
+
+# Ignore test files and folders
+test/
+test_folder/
+
+# Ignore version control directory
+.git/
+.github/
+
+# Ignore logs, temp files, and other temporary folders
+logs/
+temp_image/
+TrueTypefont/
+modified_files/
+
+# Ignore Docker-specific files
+docker-compose.yml
+Dockerfile
+
+# Ignore unnecessary development files
+.vscode/
+*.db (if files.db is used for local testing and not needed in production)
+*.pytest_cache
+
+# Ignore common dependency files if not needed in the image
+# requirements*.txt (if you install dependencies directly from the environment, e.g., using a specific script)
+
+# Any large data files or uploads that are not part of the build
+uploaded_files/
+
+*.swp
+.env
+*.ipynb
+tests
+before_coding
+jupyter_for_test
+
+hadoop-aws-3.3.2.jar

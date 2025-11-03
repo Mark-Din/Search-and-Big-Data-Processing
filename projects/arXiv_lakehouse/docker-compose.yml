@@ -4,76 +4,35 @@
 services:
   # For custome purpose
   mysql_db:
-    build:
-      context: .
-      dockerfile: sql/Dockerfile
-    container_name: mysql_db_container
-    environment:
-      MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
-      MYSQL_ROOT_HOST: "%"
-      MYSQL_DATABASE: whole_corp
-    command: [
-      "--server-id=1",
-      "--log-bin=mysql-bin",
-      "--binlog-format=ROW",
-      "--binlog-row-image=FULL"
-    ]
+    extends:
+      file: ../../platform/docker-compose.base.yml
+      service: mysql_db
     volumes:
-      # - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
-      - ./volumes/mmysql_data:/var/lib/mysql
-    ports:
-      - "3307:3306"  # Expose MySQL on port 3306
-    profiles:
-      - search    
-    networks:
-      - bigdata-net
+      - ./sql:/docker-entrypoint-initdb.d       # ✅ project-specific init.sql
+      - ./volumes/mysql_data:/var/lib/mysql
+    profiles: 
+       - search
       
   elasticsearch:
-    build:
-      context: ./search_system
-      dockerfile: Dockerfile_es
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=true  # Keep security enabled
-      # - xpack.security.http.ssl.enabled=true
-      # - xpack.security.http.ssl.keystore.path=certs/http.p12
-      # - xpack.security.http.ssl.truststore.path=certs/http.p12
-      - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
+    extends:
+      file: ../../platform/docker-compose.base.yml
+      service: elasticsearch
     volumes:
-      - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
       - ./volumes/es_data:/usr/share/elasticsearch/data
-    profiles:
-      - search    
-    depends_on:
-      - mysql_db
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    networks:
-      - bigdata-net
-
+    profiles: 
+       - search
+       
   fastapi_search_service:
+    extends:
+      file: ../../platform/docker-compose.base.yml
+      service: fastapi_search_service
     build:
-      context: ./search_system/FastAPI_service
-      dockerfile: Dockerfile
-    container_name: fastapi_search_service
+      context: ./search_system_code
+      dockerfile: ../../platform/search_system/FastAPI_service/Dockerfile   # ✅ Dockerfile stored here
     volumes:
-      - ./search_system/es_certs:/usr/certs
-      - ./search_system/FastAPI_service/code:/app  # Persistent data storage for FastAPI
-    environment:
-      - ES_USERNAME=elastic
-      - ES_PASSWORD=gAcstb8v-lFCVzCBC__a  # Use the manually set password
-      - ES_HOST=http://elasticsearch:9200
-      - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
-    networks:
-      - bigdata-net
-    profiles:
-      - search    
-    depends_on:
-      - elasticsearch
-    ports:
-      - "3002:3002"  # Expose FastAPI on port 3002
-      - "8501:8501"
+      - ./search_system_code:/app  # Persistent data storage for FastAPI
+    profiles: 
+       - search
 
 
   # --------------------

@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS whole_corp;
-USE whole_corp;
+CREATE DATABASE IF NOT EXISTS arxiv;
+USE arxiv;
 
 CREATE TABLE IF NOT EXISTS coauthorship_edges (
     source VARCHAR(255),

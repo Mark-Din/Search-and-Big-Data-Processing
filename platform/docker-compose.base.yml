@@ -19,7 +19,6 @@ services:
       "--binlog-row-image=FULL"
     ]
     volumes:
-      # - ./sql/my.cnf:/etc/mysql/conf.d/my.cnf
       - mysql_data:/var/lib/mysql
     ports:
       - "3307:3306"  # Expose MySQL on port 3306
@@ -41,7 +40,6 @@ services:
       - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
     volumes:
       - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
-      - ./volumes/es_data:/usr/share/elasticsearch/data
     profiles:
       - search    
     depends_on:

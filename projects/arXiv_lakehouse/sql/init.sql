@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS arxiv;
+CREATE DATABASE IF NOT EXISTS arxiv CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE arxiv;
 
 CREATE TABLE IF NOT EXISTS coauthorship_edges (

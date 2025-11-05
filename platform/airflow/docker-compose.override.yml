@@ -8,12 +8,8 @@ networks:
 
 services:
   scheduler:
-    # volumes:
-    #   - ../spark_jobs/dependencies:/usr/local/airflow/jars   # mount JDBC jars here
     networks:
       - bigdata-net
-    # environment:
-    #   - SPARK_DRIVER_HOST=scheduler
 
   triggerer:
     networks:
@@ -26,14 +22,4 @@ services:
   webserver:
     networks:
       - bigdata-net
-
-  # api-server:
-  #   networks:
-  #     - bigdata-net
-  #   # ports:
-  #   #   - 0.0.0.0:8080:8080
-  
-  # dag-processor:
-  #   networks:
-  #     - bigdata-net
 

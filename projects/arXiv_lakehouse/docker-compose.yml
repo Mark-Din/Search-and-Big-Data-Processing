@@ -3,24 +3,24 @@
 # # ---------------
 services:
   # For custome purpose
-  # mysql_db:
-  #   extends:
-  #     file: ../../platform/docker-compose.base.yml
-  #     service: mysql_db
-  #   volumes:
-  #     - ./sql:/docker-entrypoint-initdb.d       # ✅ project-specific init.sql
-  #     - ./volumes/mysql_data:/var/lib/mysql
-  #   profiles: 
-  #      - search
+  mysql_db:
+    extends:
+      file: ../../platform/docker-compose.base.yml
+      service: mysql_db
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d       # ✅ project-specific init.sql
+      - ./volumes/mysql_data:/var/lib/mysql
+    profiles: 
+       - search
       
-  # elasticsearch:
-  #   extends:
-  #     file: ../../platform/docker-compose.base.yml
-  #     service: elasticsearch
-  #   volumes:
-  #     - ./volumes/es_data:/usr/share/elasticsearch/data
-  #   profiles: 
-  #      - search
+  elasticsearch:
+    extends:
+      file: ../../platform/docker-compose.base.yml
+      service: elasticsearch
+    volumes:
+      - ./volumes/es_data:/usr/share/elasticsearch/data
+    profiles: 
+       - search
        
   fastapi_search_service:
     extends:
@@ -41,137 +41,79 @@ services:
   # MinIO for object storage
   # --------------------
   minio:
-    image: minio/minio
-    container_name: minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
+    extends:
+      file: ../../platform/docker-compose.base.yml
+      service: minio
     volumes:
       - ./volumes/minio-data:/data
-    environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
-    command: server /data --console-address ":9001"
     profiles: 
        - storage
-    networks:
-      - bigdata-net
 
   createbucket:
-    image: minio/mc
-    depends_on:
-      - minio
-    entrypoint: >
-      /bin/sh -c "
-        sleep 5;
-        mc alias set local http://minio:9000 minioadmin minioadmin; 
-        mc mb -p local/deltabucket;
-        mc policy set public local/deltabucket;
-        exit 0;
-      "
+    extends:
+      file: ../../platform/docker-compose.base.yml
+      service: createbucket
     profiles:
       - storage
-    networks:
-      - bigdata-net
 
   # --------------------
   # Spark Cluster
   # --------------------
   spark-master:
+    extends:
+      file: ../../platform/docker-compose.base.yml
+      service: spark-master
     build:
-      context: .   # root of repo
-      dockerfile: spark_jobs/Dockerfile
-    container_name: spark-master
-    command: >
-      bash -c "/opt/spark/sbin/start-master.sh && tail -f /dev/null"
-    volumes:
-      - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyter # For jupyterlab to test spark
-    environment:
-      - SPARK_MODE=master
-      - SPARK_MASTER_HOST=spark-master
-      - PYSPARK_NO_DRIVER=true
-      - PYSPARK_SUBMIT_ARGS=--jars /opt/spark/jars/delta-core_2.12-3.1.0.jar,/opt/spark/jars/delta-storage-3.1.0.jar pyspark-shell
-      - SPARK_MASTER_REST_ENABLED=true
-      - SPARK_MASTER_WEBUI_PORT=8080
-      - SPARK_MASTER_PORT=7077
-      # - SPARK_MASTER_REST_PORT=6066
-    ports:
-      - "7077:7077"
-      - "8081:8080"
+      context: ../..
+      dockerfile: platform/spark_jobs/Dockerfile
+      args:
+        PROJECT_CODE_PATH: projects/arxiv_lakehouse/spark_jobs
+    # volumes:
+    #   - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyter # For jupyterlab to test spark
     profiles:
       - spark
-    networks:
-      - bigdata-net
 
   spark-worker-1:
+    extends:
+      file: ../../platform/docker-compose.base.yml
+      service: spark-worker-1
     build:
-      context: .   # root of repo
-      dockerfile: spark_jobs/Dockerfile
-    container_name: spark-worker-1
-    volumes:
-      - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyter # For jupyterlab to test spark
-    command: >
-      bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
-    depends_on:
-      - spark-master
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=4G
-      - SPARK_WORKER_CORES=2
-      - SPARK_MASTER_HOST=spark-master
-      - PYSPARK_NO_DRIVER=true
-      - PYSPARK_SUBMIT_ARGS=--jars /opt/spark/jars/delta-core_2.12-3.1.0.jar,/opt/spark/jars/delta-storage-3.1.0.jar pyspark-shell
+      context: ../..
+      dockerfile: platform/spark_jobs/Dockerfile
+      args:
+        PROJECT_CODE_PATH: projects/arxiv_lakehouse/spark_jobs
+    # volumes:
+    #   - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyter # For jupyterlab to test spark
     profiles:
       - spark
-    networks:
-      - bigdata-net
 
   spark-worker-2:
+    extends:
+      file: ../../platform/docker-compose.base.yml
+      service: spark-worker-2
     build:
-      context: .   # root of repo
-      dockerfile: spark_jobs/Dockerfile
-    container_name: spark-worker-2
-    volumes:
-      - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyter # For jupyterlab to test spark
-    command: >
-      bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
-    depends_on:
-      - spark-master
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=4G
-      - SPARK_WORKER_CORES=2
-      - SPARK_MASTER_HOST=spark-master
-      - PYSPARK_NO_DRIVER=true
-      - PYSPARK_SUBMIT_ARGS=--jars /opt/spark/jars/delta-core_2.12-3.1.0.jar,/opt/spark/jars/delta-storage-3.1.0.jar pyspark-shell
+      context: ../..
+      dockerfile: platform/spark_jobs/Dockerfile
+      args:
+        PROJECT_CODE_PATH: projects/arxiv_lakehouse/spark_jobs
+    # volumes:
+    #   - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyter # For jupyterlab to test spark
     profiles:
       - spark
-    networks:
-      - bigdata-net
 
-  jupyter:
-    build:
-      context: .
-      dockerfile: spark_jobs/Dockerfile_jupyter
-    container_name: jupyter
-    volumes:
-      - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyter
-    environment:
-      - GRANT_SUDO=yes
-      - PYSPARK_NO_DRIVER=true
-      - PYSPARK_SUBMIT_ARGS=--jars /opt/spark/jars/delta-core_2.12-3.1.0.jar,/opt/spark/jars/delta-storage-3.1.0.jar pyspark-shell
-      - JUPYTER_ENABLE_LAB=yes
-    ports:
-      - "8888:8888"
-    profiles:
-      - spark
-    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --ip=0.0.0.0
-    depends_on:
-      - spark-master
-    networks:
-      - bigdata-net
+  # jupyter:
+  #   extends:
+  #     file: ../../platform/docker-compose.base.yml
+  #     service: jupyter
+  #   build:
+  #     context: ../..
+  #     dockerfile: platform/spark_jobs/Dockerfile
+  #     args:
+  #       PROJECT_CODE_PATH: projects/arxiv_lakehouse/spark_jobs
+  #   volumes:
+  #     - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyter
+  #   profiles:
+  #     - spark
 
 
 # volumes:

@@ -9,7 +9,6 @@ delta-spark==3.1.0
 setuptools
 
 mysql-connector-python
-sqlalchemy
 pandas
 apache-airflow
 boto3
@@ -18,4 +17,9 @@ pyarrow
 
 scikit-learn
 scipy
-# s3fs
+
+feedparser
+bs4
+lxml
+networkit
+networkx

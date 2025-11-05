@@ -3,10 +3,12 @@ FROM apache/spark:3.5.0-python3
 
 USER root
 
-COPY ./spark_jobs/requirements.txt /tmp/requirements.txt
+ARG PROJECT_CODE_PATH
+
+COPY ${PROJECT_CODE_PATH}/requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt
 
-COPY ./airflow/include/dependencies/* /opt/bitnami/spark/jars
+COPY ./platform/airflow/include/dependencies/* /opt/bitnami/spark/jars
 
 ENV DEBIAN_FRONTEND=noninteractive
 

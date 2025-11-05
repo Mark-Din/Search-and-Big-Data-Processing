@@ -3,52 +3,52 @@
 # # ---------------
 services:
   # For custome purpose
-  # mysql_db:
-  #   build:
-  #     context: .
-  #     dockerfile: sql/Dockerfile
-  #   container_name: mysql_db_container
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
-  #     MYSQL_ROOT_HOST: "%"
-  #     MYSQL_DATABASE: whole_corp
-  #   command: [
-  #     "--server-id=1",
-  #     "--log-bin=mysql-bin",
-  #     "--binlog-format=ROW",
-  #     "--binlog-row-image=FULL"
-  #   ]
-  #   volumes:
-  #     - mysql_data:/var/lib/mysql
-  #   ports:
-  #     - "3307:3306"  # Expose MySQL on port 3306
-  #   profiles:
-  #     - search    
-  #   networks:
-  #     - bigdata-net
+  mysql_db:
+    build:
+      context: .
+      dockerfile: sql/Dockerfile
+    container_name: mysql_db_container
+    environment:
+      MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: whole_corp
+    command: [
+      "--server-id=1",
+      "--log-bin=mysql-bin",
+      "--binlog-format=ROW",
+      "--binlog-row-image=FULL"
+    ]
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3307:3306"  # Expose MySQL on port 3306
+    profiles:
+      - search    
+    networks:
+      - bigdata-net
       
-  # elasticsearch:
-  #   build:
-  #     context: ./search_system
-  #     dockerfile: Dockerfile_es
-  #   environment:
-  #     - discovery.type=single-node
-  #     - xpack.security.enabled=true  # Keep security enabled
-  #     # - xpack.security.http.ssl.enabled=true
-  #     # - xpack.security.http.ssl.keystore.path=certs/http.p12
-  #     # - xpack.security.http.ssl.truststore.path=certs/http.p12
-  #     - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
-  #   volumes:
-  #     - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
-  #   profiles:
-  #     - search    
-  #   # depends_on:
-  #   #   - mysql_db
-  #   ports:
-  #     - "9200:9200"
-  #     - "9300:9300"
-  #   networks:
-  #     - bigdata-net
+  elasticsearch:
+    build:
+      context: ./search_system
+      dockerfile: Dockerfile_es
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true  # Keep security enabled
+      # - xpack.security.http.ssl.enabled=true
+      # - xpack.security.http.ssl.keystore.path=certs/http.p12
+      # - xpack.security.http.ssl.truststore.path=certs/http.p12
+      - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
+    volumes:
+      - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
+    profiles:
+      - search    
+    # depends_on:
+    #   - mysql_db
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - bigdata-net
 
   fastapi_search_service:
     build:
@@ -83,8 +83,6 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
-    volumes:
-      - ./volumes/minio-data:/data
     environment:
       - MINIO_ROOT_USER=minioadmin
       - MINIO_ROOT_PASSWORD=minioadmin
@@ -193,9 +191,9 @@ services:
     container_name: spark-master
     command: >
       bash -c "/opt/spark/sbin/start-master.sh && tail -f /dev/null"
-    volumes:
-      - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab # For jupyterlab to test spark
-      - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
+    # volumes:
+    #   - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab # For jupyterlab to test spark
+    #   - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
     environment:
       - SPARK_MODE=master
       - SPARK_MASTER_HOST=spark-master

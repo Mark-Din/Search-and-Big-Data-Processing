@@ -12,7 +12,7 @@ from init_log import initlog
 from connection import ElasticSearchConnectionManager
 
 logger = initlog('fastapi')
-from query import all_params, recommend_params, search_company_params, knn_params
+from projects.arxiv_lakehouse.search_system_code.fastapi.project_arxiv.query import all_params, recommend_params, search_company_params, knn_params
 
 # Configuration
 locale.setlocale(locale.LC_ALL, 'zh_TW.UTF-8')

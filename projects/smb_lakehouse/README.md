@@ -1,8 +1,11 @@
-# big-data-etl-automation-pipeline
+# Taiwanese companies Data Lakehouse & Search System
+
+## 🧩 Project Summary
 End-to-end ETL solution integrating Airflow, Spark, Delta Lake, and object storage (MinIO) for big data workflows.
 
-## Overview
 “This project demonstrates an automated ETL … This project has streamlit, fastapi and elasticsearch for overall and similarity searh.”
+
+---
 
 ## Features
 - **Automated ETL** using Apache Airflow DAGs  
@@ -13,15 +16,6 @@ End-to-end ETL solution integrating Airflow, Spark, Delta Lake, and object stora
 - **Search**: vectorization & clustering with Elasticsearch 
 - **Environment**: Dockerized environment for easy deployment 
 
-## Tech Stack
-Programming: Python 3.x\
-Workflow Orchestration: Apache Airflow\
-Database: MySQL, Elasticsearch\
-Object Storage: MinIO\
-Libraries: Pandas, SQLAlchemy, PySpark\
-Data streaming: Kafka\
-Dependencies : All dependencies are needed for spark running, hadoop-aws-3.3.2.jar is specially for airflow only\
-Containerization: Docker, Docker Compose
 
 ## Architecture
 <img width="1128" height="789" alt="image" src="https://github.com/user-attachments/assets/5cc71350-e0ec-493e-812b-bde19aab556e" /> \

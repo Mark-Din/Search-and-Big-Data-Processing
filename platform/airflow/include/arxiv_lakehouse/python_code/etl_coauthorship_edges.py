@@ -106,31 +106,31 @@ def main():
     # # Compute and store network stats
     G = nx.from_pandas_edgelist(edges_df, "source", "target", edge_attr="weight")
 
-    # logger.info('Computing centrality')
+    logger.info('Computing centrality')
 
-    # dc = nx.degree_centrality(G)
-    # # bc = nx.betweenness_centrality(G, k=min(1000, len(G))) # This line is taking too much time, around 3 million rows for 11 mins.
+    dc = nx.degree_centrality(G)
+    # bc = nx.betweenness_centrality(G, k=min(1000, len(G))) # This line is taking too much time, around 3 million rows for 11 mins.
 
-    # bc = custom_degree_centrality(G)
+    bc = custom_degree_centrality(G)
 
-    # stats = [
-    #     (a, G.degree(a), dc[a], bc[a], datetime.now())
-    #     for a in G.nodes()
-    # ]
+    stats = [
+        (a, G.degree(a), dc[a], bc[a], datetime.now())
+        for a in G.nodes()
+    ]
 
-    # logger.info(f"Inserting coauthorship stats into the database... ,count: [{len(stats)}]")    
+    logger.info(f"Inserting coauthorship stats into the database... ,count: [{len(stats)}]")    
     
-    # cursor.execute("DELETE FROM coauthor_stats")
-    # for row in stats:
-    #     cursor.execute("""
-    #         INSERT INTO coauthor_stats (author, degree, degree_centrality, betweenness, updated_at)
-    #         VALUES (%s, %s, %s, %s, %s)
-    #         ON DUPLICATE KEY UPDATE
-    #             degree = VALUES(degree),
-    #             degree_centrality = VALUES(degree_centrality),
-    #             betweenness = VALUES(betweenness),
-    #             updated_at = VALUES(updated_at)
-    #     """, row)
+    cursor.execute("DELETE FROM coauthor_stats")
+    for row in stats:
+        cursor.execute("""
+            INSERT INTO coauthor_stats (author, degree, degree_centrality, betweenness, updated_at)
+            VALUES (%s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                degree = VALUES(degree),
+                degree_centrality = VALUES(degree_centrality),
+                betweenness = VALUES(betweenness),
+                updated_at = VALUES(updated_at)
+        """, row)
         
     conn.commit()
     conn.close()

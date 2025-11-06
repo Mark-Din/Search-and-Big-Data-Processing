@@ -36,8 +36,6 @@ def read_from_mysql(spark):
     return papers_df, authors_df, versions_df
 
 
-def clean_authors_and_analysis(df):
-
 # ------------------------------
 # Transform and Clean (Silver)
 # ------------------------------
@@ -104,8 +102,6 @@ def bronze_to_silver(spark):
 
     # --- Drop NA columns if all null ---
     latest_versions = latest_versions.na.drop(how="all")
-
-    latest_versions.filter(F.col('paper_id')=='1805.10653').show()
 
     # --- Write to MinIO (Silver layer) ---
     silver_path = os.getenv("SILVER_PATH", "s3a://deltabucket/silver/arxiv_cleaned")

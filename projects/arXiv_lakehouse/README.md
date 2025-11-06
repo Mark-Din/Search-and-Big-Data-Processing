@@ -7,18 +7,17 @@ It ingests and cleans arXiv metadata, performs clustering and vector embedding, 
 ---
 
 ## 🏗️ System Architecture Overview
-
 This project implements an end-to-end data pipeline for arXiv metadata processing, analytics, and search.
 
 ### 🗺️ High-Level Data Flow
 The following diagram illustrates the overall flow of data from ingestion to the user interface.
 
-![High-Level Architecture](architecture_overview.png)
+![High-Level Architecture](image/architecture_overview.png)
 
 ### ⚙️ Logical Process Flow
 The diagram below details how each component interacts and how data moves through the system.
 
-![Logical Workflow](architecture_flowchart.png)
+![Logical Workflow](image/architecture_flowchart.png)
 
 **Layer Summary**
 - Ingestion → ETL → Feature Engineering → Clustering → Elasticsearch → Streamlit + FastAPI  
@@ -67,6 +66,9 @@ The diagram below details how each component interacts and how data moves throug
 - Average updates per discipline.  
 - Median time to publication.  
 - Cumulative submissions per author/institution.  
+- Co-authorship network visualization.
+
+![alt text](image/monitoring_dashboard.png)
 <!-- - Co-authorship network visualization. -->
 
 ---
@@ -138,3 +140,15 @@ This version focuses on core ETL, feature extraction, and semantic search, but i
 ## 📢 Further Note
 The architecture was implemented fully on-premise using Docker and MinIO to ensure a self-contained, reproducible setup within the limited project timeline.
 Each component mirrors a cloud equivalent (e.g., MinIO ↔ S3, Spark ↔ AWS Glue), allowing future migration to AWS with minimal refactoring.
+
+## 🧭 Assumptions
+- Each arXiv `paper_id` uniquely identifies a single paper across versions.
+- Category mapping (`category_map`) is stable across all records.
+- The pipeline runs daily and overwrites Silver/Gold layers for simplicity.
+- On-premise setup (MinIO, Docker) simulates cloud-based architecture for demonstration.
+
+## 🧩 Challenges & Irregularities
+- **Inconsistent date formats:** The `updated` and `created` fields varied across OAI records, requiring normalization to standard ISO date strings.  
+- **Missing abstracts or titles:** Some records lacked abstracts, which were dropped to maintain clean text input for TF-IDF.  
+- **Duplicate records:** Multiple versions of the same paper required deduplication in the Silver layer using the latest `version_created`.  
+- **Nested XML parsing:** OAI responses contained irregular XML tags that needed defensive parsing logic.

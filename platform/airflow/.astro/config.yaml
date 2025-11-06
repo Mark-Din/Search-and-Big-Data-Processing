@@ -1,11 +1,2 @@
 project:
     name: airflow
-
-mounts:
-  - source: ./project_airflow/arxiv_lakehouse/dags
-    target: /usr/local/airflow/dags/arxiv_lakehouse
-    type: bind
-
-  - source: ./project_airflow/arxiv_lakehouse/include
-    target: /usr/local/airflow/project_include/arxiv_lakehouse
-    type: bind

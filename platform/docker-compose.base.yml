@@ -222,8 +222,8 @@ services:
       context: .   # root of repo
       dockerfile: spark_jobs/Dockerfile
     container_name: spark-worker-1
-    volumes:
-        - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
+    # volumes:
+    #     - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
     depends_on:
       - spark-master
     command: >
@@ -246,8 +246,8 @@ services:
       context: .   # root of repo
       dockerfile: spark_jobs/Dockerfile
     container_name: spark-worker-2
-    volumes:
-      - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
+    # volumes:
+    #   - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
     command: >
       bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
     depends_on:

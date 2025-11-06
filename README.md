@@ -1,35 +1,27 @@
 # big-data-etl-automation-pipeline
-End-to-end ETL solution integrating Airflow, Spark, Delta Lake, and object storage (MinIO) for big data workflows.
+End-to-end ETL solution integrating Airflow, Spark, Delta Lake, and object storage (MinIO) for big data workflows. 
 
-## Overview
-“This project demonstrates an automated ETL … This project has streamlit, fastapi and elasticsearch for overall and similarity searh.”
-
-## Features
-- **Automated ETL** using Apache Airflow DAGs  
-- **Extract** data from CSV (dummy data provided), loaded to MySQL first  
-- **Transform** with Pandas (cleaning, type casting), if data is big then use PySpark
-- **Load** into MySQL  
-- **Data streaming** data from MySQL to ES for regular sync
-- **Search**: vectorization & clustering with Elasticsearch 
-- **Environment**: Dockerized environment for easy deployment 
+---
 
 ## Tech Stack
-Programming: Python 3.x\
-Workflow Orchestration: Apache Airflow\
-Database: MySQL, Elasticsearch\
-Object Storage: MinIO\
-Libraries: Pandas, SQLAlchemy, PySpark\
-Data streaming: Kafka\
-Dependencies : All dependencies are needed for spark running, hadoop-aws-3.3.2.jar is specially for airflow only\
-Containerization: Docker, Docker Compose
+| Category | Tools |
+|-----------|-------|
+| Programming | Python 3.x |
+| Orchestration | Apache Airflow |
+| Data Processing | PySpark, Delta Lake |
+| Data streaming | Kafka |
+| Database | MySQL |
+| Object Storage | MinIO |
+| Search Engine | Elasticsearch |
+| Frontend | Streamlit + FastAPI |
+| Visualization | Altair |
+| Environment | Docker & Docker Compose |
+| Dependencies | All dependencies are needed for spark running |
+==Check specifically what is being used in each project==
+
 
 ## Architecture
-<img width="1128" height="789" alt="image" src="https://github.com/user-attachments/assets/5cc71350-e0ec-493e-812b-bde19aab556e" /> \
-Data should be in mysql by default as user's input.\
-From mysql to MinIO => Using Spark ETL for about twice a week \
-For regular ETL : Web APP → MySQL→ Extract (Airflow Task) → Transform (Pandas) → Load with structured data(MySQL) → Save format (Delta format) → Load with structured/unstructured data(MinIO)\
-For big data/ML process : MySQL → Transform (Apache Spark) → Load with structured data(MySQL)
-Data streaming will in process: MuSQL → ES
+See the architecture in each project's readme
 
 ## How to Run
 1. Clone the Repository
@@ -37,26 +29,10 @@ Data streaming will in process: MuSQL → ES
 git clone https://github.com/Mark-Din/big-data-ai-integration-platform.git
 cd etl-automation-airflow
 ```
-2. Start Airflow and PostgreSQL with Docker
-```bash
-astro dev start
-```
-3. Access Airflow UI
-URL: http://localhost:8080
-Enable and run etl_pipeline DAG
+2. See in each project
 
-4. Start other services
-```bash
-docker-compose up --build
-```
-
-5. minio UI
-http://localhost:9001/
-
-6. Spark UI
-http://localhost:8080/
-
-7. Enter Kafka config in connect container
+## Note
+Enter Kafka connector for both mysql and ES if not automatically set
 ```bash
 curl -X POST http://localhost:8083/connectors \
   -H "Content-Type: application/json" \
@@ -118,12 +94,7 @@ Kafka topic: mysql.whole_corp.whole_corp_
    │
    ▼
 Elasticsearch index: whole_corp
-
 ```
-
-## Results
-Pipeline processes dummy_data.csv and loads clean data into mysql
-ETL execution is fully automated and can be scheduled
 
 ## ⚠ Disclaimer
 This project is for demonstration purposes only. It uses synthetic data and does NOT include proprietary business logic or production code.

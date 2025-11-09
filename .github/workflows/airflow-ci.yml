@@ -2,9 +2,7 @@ name: Airflow CI (Astro)
 
 on:
   push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 jobs:
   test:
@@ -21,13 +19,12 @@ jobs:
 
       - name: Install Astronomer CLI
         run: |
-          curl -sSL https://install.astronomer.io | bash
+          curl -sSL https://install.astronomer.io | bash -s -- --user
           echo "$HOME/.astro/bin" >> $GITHUB_PATH
+          astro version
 
       - name: Build Airflow image
-        run: |
-          astro dev start
+        run: astro dev build
 
-      - name: Run DAG and pytest validation
-        run: |
-          astro dev pytest --no-cache
+      - name: Run Astro Pytest
+        run: astro dev pytest --no-cache

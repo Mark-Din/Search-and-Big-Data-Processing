@@ -19,12 +19,16 @@ jobs:
 
       - name: Install Astronomer CLI
         run: |
-          curl -sSL https://install.astronomer.io | bash -s -- --user
+          curl -sL "https://github.com/astronomer/astro-cli/releases/latest/download/astro_$(uname -s)_amd64.tar.gz" -o astro.tar.gz
+          mkdir -p $HOME/.astro/bin
+          tar -xzf astro.tar.gz -C $HOME/.astro/bin
+          chmod +x $HOME/.astro/bin/astro
           echo "$HOME/.astro/bin" >> $GITHUB_PATH
-          astro version
+          $HOME/.astro/bin/astro version
 
       - name: Build Airflow image
         run: astro dev build
 
       - name: Run Astro Pytest
         run: astro dev pytest --no-cache
+

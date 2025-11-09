@@ -1,4 +1,4 @@
-name: Airflow CI (Astro)
+name: search CI
 
 on:
   push:

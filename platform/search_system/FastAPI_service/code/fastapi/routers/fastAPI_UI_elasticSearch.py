@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 # Custom local imports
 import sys
-sys.path.append('../common')
+sys.path.append('/app/common')
 from init_log import initlog
 from connection import ElasticSearchConnectionManager
 

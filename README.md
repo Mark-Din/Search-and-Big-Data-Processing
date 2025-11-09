@@ -1,101 +1,154 @@
-# big-data-etl-automation-pipeline
-End-to-end ETL solution integrating Airflow, Spark, Delta Lake, and object storage (MinIO) for big data workflows. 
+# arXiv Data Lakehouse & Search System
+
+## 🧩 Project Summary
+A complete end-to-end data pipeline built with **Spark**, **Kafka**, **Delta Lake**, **MinIO**, and **Elasticsearch**.  
+It ingests and cleans arXiv metadata, performs clustering and vector embedding, and provides a **Streamlit interface** for semantic search, recommendations, and pipeline monitoring.
 
 ---
 
-## Tech Stack
+## 🏗️ System Architecture Overview
+This project implements an end-to-end data pipeline for arXiv and some other companies' metadata processing, analytics, and search.
+
+### 🗺️ High-Level Data Flow
+The following diagram illustrates the overall flow of data from ingestion to the user interface.
+
+![High-Level Architecture](image/architecture_overview.png)
+
+### ⚙️ Logical Process Flow
+The diagram below details how each component interacts and how data moves through the system.
+
+![Logical Workflow](image/architecture_flowchart.png)
+
+**Layer Summary**
+- Ingestion → ETL → Feature Engineering → Clustering → Elasticsearch → Streamlit + FastAPI  
+- Bronze (MySQL) → Silver (Delta cleaned) → Gold (feature vectors) → Elasticsearch (vector index)
+
+---
+
+## 🧠 System Components
+| Stage | Description |
+|--------|--------------|
+| **Ingestion** | Python scripts ingest data from the arXiv OAI/API and store it in MySQL (Bronze). |
+| **Cleaning** | `task_silver_clean.py` — Spark ETL cleans, deduplicates, and joins data → Delta (Silver). |
+| **Feature Engineering** | `task_build_features_gold.py` — TF-IDF feature generation → Delta (Gold). |
+| **Clustering** | `task_data_clustering.py` — SVD + KMeans clustering → write vectors to Elasticsearch. |
+| **Storage** | Delta Lake on MinIO for Silver/Gold layers. |
+| **Search API** | FastAPI integrates with Elasticsearch for vector and keyword search. |
+| **Frontend** | Streamlit UI for search, recommendations, and visualization. |
+| **Monitoring** | MySQL + `ETL_metrics.py` for pipeline logs, status, and performance. |
+| **Environment** | Dockerized (Airflow, Spark, MySQL, MinIO, Elasticsearch, Streamlit). |
+
+---
+
+## 🔄 ETL Flow Description
+| Stage | Script | Description |
+|--------|---------|-------------|
+| **Bronze** | `etl_data_to_mysql_OAI.py`& `etl_data_to_mysql_api.py`| Pull raw XML → store in MySQL. |
+| **Silver** | `task_silver_clean.py` | Clean, deduplicate, and join → Delta Lake. |
+| **Gold** | `task_build_features_gold.py` | TF-IDF vectorization → Delta Lake. |
+| **Clustering** | `task_data_clustering.py` | Dimensionality reduction (SVD) + KMeans → Elasticsearch. |
+| **Monitoring** | `ETL_metrics.py` | Track ETL runs and visualize pipeline metadata. |
+| **Analysis** | `etl_coauthorship_edges.py` | Basic visualizaion on data |
+---
+
+## 📊 Streamlit Dashboards
+
+### 1. Search UI (`home.py`)
+- Query arXiv data via FastAPI endpoints.  
+- View results, clusters, and recommended papers.
+
+### 2. Monitoring Dashboard (`ETL_metrics.py`)
+- Latest run summary (records, duration, success rate).  
+- Trend over time and stage breakdown.  
+- Status bar charts and logs.
+
+### 3. Academic Trends Dashboard (`arxiv_dashboard.py`)
+- Average updates per discipline.  
+- Median time to publication.  
+- Cumulative submissions per author/institution.  
+- Co-authorship network visualization.
+
+![alt text](image/monitoring_dashboard.png)
+<!-- - Co-authorship network visualization. -->
+
+---
+
+## 📈 Key Metrics
+- **Pipeline metrics:** total records processed, duration, success rate.  
+- **Data metrics:** unique papers, categories, authors.  
+- **Search metrics:** total hits, latency, cluster coverage.
+
+---
+
+## ⚙️ Tech Stack
 | Category | Tools |
 |-----------|-------|
 | Programming | Python 3.x |
 | Orchestration | Apache Airflow |
 | Data Processing | PySpark, Delta Lake |
-| Data streaming | Kafka |
 | Database | MySQL |
 | Object Storage | MinIO |
 | Search Engine | Elasticsearch |
 | Frontend | Streamlit + FastAPI |
 | Visualization | Altair |
 | Environment | Docker & Docker Compose |
-| Dependencies | All dependencies are needed for spark running |
-==Check specifically what is being used in each project==
 
+> **Note:** `hadoop-aws-3.3.2.jar` is required specifically for Airflow to interact with MinIO/S3.
 
-## Architecture
-See the architecture in each project's readme
+---
 
-## How to Run
-1. Clone the Repository
-```bash
-git clone https://github.com/Mark-Din/big-data-ai-integration-platform.git
-cd etl-automation-airflow
-```
-2. See in each project
+## 🚀 How to Run
 
-## Note
-Enter Kafka connector for both mysql and ES if not automatically set
-```bash
-curl -X POST http://localhost:8083/connectors \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "mysql-connector",
-    "config": {
-      "connector.class": "io.debezium.connector.mysql.MySqlConnector",
-      "database.hostname": "mysql_db",
-      "database.port": "3306",
-      "database.user": "root",
-      "database.password": "!QAZ2wsx",
-      "database.server.id": "184054",
-      "topic.prefix": "mysql",
-      "database.include.list": "whole_corp",
-      "table.include.list": "whole_corp.whole_corp_",
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Mark-Din/arXiv_data_processing
+   cd airflow
+2. Start Airflow and PostgreSQL
+    ```bash
+    # You need to have Astronomer.Astro installed first
+    astro dev start
+    ```
+3. Start other services
+    ```bash
+    docker-compose up --build
+    ``` 
+4. Access UIs
+- MinIO: http://localhost:9001
+- Spark: http://localhost:8080
+- Streamlit: http://localhost:8501
 
-      "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",
-      "schema.history.internal.kafka.topic": "schema-changes.mysql",
+## ☁️ Cloud Adaptability
+| Local Component | AWS Equivalent |
+|-----------|-------|
+| MinIO | Amazon S3 |
+| Spark | AWS Glue / EMR |
+| Airflow | MWAA |
+| Elasticsearch | OpenSearch |
+| Streamlit | QuickSight / CloudWatch Dashboards|
+| MySQL | DynamoDB / RDS |
 
-      "include.schema.changes": "true",
-      "snapshot.mode": "initial",
-      "database.allowPublicKeyRetrieval": "true",
-      "database.sslMode": "disable"
-    }
-  }'
-```
-```bash
-curl -X POST http://localhost:8083/connectors \
- -H "Content-Type: application/json" \
- -d '{
-  "name": "es-sink",
-  "config": {
-    "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
-    "topics": "mysql.whole_corp.whole_corp_",
-    "connection.url": "http://elasticsearch:9200",
-    "connection.username": "elastic",
-    "connection.password": "gAcstb8v-lFCVzCBC__a",
-    "type.name": "_doc",
-    "key.ignore": false,
-    "schema.ignore": true,
-    "transforms": "unwrap",
-    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
-    "transforms.unwrap.drop.tombstones": "false"
-  }
-}'
-```
-Pipeline
-```bash
-MySQL (binlog)
-   │
-   ▼
-[ Debezium MySQL Source Connector ]  ← inside cp-kafka-connect
-   │
-   ▼
-Kafka topic: mysql.whole_corp.whole_corp_
-   │
-   ▼
-[ Elasticsearch Sink Connector ]     ← inside cp-kafka-connect
-   │
-   ▼
-Elasticsearch index: whole_corp
-```
+## 🙏 Acknowledgments
+### Datasets
+- arXiv.org Open Access Metadata
+- Kaggle arXiv Dataset
 
-## ⚠ Disclaimer
-This project is for demonstration purposes only. It uses synthetic data and does NOT include proprietary business logic or production code.
+## 🧮 Institutional Rankings (Future Integration)
+The architecture is designed to integrate external datasets such as journal impact factors, CORE conference rankings, and citation databases.
+These enrichments can be ingested into the Bronze layer and joined with arXiv metadata in Silver/Gold layers to produce subject-wise institutional rankings.
+This version focuses on core ETL, feature extraction, and semantic search, but is structured for future expansion.
 
+## 📢 Further Note
+The architecture was implemented fully on-premise using Docker and MinIO to ensure a self-contained, reproducible setup within the limited project timeline.
+Each component mirrors a cloud equivalent (e.g., MinIO ↔ S3, Spark ↔ AWS Glue), allowing future migration to AWS with minimal refactoring.
+
+## 🧭 Assumptions
+- Each arXiv `paper_id` uniquely identifies a single paper across versions.
+- Category mapping (`category_map`) is stable across all records.
+- The pipeline runs daily and overwrites Silver/Gold layers for simplicity.
+- On-premise setup (MinIO, Docker) simulates cloud-based architecture for demonstration.
+
+## 🧩 Challenges & Irregularities
+- **Inconsistent date formats:** The `updated` and `created` fields varied across OAI records, requiring normalization to standard ISO date strings.  
+- **Missing abstracts or titles:** Some records lacked abstracts, which were dropped to maintain clean text input for TF-IDF.  
+- **Duplicate records:** Multiple versions of the same paper required deduplication in the Silver layer using the latest `version_created`.  
+- **Nested XML parsing:** OAI responses contained irregular XML tags that needed defensive parsing logic.

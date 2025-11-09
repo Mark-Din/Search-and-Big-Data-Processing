@@ -13,6 +13,29 @@ logger = initlog(__name__)
 
 conn = em.mysql_connection()
 
+
+def create_tables(cursor):
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS coauthorship_edges (
+        source VARCHAR(255),
+        target VARCHAR(255),
+        weight INT,
+        updated_at DATETIME,
+        PRIMARY KEY (source, target)
+        );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS coauthor_stats (
+        author VARCHAR(255) PRIMARY KEY,
+        degree INT,
+        degree_centrality FLOAT,
+        betweenness FLOAT,
+        updated_at DATETIME
+        );
+    """)
+    conn.commit()
+
 def custom_degree_centrality(G):
 
     G_nk = nk.graph.Graph(directed=False)
@@ -33,10 +56,9 @@ def custom_degree_centrality(G):
     
     return bc
 
-def main():
-    global LEN_DF
-    LEN_DF = 0
 
+def coauthorship_processing():
+    
     # Load data
     authors = pd.read_sql("SELECT paper_id, name FROM authors", conn)
 
@@ -68,38 +90,22 @@ def main():
     cursor = conn.cursor()
 
     edges_df.drop_duplicates(["source", "target"],inplace=True)
-    LEN_DF = len(edges_df)
+    len_df = len(edges_df)
     
-    logger.info(f"Total coauthorship edges to insert: {LEN_DF}")
+    logger.info(f"Total coauthorship edges to insert: {len_df}")
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS coauthorship_edges (
-        source VARCHAR(255),
-        target VARCHAR(255),
-        weight INT,
-        updated_at DATETIME,
-        PRIMARY KEY (source, target)
-        );
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS coauthor_stats (
-        author VARCHAR(255) PRIMARY KEY,
-        degree INT,
-        degree_centrality FLOAT,
-        betweenness FLOAT,
-        updated_at DATETIME
-        );
-    """)
-    conn.commit()
+    # Create tables if not exists
+    create_tables(cursor)
 
     cursor.execute("DELETE FROM coauthorship_edges")
     conn.commit()
-
     for _, r in edges_df.iterrows():
         cursor.execute("""
                 INSERT INTO coauthorship_edges (source, target, weight, updated_at)
                 VALUES (%s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE
+                    weight = VALUES(weight),
+                    updated_at = VALUES(updated_at)
         """, (r.source, r.target, int(r.weight), r.updated_at.to_pydatetime()))
     conn.commit()
 
@@ -121,6 +127,7 @@ def main():
     logger.info(f"Inserting coauthorship stats into the database... ,count: [{len(stats)}]")    
     
     cursor.execute("DELETE FROM coauthor_stats")
+    conn.commit()
     for row in stats:
         cursor.execute("""
             INSERT INTO coauthor_stats (author, degree, degree_centrality, betweenness, updated_at)
@@ -131,19 +138,22 @@ def main():
                 betweenness = VALUES(betweenness),
                 updated_at = VALUES(updated_at)
         """, row)
-        
     conn.commit()
     conn.close()
 
     logger.info("✅ ETL completed successfully!")
 
-if __name__ == '__main__':
+    return len_df
+
+
+def main():
 
     run_id = f"run_{time.strftime('%Y%m%d_%H%M%S')}"
     try:
         start = time.time()
 
-        main()
+        len_df = coauthorship_processing()
+
         end = time.time()
         duration = end - start   # in seconds (float)
         status = 'S'
@@ -156,10 +166,14 @@ if __name__ == '__main__':
                 run_id=run_id,
                 stage_name='etl_api_to_mysql',
                 component='python',
-                record_count=LEN_DF if 'count' in locals() else 0,
+                record_count=len_df if 'len_df' in locals() else 0,
                 duration=duration if 'duration' in locals() else 0,
                 status=status,
                 note='ETL job from arXiv api to MySQL'
             )
         except Exception as e:
             logger.error(f"❌ Error storing metadata: {e}", exc_info=True)
+
+
+if __name__ == '__main__':
+    main()

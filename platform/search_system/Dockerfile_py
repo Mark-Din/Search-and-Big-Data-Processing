@@ -14,14 +14,11 @@ ENV LC_ALL=zh_TW.UTF-8
 # Create a new user 'appuser'
 RUN useradd -m appuser
 
-ARG PROJECT_CODE_PATH
-# Set the working directory in the container
 WORKDIR /app
 
 # Copy the current directory contents into the container at /app
-COPY ${PROJECT_CODE_PATH}/requirements.txt /app/requirements.txt
-# COPY ./requirements.txt /app/requirements.txt
-COPY ${PROJECT_CODE_PATH} /app
+COPY requirements.txt /app/requirements.txt
+COPY ./FastAPI_service/code /app
 
 # Create the logs directory and set permissions
 RUN mkdir -p /app/logs && \
@@ -38,8 +35,7 @@ ENV PATH="/home/appuser/.local/bin:${PATH}"
 RUN pip install --user -r requirements.txt
 
 # Copy supervisor config
-# COPY supervisord.conf /etc/supervisord.conf
-COPY platform/search_system/FastAPI_service/supervisord.conf /etc/supervisord.conf
+COPY ./FastAPI_service/supervisord.conf /etc/supervisord.conf
 
 # Expose both ports
 EXPOSE 3002 8501

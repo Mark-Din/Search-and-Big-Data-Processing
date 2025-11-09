@@ -71,7 +71,7 @@ def fetch_oai_records(base_url):
     """Yield all <record> elements from OAI-PMH endpoint (handles pagination)."""
     url = base_url
     while True:
-        print(f"Fetching: {url}")
+        logger.info(f"Fetching: {url}")
         r = requests.get(url)
         soup = BeautifulSoup(r.content, "lxml-xml")
         records = soup.find_all("record")
@@ -84,7 +84,7 @@ def fetch_oai_records(base_url):
         time.sleep(3)  # polite pause
 
 
-def main():
+def OAI_extraction():
     len_paper = 0
     len_authors = 0
     len_version = 0
@@ -157,19 +157,20 @@ def main():
         count += 1
     conn.commit()
 
-    print("✅ ETL completed successfully!")
+    logger.info("✅ ETL completed successfully!")
     cursor.close()
     conn.close()
 
     return len_paper, len_authors, len_version
 
 
-if __name__ == '__main__':
+def main():
+    
     start = time.time()
 
     run_id = f"run_{time.strftime('%Y%m%d_%H%M%S')}"
     try:
-        len_paper, len_authors, len_version = main()
+        len_paper, len_authors, len_version = OAI_extraction()
 
         logger.info("Inserting into metadata...")
         status = 'S'
@@ -194,3 +195,9 @@ if __name__ == '__main__':
         except Exception as me:
             logger.error(f"❌ Error storing metadata: {me}", exc_info=True)
             raise
+
+if __name__ == '__main__':
+
+    main() 
+
+    

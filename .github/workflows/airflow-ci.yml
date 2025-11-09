@@ -1,0 +1,5 @@
+name Airflow CI (Astro)
+
+on:
+  push:
+    branch

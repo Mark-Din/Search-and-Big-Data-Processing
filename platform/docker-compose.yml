@@ -19,7 +19,7 @@ services:
       "--binlog-row-image=FULL"
     ]
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./volumes/mysql_data:/var/lib/mysql
     ports:
       - "3307:3306"  # Expose MySQL on port 3306
     profiles:
@@ -31,6 +31,7 @@ services:
     build:
       context: ./search_system
       dockerfile: Dockerfile_es
+    container_name: elasticsearch
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=true  # Keep security enabled
@@ -40,6 +41,7 @@ services:
       - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
     volumes:
       - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
+      - ./volumes/es_data:/usr/share/elasticsearch/data  # Persistent data storage for Elasticsearch
     profiles:
       - search    
     # depends_on:
@@ -52,8 +54,8 @@ services:
 
   fastapi_search_service:
     build:
-      context: ./search_system/FastAPI_service
-      dockerfile: Dockerfile
+      context: ./search_system
+      dockerfile: Dockerfile_py
     container_name: fastapi_search_service
     volumes:
       - ./search_system/es_certs:/usr/certs
@@ -86,6 +88,8 @@ services:
     environment:
       - MINIO_ROOT_USER=minioadmin
       - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - ./volumes/minio-data:/data
     command: server /data --console-address ":9001"
     profiles: 
        - storage
@@ -193,7 +197,6 @@ services:
       bash -c "/opt/spark/sbin/start-master.sh && tail -f /dev/null"
     # volumes:
     #   - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab # For jupyterlab to test spark
-    #   - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
     environment:
       - SPARK_MODE=master
       - SPARK_MASTER_HOST=spark-master

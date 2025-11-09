@@ -21,10 +21,11 @@ default_args = {
 }
 
 with DAG(
-    dag_id = "es_data_dag",
+    dag_id = "smb_es_data_dag",
     start_date=datetime(2025,9,22),
     schedule="*/15 * * * *",
-    catchup=False
+    catchup=False,
+    default_args = default_args
 ) as dag:
     
     PythonOperator(
@@ -44,10 +45,11 @@ default_args = {
 }
 
 with DAG(
-    dag_id = "es_cluster_dag",
+    dag_id = "smb_es_cluster_dag",
     start_date=datetime(2025,9,22),
     schedule="@daily",
-    catchup=False
+    catchup=False,
+    default_args = default_args
 ) as dag:
     
     PythonOperator(

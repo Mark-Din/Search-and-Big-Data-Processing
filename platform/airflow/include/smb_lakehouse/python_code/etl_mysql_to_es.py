@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import datetime
 from include.smb_lakehouse.python_code import es_mapping
-from include.smb_lakehouse.python_code.connection import ElasticSearchConnectionManager
+from include.connection import ElasticSearchConnectionManager
 
 import logging
 

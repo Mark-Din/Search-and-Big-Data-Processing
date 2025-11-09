@@ -27,7 +27,6 @@ def health_check():
 
 # Router for search
 app.include_router(fastAPI_UI_elasticSearch.router)
-# Router for quickreport
 
 
 if __name__ == "__main__":

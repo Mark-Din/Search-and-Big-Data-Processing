@@ -28,7 +28,7 @@ async def search_for_each_index(client, query):
     # Request to search within the selected index
     response = await client.post(
                                 "http://127.0.0.1:3002/full_search",
-                                params={'query': query}
+                                params={'query': query, 'index_name': TABLE.lower()}
                             )
     if response.status_code != 200:
         print("Error:", response.status_code, response.text)
@@ -153,9 +153,6 @@ async def main(query):
     
     await get_full_search_data(indices, results)
 
-    # st.session_state['last_query'] = query
-    # logger.info(f'indices: {indices}, results: {len(results)}')
-
     # For similarity search
     if 'last_query' in st.session_state and st.session_state['last_query'] != "":
         result, company_for_sim = await sim_for_company()
@@ -177,8 +174,6 @@ def init_sidebar():
         st.set_page_config(initial_sidebar_state=st.session_state.sidebar_state)
 
         st.session_state['sidebar_state'] = 'expanded'
-    # Show title and description of the app.
-
     # Add a button to toggle the sidebar state.
     if st.session_state.sidebar_state == 'expanded':
         if st.sidebar.button('Collapse sidebar', on_click=lambda: st.session_state.update(sidebar_state='collapsed')):
@@ -189,7 +184,9 @@ def init_sidebar():
     
 
 if __name__ == '__main__':
-
+    
+    global TABLE
+    TABLE = 'whole_corp'
     try:
         init_sidebar()
 
@@ -208,6 +205,11 @@ if __name__ == '__main__':
             if 'results' not in st.session_state:
                 st.session_state['results'] = {}
                 
+            selected = st.selectbox('Select Table', ['arXiv', 'SMB'])
+
+            if selected == 'arXiv':
+                TABLE = 'arxiv_clusters'
+
             query = st.text_input('Enter search query').strip().replace(' ', '')
             asyncio.run(main(query))
 

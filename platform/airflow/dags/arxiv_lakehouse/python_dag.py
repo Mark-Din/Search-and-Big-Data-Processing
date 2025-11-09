@@ -17,10 +17,11 @@ default_args = {
 
 
 with DAG(
-    dag_id = "python_dag",
+    dag_id = "arxiv_python_dag",
     start_date=datetime(2025,9,22),
     schedule="@daily",
-    catchup=False
+    catchup=False,
+    default_args=default_args
 ) as dag:
     
     # oai = PythonOperator(

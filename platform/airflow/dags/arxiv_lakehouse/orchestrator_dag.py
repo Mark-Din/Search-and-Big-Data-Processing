@@ -15,15 +15,15 @@ default_args = {
     "email_on_failure": True,
     "email_on_retry": False,
     "retries": 2,
+    "start_date":datetime(2025, 10, 24),
     "retry_delay": timedelta(minutes=5),
 }
 
 dag = DAG(
-    "orchestrator_dag",
+    "arxiv_orchestrator_dag",
     default_args=default_args,
     description="End-to-end pipeline orchestrator for arXiv ETL + clustering",
-    schedule_interval="@daily",  # or "@once" for manual testing
-    start_date=datetime(2025, 10, 24),
+    schedule="@daily",  # or "@once" for manual testing
     catchup=False,
     max_active_runs=1,
     tags=["arxiv", "pipeline", "controller"],
@@ -103,15 +103,13 @@ process_task = TriggerDagRunOperator(
 quality_check_task = PythonOperator(
     task_id="quality_check_task",
     python_callable=validate_output,
-    provide_context=True,
-    retries=1,
+    retries=2,
     dag=dag,
 )
 
 notify_task = PythonOperator(
     task_id="notify_task",
     python_callable=write_final_status,
-    provide_context=True,
     dag=dag,
 )
 

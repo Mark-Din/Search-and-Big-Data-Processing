@@ -11,11 +11,6 @@ logger = initlog(__name__)
 
 CATEGORIES = list(category_map.keys())
 
-# ============= TRANSFORM =============
-def parse_authors(entry):
-    logger.info(f"Parsing authors: {entry.authors}")
-    return [a['name'] for a in entry['authors']] if entry.get("authors", None) else []
-
 specific_date = date.today() - timedelta(days=1)
 specific_date = date(2025,10,20)  # for testing
     
@@ -23,7 +18,12 @@ specific_date = date(2025,10,20)  # for testing
 conn = em.mysql_connection()
 cursor = conn.cursor()
 
-def main():
+# ============= TRANSFORM =============
+def parse_authors(entry):
+    logger.info(f"Parsing authors: {entry.authors}")
+    return [a['name'] for a in entry['authors']] if entry.get("authors", None) else []
+
+def api_extraction():
 # ============= EXTRACT =============
     global COUNT
     COUNT = 0
@@ -65,12 +65,12 @@ def main():
     logger.info("✅ ETL completed successfully!")
 
 
-if __name__ == '__main__':
+def main():
 
     run_id = f"run_{time.strftime('%Y%m%d_%H%M%S')}"
     try:
         start = time.time()
-        main()
+        api_extraction()
         end = time.time()
         duration = end - start   # in seconds (float)
         status = 'S'
@@ -90,3 +90,8 @@ if __name__ == '__main__':
             )
         except Exception as e:
             logger.error(f"❌ Error storing metadata: {e}", exc_info=True)
+
+
+if __name__ == '__main__':
+
+    main()

@@ -13,7 +13,7 @@ config_112 = {
 
 config_es = {
   "ES_PASSWORD":"gAcstb8v-lFCVzCBC__a",
-  "ES_HOST":"http://elasticsearch:9200",
+  "ES_HOST":"http://platform-elasticsearch-1:9200",
   "ES_HOST_local":"http://localhost:9200",
   "ES_CA_CERT":""
 }

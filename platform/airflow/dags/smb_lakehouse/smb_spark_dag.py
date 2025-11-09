@@ -14,10 +14,11 @@ default_args = {
 }
 
 with DAG(
-    dag_id="spark_dag",
+    dag_id="smb_spark_dag",
     start_date=datetime(2025, 9, 22),
     schedule= "@daily",
     catchup=False,
+    default_args = default_args
 ) as dag:
 
     jar_dir = "/usr/local/airflow/include/dependencies"

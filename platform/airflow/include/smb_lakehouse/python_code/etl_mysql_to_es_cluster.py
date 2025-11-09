@@ -2,8 +2,8 @@ from elasticsearch import helpers
 import numpy as np
 import pandas as pd
 import datetime
-from include.python_code import es_mapping
-from include.python_code.connection import ElasticSearchConnectionManager
+from include.smb_lakehouse.python_code.es_mapping import corp_mapping 
+from include.connection import ElasticSearchConnectionManager
 
 import logging
 
@@ -142,7 +142,7 @@ def create_index_if_not_exists(es, index_name):
         logger.info(f"Index {index_name} already exists.")
     except Exception as e:
         logger.warning(f"Index {index_name} does not exist. Creating new index.")
-        mapping = es_mapping.corp_mapping()
+        mapping = corp_mapping()
         if mapping:
             es.indices.create(index=index_name, body=mapping)
             logger.info(f"Index {index_name} created with the specified mapping.")

@@ -1,14 +1,12 @@
-# Spark 3.4.1, Scala 2.12, Hadoop 3.3, JupyterLab
+# Spark 3.4.1, Scala 2.12, Hadoop 3.3
 FROM apache/spark:3.5.0-python3
 
 USER root
 
-ARG PROJECT_CODE_PATH
-
-COPY ${PROJECT_CODE_PATH}/requirements.txt /tmp/requirements.txt
+COPY ./spark_jobs/requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt
 
-COPY ./platform/airflow/include/dependencies/* /opt/bitnami/spark/jars
+COPY ./airflow/include/dependencies/* /opt/spark/jars
 
 ENV DEBIAN_FRONTEND=noninteractive
 

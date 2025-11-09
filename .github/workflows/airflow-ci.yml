@@ -1,5 +1,35 @@
-name Airflow CI (Astro)
+name: Airflow CI (Astro)
+
 
 on:
   push:
-    branch
+    branches: [ main , develop] # a safe area to test DAGs or new ETL logic before deploying, creating a develop branch can be helpful
+  pull_request:
+    branches: [ main , develop]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    stpes:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+        
+      - name: Install Astronomer CLI
+        run: |
+          curl -sSL https://install.astronomer.io | bash
+          echo "$HOME/.astro/bin" >> $GITHUB_PATH
+
+      - name: Build Airflow image
+        run: |
+          astro dev build
+
+      - name: Run DAG and pytest validation
+        run: |
+          astro dev pytest --no-cache
+

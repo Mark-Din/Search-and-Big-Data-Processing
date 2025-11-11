@@ -209,6 +209,8 @@ if __name__ == '__main__':
 
             if selected == 'arXiv':
                 TABLE = 'arxiv_clusters'
+            else:
+                TABLE = "wholecorp_clusters_vector"
 
             query = st.text_input('Enter search query').strip().replace(' ', '')
             asyncio.run(main(query))

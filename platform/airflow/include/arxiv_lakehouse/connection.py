@@ -37,7 +37,7 @@ class ElasticSearchConnectionManager:
 
                     es = Elasticsearch(
                         [node['ip']],
-                        http_auth=('elastic', config_json['ES_PASSWORD']),
+                        basic_auth=('elastic', config_json['ES_PASSWORD']),
                         verify_certs=False
                     )
                     if es.ping():

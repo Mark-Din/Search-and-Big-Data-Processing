@@ -58,11 +58,9 @@ def bronze_to_silver(spark):
     papers_df = papers_df.dropna(subset=["id", "title"])
     authors_df = authors_df.dropna(subset=["paper_id", "name"])
     versions_df = versions_df.dropna(subset=["paper_id", "version"])
-    authors_df = authors_df.withColumn("name", F.regexp_replace('name','\n',' ')).show()
-
-    # --- Deal with \n in authors' name ---
-    co_main(authors_df)
-
+    authors_df = authors_df.withColumn("name", F.regexp_replace('name','\n',' '))
+    
+    logger.info(f'auther dataframe : {authors_df.show(5)}')
     # --- Clean and unify version strings (e.g., ensure uppercase) ---
     versions_df = versions_df.withColumn("version", F.upper(F.col("version")))
 

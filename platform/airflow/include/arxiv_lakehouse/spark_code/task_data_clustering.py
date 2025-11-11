@@ -13,7 +13,7 @@ from include.init_log import initlog
 
 from es_mapping import arxiv_mapping
 
-from include.category import category_map
+from include.arxiv_lakehouse.category import category_map
 
 
 logger = initlog(__name__)

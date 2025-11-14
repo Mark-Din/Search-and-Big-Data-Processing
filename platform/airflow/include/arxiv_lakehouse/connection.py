@@ -3,8 +3,7 @@ from elasticsearch import Elasticsearch
 # from ssl import create_default_context, CERT_NONE
 from elasticsearch.exceptions import ConnectionError, SSLError
 import time
-from include.config import config_es as config_json
-from include.config import mysql_conf
+from config import config_es as config_json, mysql_conf
 
 import logging
 

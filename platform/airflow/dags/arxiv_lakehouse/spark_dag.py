@@ -20,10 +20,10 @@ with DAG(
     default_args=default_args
 ) as dag:
 
-    jar_dir = "/usr/local/airflow/include/dependencies"
+    jar_dir = "/opt/airflow/include/dependencies"
     jars = ",".join([os.path.join(jar_dir, f) for f in os.listdir(jar_dir) if f.endswith(".jar")])
 
-    main_path = '/usr/local/airflow/include/arxiv_lakehouse/spark_code'
+    main_path = '/opt/airflow/include/arxiv_lakehouse/spark_code'
 
     silver_task = SparkSubmitOperator(
         task_id="silver_clean_task",

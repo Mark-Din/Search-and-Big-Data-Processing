@@ -1,20 +1,23 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import date
+from datetime import date, timedelta
 import time
+import sys
 
-from include.init_log import initlog
-from include.mysql_log import store_metadata
-from include.connection import ElasticSearchConnectionManager as em
+sys.path.append('/opt/airflow/include/arxiv_lakehouse')
+# sys.path.append('/opt/airflow/include/arxiv_lakehouse/python_code')
+from init_log import initlog
+from mysql_log import store_metadata
+from connection import ElasticSearchConnectionManager as em
 
 logger = initlog(__name__)
 
 # adjust date range
-# today = date.today()
-# yesterday = today - timedelta(days=1)
+today = date.today()
+yesterday = today - timedelta(days=1)
 
 # Set fixed range for testing
-yesterday, today = date(2025,10,20), date(2025,10,26)
+# yesterday, today = date(2025,10,20), date(2025,10,26)
 
 BASE_URL = (
     "https://export.arxiv.org/oai2?"

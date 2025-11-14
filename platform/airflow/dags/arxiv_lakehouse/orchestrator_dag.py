@@ -1,8 +1,12 @@
+import sys
+
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.email import send_email
+
+sys.path.append('/opt/airflow')
 from include.mysql_log import store_metadata
 
 # -------------------------------------------------------------------

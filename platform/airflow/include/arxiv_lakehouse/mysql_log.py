@@ -1,6 +1,6 @@
 import mysql.connector
 from datetime import datetime
-from include.config import mysql_conf
+from config import mysql_conf
 
 def store_metadata(run_id, stage_name, record_count, duration, status, component=None, note=None):
     try:

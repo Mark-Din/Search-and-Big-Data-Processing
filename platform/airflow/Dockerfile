@@ -1,13 +1,13 @@
-# Dockerfile
-# FROM astrocrpublic.azurecr.io/runtime:3.0-6
-FROM quay.io/astronomer/astro-runtime:12.8.0-python-3.11
+FROM apache/airflow:3.1.2
 
 USER root
 
 # Install OpenJDK-17
-RUN apt update && \
+RUN apt-get update && \
     apt-get install -y openjdk-17-jdk && \
     apt-get install -y ant && \
+    apt-get install -y wget && \
+    rm -rf /var/lib/apt/lists/* \
     apt-get clean;
 
 # Set JAVA_HOME
@@ -17,7 +17,10 @@ RUN export JAVA_HOME
 RUN mkdir -p /mnt/spark-tmp/local && \
     chmod -R 777 /mnt/spark-tmp 
     
-RUN apt-get update && apt-get install -y wget &&\
-    rm -rf /var/lib/apt/lists/*
+USER airflow
 
-USER astro
+COPY requirements.txt /requirements.txt
+RUN pip install --no-cache-dir -r /requirements.txt
+
+
+

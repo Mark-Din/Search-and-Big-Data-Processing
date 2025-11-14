@@ -1,10 +1,14 @@
+import logging
+import sys
+
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
+
+sys.path.append('/opt/airflow')
 from include.smb_lakehouse.python_code.etl_mysql_to_es import main as etl_mysql_to_es_main
 from include.smb_lakehouse.python_code.etl_mysql_to_es_cluster import main as etl_mysql_to_es_cluster_main    
 
-import logging
 
 # Turn down elasticsearch-py logs
 logging.getLogger("elastic_transport.transport").setLevel(logging.WARNING)

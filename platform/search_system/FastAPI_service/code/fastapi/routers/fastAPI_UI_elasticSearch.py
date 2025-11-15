@@ -12,8 +12,9 @@ import sys
 import os
 # sys.path.append('/app/common')
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-sys.path.append(os.path.join(PROJECT_ROOT, "search_system", "FastAPI_service", "code", "common"))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..",".."))
+sys.path.append(os.path.join(PROJECT_ROOT,  "common"))
+print('path:',os.path.join(PROJECT_ROOT, "common"))
 from init_log import initlog
 from connection import ElasticSearchConnectionManager
 

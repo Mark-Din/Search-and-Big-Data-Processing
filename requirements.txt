@@ -1,0 +1,11 @@
+pytest
+pytest-mock
+fastapi
+uvicorn
+pydantic
+starlette
+sqlalchemy
+pandas
+pyspark
+elasticsearch
+requests

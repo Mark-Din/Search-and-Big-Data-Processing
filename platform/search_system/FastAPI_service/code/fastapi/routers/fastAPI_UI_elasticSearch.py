@@ -11,9 +11,11 @@ from pydantic import BaseModel
 import sys
 import os
 # sys.path.append('/app/common')
-sys.path.append(os.path.join(os.getcwd(), "search_system", "FastAPI_service", "code", "common"))
-from init_log import initlog
-from connection import ElasticSearchConnectionManager
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.append(os.path.join(PROJECT_ROOT, "search_system", "FastAPI_service", "code", "common"))
+from common.init_log import initlog
+from common.connection import ElasticSearchConnectionManager
 
 logger = initlog('fastapi')
 from queries.query_arxiv import all_params, knn_params

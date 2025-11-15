@@ -23,7 +23,11 @@ from queries.query_arxiv import all_params, knn_params
 from queries.query_smb import all_params, recommend_params
 
 # Configuration
-locale.setlocale(locale.LC_ALL, 'zh_TW.UTF-8')
+try:
+    locale.setlocale(locale.LC_ALL, 'zh_TW.UTF-8')
+except locale.Error:
+    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+    
 router = APIRouter(tags=["search"])
 
 # Function to format a number as currency

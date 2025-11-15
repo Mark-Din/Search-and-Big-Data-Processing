@@ -90,6 +90,7 @@ services:
       - MINIO_ROOT_PASSWORD=minioadmin
     volumes:
       - ./volumes/minio-data:/data
+      - /mnt/ssd/minio-hot:/data
     command: server /data --console-address ":9001"
     profiles: 
        - storage

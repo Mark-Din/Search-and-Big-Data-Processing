@@ -1,7 +1,7 @@
 # Imports and Configuration
 from datetime import datetime
 from typing import Optional
-from fastapi import Request, APIRouter, HTTPException, Depends
+from fastapi import Query, Request, APIRouter, HTTPException, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 import locale
 from fastapi import Body
@@ -9,7 +9,9 @@ from pydantic import BaseModel
 
 # Custom local imports
 import sys
-sys.path.append('/app/common')
+import os
+# sys.path.append('/app/common')
+sys.path.append(os.path.join(os.getcwd(), "search_system", "FastAPI_service", "code", "common"))
 from init_log import initlog
 from connection import ElasticSearchConnectionManager
 
@@ -97,13 +99,13 @@ async def perform_index_search(
 
 @router.post("/full_search", response_class=HTMLResponse)
 async def full_search(request: Request,
-                        query: str = '',
+                        query: str = Query(...),
                         index_name: str = '',
                         es = Depends(ElasticSearchConnectionManager.get_instance)):
     
     # Tokenize the queries
     try:
-        if query != '': query = [q for q in tokenization(query, index_name) if q != 'undefined']
+        query = [q for q in tokenization(query, index_name) if q != 'undefined']
 
         logger.info(f'=========query: {query}=========')
 

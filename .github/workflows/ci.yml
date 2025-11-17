@@ -52,13 +52,18 @@ jobs:
 
       - name: Verify Docker Compose installation
         run: | 
-          which docker-compose || echo "docker-compose not found"
+          which docker compose || echo "docker-compose not found"
           docker compose version 
           docker version
 
+      - name: Debug workspace tree
+        run: |
+          pwd
+          ls -R .
+
       - name: Start docker compose services
         run: |
-          docker compose up -d --build
+          docker compose -f ./platform/docker-compose.yml --profile "*" up -d --build
           sleep 40               # wait for ES, Kafka, MySQL, Spark, etc.
 
       - name: Show running containers

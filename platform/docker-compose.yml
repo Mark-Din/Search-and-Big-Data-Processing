@@ -162,7 +162,7 @@ services:
       - bigdata-net
 
 
-  kafka-connect:
+  kafka-connect:  # It will break if topics in kafka-qidu is not created
     build: 
       context: .
       dockerfile: kafka/Dockerfile_connect

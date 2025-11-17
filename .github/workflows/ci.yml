@@ -49,10 +49,16 @@ jobs:
 
       - name: Install Docker Compose
         uses: docker/setup-compose-action@v1
-        
+
+      - name: Verify Docker Compose installation
+        run: | 
+          which docker-compose || echo "docker-compose not found"
+          docker compose version 
+          docker version
+
       - name: Start docker compose services
         run: |
-          docker-compose up -d --build
+          docker compose up -d --build
           sleep 40               # wait for ES, Kafka, MySQL, Spark, etc.
 
       - name: Show running containers

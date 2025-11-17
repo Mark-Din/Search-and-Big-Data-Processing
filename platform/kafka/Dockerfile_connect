@@ -7,13 +7,12 @@ RUN curl -L https://repo1.maven.org/maven2/io/debezium/debezium-connector-mysql/
  && tar -xzf /tmp/debezium-mysql.tar.gz -C /usr/share/confluent-hub-components/debezium-connector-mysql \
  && rm /tmp/debezium-mysql.tar.gz
 
-COPY ./kafka/confluentinc-kafka-connect-elasticsearch-14.1.0.zip /usr/share/confluent-hub-components/elasticsearch
+COPY kafka/confluentinc-kafka-connect-elasticsearch-14.1.0.zip /usr/share/confluent-hub-components/elasticsearch/confluentinc-kafka-connect-elasticsearch-14.1.0.zip
 
 USER root
 
-RUN yum install -y unzip && yum clean all
-
-COPY ./kafka/confluentinc-kafka-connect-elasticsearch-14.1.0.zip \
-     /usr/share/confluent-hub-components/elasticsearch
+RUN yum install -y unzip && \
+     yum clean all && \
+     unzip /usr/share/confluent-hub-components/elasticsearch/confluentinc-kafka-connect-elasticsearch-14.1.0.zip
 
 USER appuser

@@ -120,19 +120,17 @@ services:
   # Kafka
   # --------------------
   kafka:
-    build:
-      context: .
-      dockerfile: kafka/Dockerfile
-    container_name: kafka
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: ${kafka_main}
     environment:
       # KRaft mode enabled
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@${kafka_main}:9093
 
       # Listeners
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${kafka_main}:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
 
       # Basic settings
@@ -148,14 +146,29 @@ services:
     networks:
       - bigdata-net
 
-  kafka-python-consumer:
+  kafka_init:
+    image: confluentinc/cp-kafka:7.6.0
+    depends_on:
+      - kafka
+    command: ["bash", "-c", "/app/init_kafka.sh"]
+    volumes:
+      - ./kafka/init_kafka.sh:/app/init_kafka.sh
+    profiles:
+      - streaming
+    networks:
+      - bigdata-net
+
+  python-kafka-consumer:
     build:
       context: .
       dockerfile: kafka/Dockerfile_python_consumer
     container_name: kafka_python_consumer
+    volumes:
+      - ./kafka/python_kafka:/app/python
     depends_on:
       - kafka
       # - elasticsearch
+    
     profiles:
       - streaming
     networks:

@@ -8,4 +8,4 @@ COPY ./kafka/init_kafka.sh /app
 
 RUN chmod +x /app/init_kafka.sh
 
-# CMD ["/bin/bash", "-c",  "/app/init_kafka.sh"]
+# CMD ["/bin/bash", "/app/init_kafka.sh"]

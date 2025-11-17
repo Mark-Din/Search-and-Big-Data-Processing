@@ -32,7 +32,7 @@ USER appuser
 ENV PATH="/home/appuser/.local/bin:${PATH}"
 
 # Could run --no-cache-dir for 
-RUN pip install --user -r requirements.txt
+RUN pip install -r /app/requirements.txt
 
 # Copy supervisor config
 COPY ./FastAPI_service/supervisord.conf /etc/supervisord.conf

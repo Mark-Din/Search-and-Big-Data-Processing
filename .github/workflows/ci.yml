@@ -88,7 +88,7 @@ jobs:
             -v $PWD:/app \
             -w /app \
             python:3.11 \
-            /bin/bash -c "pip install-r tests/requirements.txt && pytest -m integration -v"
+            /bin/bash -c "pip install -r tests/requirements.txt && pytest -m integration -v"
 
 
   ##########################################################################
@@ -110,7 +110,7 @@ jobs:
             -v $PWD:/app \
             -w /app \
             python:3.11 \
-            /bin/bash -c "pip install-r tests/requirements.txt && pytest -m system -v
+            /bin/bash -c "pip install -r tests/requirements.txt && pytest -m system -v
 
 
   ##########################################################################

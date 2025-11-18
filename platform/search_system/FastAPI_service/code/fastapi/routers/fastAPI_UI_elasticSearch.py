@@ -23,10 +23,15 @@ from queries.query_arxiv import all_params, knn_params
 from queries.query_smb import all_params, recommend_params
 
 # Configuration
-try:
-    locale.setlocale(locale.LC_ALL, 'zh_TW.UTF-8')
-except locale.Error:
-    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+for loc in []
+
+# Configuration
+for loc in ("zh_TW.UTF-8", "en_US.UTF-8", "C.UTF-8", "C"):
+    try:
+        locale.setlocale(locale.LC_ALL, loc)
+        break
+    except locale.Error:
+        continue
     
 router = APIRouter(tags=["search"])
 

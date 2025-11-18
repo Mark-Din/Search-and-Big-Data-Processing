@@ -84,7 +84,7 @@ jobs:
       - name: Run integration tests inside Docker network
         run: |
           docker run --rm -i \
-            --network bigdata-net \
+            --network search-and-big-data-processing_default \
             -v $PWD:/app \
             -w /app \
             python:3.11 \

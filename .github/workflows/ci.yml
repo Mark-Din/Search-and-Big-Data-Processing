@@ -83,8 +83,9 @@ jobs:
 
       - name: Run integration tests inside Docker network
         run: |
+          docker network create bigdata-net
           docker run --rm -i \
-            --network search-and-big-data-processing_default \
+            --network bigdata-net \
             -v $PWD:/app \
             -w /app \
             python:3.11 \
@@ -104,8 +105,9 @@ jobs:
 
       - name: Run system tests inside Docker network
         run: |
+          docker network create bigdata-net
           docker run --rm -i \
-            --network search-and-big-data-processing_default \
+            --network bigdata-net \
             -v $PWD:/app \
             -w /app \
             python:3.11 \

@@ -23,7 +23,7 @@ services:
     ports:
       - "3307:3306"  # Expose MySQL on port 3306
     profiles:
-      - search    
+      - ["search","test","dev","full"]    
     networks:
       - bigdata-net
       
@@ -43,7 +43,7 @@ services:
       - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
       - ./volumes/es_data:/usr/share/elasticsearch/data  # Persistent data storage for Elasticsearch
     profiles:
-      - search    
+      - ["search","test","dev","full"]    
     # depends_on:
     #   - mysql_db
     ports:
@@ -68,7 +68,7 @@ services:
     networks:
       - bigdata-net
     profiles:
-      - search    
+      - ["search","test","dev","full"]    
     # depends_on:
     #   - elasticsearch
     ports:
@@ -93,7 +93,7 @@ services:
       - /mnt/ssd/minio-hot:/data
     command: server /data --console-address ":9001"
     profiles: 
-       - storage
+      - ["storage","full"]    
     networks:
       - bigdata-net
 
@@ -112,7 +112,7 @@ services:
         exit 0;
       "
     profiles:
-      - storage
+      - ["storage","full"]    
     networks:
       - bigdata-net
 
@@ -142,7 +142,7 @@ services:
     ports:
       - "9092:9092"
     profiles:
-      - streaming
+      - ["streaming","test","dev","full"]    
     networks:
       - bigdata-net
 
@@ -154,7 +154,7 @@ services:
     volumes:
       - ./kafka/init_kafka.sh:/app/init_kafka.sh
     profiles:
-      - streaming
+      - ["streaming","test","dev","full"]    
     networks:
       - bigdata-net
 
@@ -168,9 +168,8 @@ services:
     depends_on:
       - kafka
       # - elasticsearch
-    
     profiles:
-      - streaming
+      - ["streaming","test","dev","full"]    
     networks:
       - bigdata-net
 
@@ -195,7 +194,7 @@ services:
     depends_on:
       - kafka
     profiles:
-      - streaming
+      - ["streaming","test","dev","full"]    
     networks:
       - bigdata-net
 
@@ -230,7 +229,7 @@ services:
     #   - elasticsearch
     #   - mysql_db
     profiles:
-      - spark
+      - ["spark","full"]    
     networks:
       - bigdata-net
 
@@ -254,33 +253,33 @@ services:
       - PYSPARK_NO_DRIVER=true
       - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
     profiles:
-      - spark
+      - ["spark","full"]    
     networks:
       - bigdata-net
 
-  spark-worker-2:
-    build:
-      context: .   # root of repo
-      dockerfile: spark_jobs/Dockerfile
-    container_name: spark-worker-2
-    # volumes:
-    #   - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
-    command: >
-      bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
-    depends_on:
-      - spark-master
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=4G
-      - SPARK_WORKER_CORES=2
-      - SPARK_MASTER_HOST=spark-master
-      - PYSPARK_NO_DRIVER=true
-      - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
-    profiles:
-      - spark
-    networks:
-      - bigdata-net
+  # spark-worker-2:
+  #   build:
+  #     context: .   # root of repo
+  #     dockerfile: spark_jobs/Dockerfile
+  #   container_name: spark-worker-2
+  #   # volumes:
+  #   #   - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
+  #   command: >
+  #     bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
+  #   depends_on:
+  #     - spark-master
+  #   environment:
+  #     - SPARK_MODE=worker
+  #     - SPARK_MASTER_URL=spark://spark-master:7077
+  #     - SPARK_WORKER_MEMORY=4G
+  #     - SPARK_WORKER_CORES=2
+  #     - SPARK_MASTER_HOST=spark-master
+  #     - PYSPARK_NO_DRIVER=true
+  #     - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
+  #   profiles:
+  #     - spark
+  #   networks:
+  #     - bigdata-net
 
   # jupyter:
   #   build:

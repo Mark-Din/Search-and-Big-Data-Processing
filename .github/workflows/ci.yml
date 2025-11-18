@@ -81,10 +81,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install pytest
-        run: |
-          pip install pytest pytest-mock elasticsearch mysql-connector-python
-
       - name: Run integration tests inside Docker network
         run: |
           docker run --rm -i \
@@ -92,7 +88,7 @@ jobs:
             -v $PWD:/app \
             -w /app \
             python:3.11 \
-            pytest -m integration -v
+            /bin/bash -c "pip install pytest pytest-mock elasticsearch mysql-connector-python && pytest -m integration -v"
 
 
   ##########################################################################
@@ -106,10 +102,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install pytest
-        run: |
-          pip install pytest pytest-mock elasticsearch mysql-connector-python
-
       - name: Run system tests inside Docker network
         run: |
           docker run --rm -i \
@@ -117,7 +109,7 @@ jobs:
             -v $PWD:/app \
             -w /app \
             python:3.11 \
-            pytest -m system -v
+            /bin/bash -c "pip install pytest pytest-mock elasticsearch mysql-connector-python" && pytest -m system -v
 
 
   ##########################################################################

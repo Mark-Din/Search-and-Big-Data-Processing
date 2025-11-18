@@ -25,8 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-mock
+          pip install -r tests/requirements.txt
 
       - name: Run unit tests
         run: pytest -m unit -v
@@ -80,7 +79,7 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
+        
       - name: Run integration tests inside Docker network
         run: |
           docker network create bigdata-net
@@ -89,7 +88,7 @@ jobs:
             -v $PWD:/app \
             -w /app \
             python:3.11 \
-            /bin/bash -c "pip install pytest pytest-mock elasticsearch mysql-connector-python && pytest -m integration -v"
+            /bin/bash -c "pip install-r tests/requirements.txt && pytest -m integration -v"
 
 
   ##########################################################################
@@ -111,7 +110,7 @@ jobs:
             -v $PWD:/app \
             -w /app \
             python:3.11 \
-            /bin/bash -c "pip install pytest pytest-mock elasticsearch mysql-connector-python" && pytest -m system -v
+            /bin/bash -c "pip install-r tests/requirements.txt && pytest -m system -v
 
 
   ##########################################################################

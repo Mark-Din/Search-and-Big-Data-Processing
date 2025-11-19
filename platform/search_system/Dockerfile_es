@@ -1,5 +1,5 @@
 # Dockerfile.elastic
 FROM docker.elastic.co/elasticsearch/elasticsearch:8.12.2
 
-# Set environment variables for Elasticsearch, Using --batch to avoid interactive prompts
+# Set environment variables for Elasticsearch, Using --batch to avoid interactive prompts, it is installed before Elasticsearch is started
 RUN elasticsearch-plugin install --batch analysis-icu 

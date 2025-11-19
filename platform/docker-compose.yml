@@ -45,11 +45,20 @@ services:
     # depends_on:
     #   - mysql_db
     ports:
-      - "9200:9200"
-      - "9300:9300"
+      - "9202:9200"
     networks:
       - bigdata-net
 
+  elastic_indices_init:
+    image: curlimages/curl:latest
+    build: 
+      context: ./search_system
+      dockerfile: Dockerfile_es_init
+    command: ["bash", "-c", "/app/init_es.py"]
+    networks:
+      - bigdata-net
+    profiles: ["search","test","dev","full"]    
+  
   fastapi_search_service:
     build:
       context: ./search_system
@@ -141,12 +150,12 @@ services:
       - bigdata-net
 
   kafka_init:
-    image: confluentinc/cp-kafka:7.6.0
-    depends_on:
+    build: 
+      context: .
+      dockerfile: kafka/Dockerfile_kafka_init
+    depends_on: 
       - kafka
     command: ["bash", "-c", "/app/init_kafka.sh"]
-    volumes:
-      - ./kafka/init_kafka.sh:/app/init_kafka.sh
     profiles: ["streaming","test","dev","full"]
     networks:
       - bigdata-net
@@ -160,7 +169,6 @@ services:
       - ./kafka/python_kafka:/app/python
     depends_on:
       - kafka
-      # - elasticsearch
     profiles: ["streaming","test","dev","full"]   
     networks:
       - bigdata-net

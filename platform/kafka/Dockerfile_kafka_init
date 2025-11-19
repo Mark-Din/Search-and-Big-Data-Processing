@@ -1,0 +1,3 @@
+FROM confluentinc/cp-kafka:7.6.0
+COPY kafka/init_kafka.sh /app/init_kafka.sh
+RUN chmod +x /app/init_kafka.sh

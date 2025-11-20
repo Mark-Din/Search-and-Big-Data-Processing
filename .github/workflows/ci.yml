@@ -82,12 +82,11 @@ jobs:
         
       - name: Run integration tests inside Docker network
         run: |
-          NETWORK=$(docker network ls --format "{{.Name}}" | grep "bigdata-net$")
-          echo "Detected network: $NETWORK"
-
+          docker inspect bigdata-net
+          
           docker run --rm -i \
-            --network $NETWORK \
-            -v $PWD:/app \
+            --network bigdata-net \
+            -v ./:/app \
             -w /app \
             python:3.11 \
             /bin/bash -c "pip install -r ./platform/tests/requirements.txt && pytest -m integration -v"
@@ -106,12 +105,10 @@ jobs:
 
       - name: Run system tests inside Docker network
         run: |
-          NETWORK = $(docker network ls --format "{{.Name}}" | grep "bigdata-net$")
-          echo "Network found $NETWORK"
-          
+
           docker run --rm -i \
-            --network $network \
-            -v $PWD:/app \
+            --network bigdata-net \
+            -v ./:/app \
             -w /app \
             python:3.11 \
             /bin/bash -c "pip install -r ./platform/tests/requirements.txt && pytest -m system -v

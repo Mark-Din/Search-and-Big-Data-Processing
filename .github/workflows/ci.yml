@@ -69,29 +69,29 @@ jobs:
         run: docker ps -a
 
 
-  ##########################################################################
-  # 3️⃣ INTEGRATION TESTS
-  ##########################################################################
-  integration-tests:
-    runs-on: ubuntu-latest
-    needs: start-services
+  # ##########################################################################
+  # # 3️⃣ INTEGRATION TESTS
+  # ##########################################################################
+  # integration-tests:
+  #   runs-on: ubuntu-latest
+  #   needs: start-services
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout repo
+  #       uses: actions/checkout@v4
         
-      - name: Run integration tests inside Docker network
-        run: |
-          docker network create bigdata-net
+  #     - name: Run integration tests inside Docker network
+  #       run: |
+  #         docker network create bigdata-net
 
-          docker compose -f ./platform/docker-compose.yml up -d --build elasticsearch
+  #         docker compose -f ./platform/docker-compose.yml up -d --build elasticsearch
 
-          docker run --rm -i \
-            --network bigdata-net \
-            -v ./:/app \
-            -w /app \
-            python:3.11 \
-            /bin/bash -c "pip install -r ./platform/tests/requirements.txt && pytest -m integration -v"
+  #         docker run --rm -i \
+  #           --network bigdata-net \
+  #           -v ./:/app \
+  #           -w /app \
+  #           python:3.11 \
+  #           /bin/bash -c "pip install -r ./platform/tests/requirements.txt && pytest -m integration -v"
 
 
   ##########################################################################

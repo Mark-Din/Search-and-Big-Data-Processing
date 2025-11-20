@@ -82,8 +82,10 @@ jobs:
         
       - name: Run integration tests inside Docker network
         run: |
-          docker inspect bigdata-net
-          
+          docker network create bigdata-net
+
+          docker compose -f ./platform/docker-compose.yml -d --build elasticsearch
+
           docker run --rm -i \
             --network bigdata-net \
             -v ./:/app \

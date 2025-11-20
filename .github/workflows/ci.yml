@@ -84,7 +84,7 @@ jobs:
         run: |
           docker network create bigdata-net
 
-          docker compose -f ./platform/docker-compose.yml -d --build elasticsearch
+          docker compose -f ./platform/docker-compose.yml up -d --build elasticsearch
 
           docker run --rm -i \
             --network bigdata-net \

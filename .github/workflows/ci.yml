@@ -82,9 +82,11 @@ jobs:
         
       - name: Run integration tests inside Docker network
         run: |
-          docker network create bigdata-net
+          NETWORK=$(docker network ls --format "{{.Name}}" | grep "bigdata-net$")
+          echo "Detected network: $NETWORK"
+
           docker run --rm -i \
-            --network bigdata-net \
+            --network $NETWORK \
             -v $PWD:/app \
             -w /app \
             python:3.11 \
@@ -104,9 +106,11 @@ jobs:
 
       - name: Run system tests inside Docker network
         run: |
-          docker network create bigdata-net
+          NETWORK = $(docker network ls --format "{{.Name}}" | grep "bigdata-net$")
+          echo "Network found $NETWORK"
+          
           docker run --rm -i \
-            --network bigdata-net \
+            --network $network \
             -v $PWD:/app \
             -w /app \
             python:3.11 \

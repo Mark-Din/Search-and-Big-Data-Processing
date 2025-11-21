@@ -87,6 +87,7 @@ jobs:
         
       - name: Build and start all services
         run: |
+          docker network create bigdata-net
           docker compose -f ./platform/docker-compose.yml up -d --build elasticsearch
           sleep 10
           docker ps
@@ -125,6 +126,7 @@ jobs:
 
       - name: Build and start all services
         run: |
+          docker network create bigdata-net
           docker compose -f ./platform/docker-compose.yml up -d --build mysql_db
           sleep 10
           docker ps

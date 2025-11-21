@@ -87,7 +87,7 @@ jobs:
         
       - name: Build and start all services
         run: |
-          docker compose up -d --build elasticsearch
+          docker compose -f ./platform/docker-compose.yml up -d --build elasticsearch
           sleep 10
           docker ps
 
@@ -125,7 +125,7 @@ jobs:
 
       - name: Build and start all services
         run: |
-          docker compose up -d --build mysql_db
+          docker compose -f ./platform/docker-compose.yml up -d --build mysql_db
           sleep 10
           docker ps
 
@@ -136,7 +136,7 @@ jobs:
 
       - name: Run system tests inside Docker network
         run: |
-          echo "🔧 Ensuring network exists..."
+          echo "Ensuring network exists..."
           docker network create bigdata-net || true
 
           NETWORK=$(docker network ls --format "{{.Name}}" | grep "bigdata-net$")

@@ -259,29 +259,29 @@ services:
     networks:
       - bigdata-net
 
-  # spark-worker-2:
-  #   build:
-  #     context: .   # root of repo
-  #     dockerfile: spark_jobs/Dockerfile
-  #   container_name: spark-worker-2
-  #   # volumes:
-  #   #   - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
-  #   command: >
-  #     bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
-  #   depends_on:
-  #     - spark-master
-  #   environment:
-  #     - SPARK_MODE=worker
-  #     - SPARK_MASTER_URL=spark://spark-master:7077
-  #     - SPARK_WORKER_MEMORY=4G
-  #     - SPARK_WORKER_CORES=2
-  #     - SPARK_MASTER_HOST=spark-master
-  #     - PYSPARK_NO_DRIVER=true
-  #     - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
-  #   profiles:
-  #     - spark
-  #   networks:
-  #     - bigdata-net
+  spark-worker-2:
+    build:
+      context: .   # root of repo
+      dockerfile: spark_jobs/Dockerfile
+    container_name: spark-worker-2
+    # volumes:
+    #   - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
+    command: >
+      bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=4G
+      - SPARK_WORKER_CORES=2
+      - SPARK_MASTER_HOST=spark-master
+      - PYSPARK_NO_DRIVER=true
+      - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
+    profiles:
+      - spark
+    networks:
+      - bigdata-net
 
   # jupyter:
   #   build:
@@ -306,12 +306,16 @@ services:
   #   networks:
   #     - bigdata-net
 
+  test-runner:
+    image: python:3.11
+    volumes:
+      - .:/app
+    working_dir: /app
+    networks:
+      - bigdata-net
 
 volumes:
   mysql_data:
     external: true
 
-networks:
-  bigdata-net:
-    external: true
-    
+

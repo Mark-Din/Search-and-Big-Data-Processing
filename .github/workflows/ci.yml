@@ -68,10 +68,10 @@ jobs:
       - name: Show running containers
         run: docker ps -a
 
-      - nane: Check networks
+      - name: Check networks
         run: docker network ls
 
-      - nane: Inspect docker network bigdata-net 
+      - name: Inspect docker network bigdata-net 
         run: docker inspect bigdata-net  
 
   ##########################################################################
@@ -85,10 +85,10 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         
-      - nane: Inspect docker network bigdata-net again
+      - name: Inspect docker network bigdata-net again
         run: docker inspect bigdata-net  
 
-      - nane: Add elasticsearch container to network bigdata-net
+      - name: Add elasticsearch container to network bigdata-net
         run: docker network connect bigdata-net elasticsearch
 
       - name: Run integration tests inside Docker network

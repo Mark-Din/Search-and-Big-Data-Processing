@@ -38,6 +38,11 @@ services:
       # - xpack.security.http.ssl.keystore.path=certs/http.p12
       # - xpack.security.http.ssl.truststore.path=certs/http.p12
       - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     volumes:
       - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
       - ./volumes/es_data:/usr/share/elasticsearch/data  # Persistent data storage for Elasticsearch

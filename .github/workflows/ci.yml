@@ -87,7 +87,7 @@ jobs:
         
       - name: Build and start all services
         run: |
-          docker compose --profile up -d elasticsearch
+          docker compose up -d --build elasticsearch
           sleep 10
           docker ps
 
@@ -125,7 +125,7 @@ jobs:
 
       - name: Build and start all services
         run: |
-          docker compose --profile up -d mysql_db
+          docker compose up -d --build mysql_db
           sleep 10
           docker ps
 

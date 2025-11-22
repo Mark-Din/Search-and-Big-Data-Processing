@@ -71,7 +71,7 @@ jobs:
         run: docker network ls
 
       - name: Inspect docker network bigdata-net 
-        run: docker inspect bigdata-net  
+        run: docker inspect platform_bigdata-net  
 
   ##########################################################################
   # 3️⃣ INTEGRATION TESTS
@@ -84,16 +84,31 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         
-      - name: Start services
-        run: |
-          docker compose -f ./platform/docker-compose.yml up -d --build elasticsearch
-          sleep 10
-          docker ps
+      - name: Inspect docker network bigdata-net 
+        run: docker inspect platform_bigdata-net  
+        
+      # - name: Start services
+      #   run: |
+      #     docker compose -f ./platform/docker-compose.yml up -d --build elasticsearch
+      #     sleep 10
+      #     docker ps
 
-      - name: Run integration tests
+      # - name: Run integration tests
+      #   run: |
+      #     docker compose run --rm test-runner \
+      #       bash -c "pytest -m integration -v"
+
+      - name: Run integration tests inside Docker network
         run: |
-          docker compose run --rm test-runner \
-            bash -c "pytest -m integration -v"
+          NETWORK=$(docker network ls --format "{{.Name}}" | grep "bigdata-net$")
+          echo "Detected network: $NETWORK"
+
+          docker run --rm -i \
+            --network $NETWORK \
+            -v $PWD:/app \
+            -w /app \
+            python:3.11 \
+            /bin/bash -c "pip install -r ./platform/tests/requirements.txt && pytest -m integration -v"
 
 
   ##########################################################################

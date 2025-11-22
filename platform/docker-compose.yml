@@ -314,8 +314,6 @@ services:
     networks:
       - bigdata-net
 
-volumes:
-  mysql_data:
-    external: true
 
-
+networks:
+  bigdata-net:

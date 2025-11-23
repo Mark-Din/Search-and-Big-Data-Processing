@@ -84,16 +84,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         
-      # - name: Start services
-      #   run: |
-      #     docker compose -f ./platform/docker-compose.yml up -d --build elasticsearch
-      #     sleep 10
-      #     docker ps
-
-      # - name: Run integration tests
-      #   run: |
-      #     docker compose run --rm test-runner \
-      #       bash -c "pytest -m integration -v"
+      - name: Start services
+        run: |
+          docker compose -f ./platform/docker-compose.yml up -d --build elasticsearch
+          sleep 10
+          docker ps
 
       - name: List docker network
         run: docker network ls
@@ -101,7 +96,7 @@ jobs:
       - name: Run integration tests inside Docker network
         run: |
           docker compose -f ./platform/docker-compose.yml run --rm test-runner \
-              bash -c "pip install -r ./platform/tests/requirements.txt && pytest -m integration -v"
+              bash -c "pip install -r /app/platform/tests/requirements.txt && pytest -m integration -v"
 
 
   ##########################################################################

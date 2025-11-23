@@ -1,3 +1,5 @@
+
+-- For arxiv project
 CREATE DATABASE IF NOT EXISTS arxiv CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE arxiv;
 
@@ -18,6 +20,7 @@ CREATE TABLE IF NOT EXISTS coauthor_stats (
 );
 
 
+-- For arxiv whole_corp
 CREATE DATABASE IF NOT EXISTS whole_corp;
 USE whole_corp;
 
@@ -33,4 +36,7 @@ CREATE TABLE IF NOT EXISTS staging_clusters_vector (
     vector JSON
 );
 
+
+-- For Hive metedata
+CREATE DATABASE IF EXISTS metastore;
 

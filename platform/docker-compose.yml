@@ -25,7 +25,18 @@ services:
     profiles: ["search","test","dev","full"]    
     networks:
       - bigdata-net
-      
+  
+  mysql:
+    image: mysql:8
+    container_name: hive_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: metastore
+    ports:
+      - "3308:3306"
+  networks:
+    - bigdata-net
+
   elasticsearch:
     build:
       context: ./search_system
@@ -125,8 +136,9 @@ services:
     networks:
       - bigdata-net
 
+
   # --------------------
-  # Kafka
+  # Kafka cluster
   # --------------------
   kafka:
     image: confluentinc/cp-kafka:7.6.0
@@ -306,6 +318,14 @@ services:
   #   networks:
   #     - bigdata-net
 
+  # --------------------
+  # Hive metadata Cluster
+  # --------------------
+
+
+  # --------------------
+  # Test Cluster
+  # --------------------
   test-runner:
     image: python:3.11
     volumes:

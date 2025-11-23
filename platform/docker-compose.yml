@@ -142,16 +142,16 @@ services:
   # --------------------
   kafka:
     image: confluentinc/cp-kafka:7.6.0
-    container_name: ${kafka_main}
+    container_name: kafka
     environment:
       # KRaft mode enabled
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@${kafka_main}:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
 
       # Listeners
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${kafka_main}:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
 
       # Basic settings

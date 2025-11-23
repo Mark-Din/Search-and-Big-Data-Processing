@@ -2,6 +2,8 @@ FROM apache/airflow:3.1.2
 
 USER root
 
+COPY ../spark_jobs/spark-defaults.conf /opt/spark/conf/spark-defaults.conf
+
 # Install OpenJDK-17
 RUN apt-get update && \
     apt-get install -y openjdk-17-jdk && \

@@ -3,7 +3,7 @@
 # # ---------------
 services:
   # For custome purpose
-  mysql_db:
+  postgres_db:
     build:
       context: .
       dockerfile: sql/Dockerfile
@@ -25,17 +25,6 @@ services:
     profiles: ["search","test","dev","full"]    
     networks:
       - bigdata-net
-  
-  mysql:
-    image: mysql:8
-    container_name: hive_mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: metastore
-    ports:
-      - "3308:3306"
-  networks:
-    - bigdata-net
 
   elasticsearch:
     build:
@@ -59,7 +48,7 @@ services:
       - ./volumes/es_data:/usr/share/elasticsearch/data  # Persistent data storage for Elasticsearch
     profiles: ["search","test","dev","full"]    
     # depends_on:
-    #   - mysql_db
+    #   - postgres_db
     ports:
       - "9202:9200"
     networks:
@@ -228,13 +217,16 @@ services:
     #   - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab # For jupyterlab to test spark
     environment:
       - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_MASTER_HOST=spark-master
       - PYSPARK_NO_DRIVER=true
-      - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
       - SPARK_MASTER_REST_ENABLED=true
       - SPARK_MASTER_WEBUI_PORT=8080
       - SPARK_MASTER_PORT=7077
-      # - SPARK_MASTER_REST_PORT=6066
+      # For Hive
+      - SPARK_HIVE_METASTORE_URI=thrift://hive-metastore:9083
+      - SPARK_CONF_DIR=/opt/spark/conf
     ports:
       - "7077:7077"
       # - "6066:6066"   # REST endpoint
@@ -253,8 +245,6 @@ services:
       context: .   # root of repo
       dockerfile: spark_jobs/Dockerfile
     container_name: spark-worker-1
-    # volumes:
-    #     - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
     depends_on:
       - spark-master
     command: >
@@ -266,7 +256,6 @@ services:
       - SPARK_WORKER_CORES=2
       - SPARK_MASTER_HOST=spark-master
       - PYSPARK_NO_DRIVER=true
-      - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
     profiles: ["spark","full"]
     networks:
       - bigdata-net
@@ -276,8 +265,6 @@ services:
       context: .   # root of repo
       dockerfile: spark_jobs/Dockerfile
     container_name: spark-worker-2
-    # volumes:
-    #   - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
     command: >
       bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
     depends_on:
@@ -289,7 +276,6 @@ services:
       - SPARK_WORKER_CORES=2
       - SPARK_MASTER_HOST=spark-master
       - PYSPARK_NO_DRIVER=true
-      - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
     profiles:
       - spark
     networks:
@@ -306,7 +292,6 @@ services:
   #   environment:
   #     - GRANT_SUDO=yes
   #     - PYSPARK_NO_DRIVER=true
-  #     - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
   #     - JUPYTER_ENABLE_LAB=yes
   #   ports:
   #     - "8888:8888"
@@ -321,7 +306,39 @@ services:
   # --------------------
   # Hive metadata Cluster
   # --------------------
+  postgres_db_hive:
+    image: postgres:12
+    container_name: postgres_db_hive
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "!QAZ2wsx"
+      POSTGRES_DB: metastore
+    ports:
+      - "5432:5432"
+    volumes:
+        - ./volumes/postgres_data:/var/lib/postgresql/data
+    profiles:
+      - hive
+    networks:
+      - bigdata-net
 
+  hive-metastore:
+    image: bde2020/hive-metastore-postgresql:latest
+    container_name: hive_metastore
+    environment:
+      METASTORE_TYPE: postgresql 
+      CONNECTION_URL: jdbc:postgresql://postgres_db_hive:5432/metastore
+      CONNECTION_DRIVER_NAME: org.postgresql.Driver
+      CONNECTION_USER_NAME: postgres
+      CONNECTION_PASSWORD: "!QAZ2wsx"
+    ports:
+      - "9083:9083"   # Hive Metastore Thrift port
+    depends_on:
+      - postgres_db_hive
+    profiles:
+      - hive
+    networks:
+      - bigdata-net
 
   # --------------------
   # Test Cluster

@@ -101,7 +101,7 @@ jobs:
       - name: Run integration tests inside Docker network
         run: |
           docker compose -f ./platform/docker-compose.yml run --rm test-runner \
-              bash -c "pytest -m integration -v"
+              bash -c "pip install -r ./platform/tests/requirements.txt && pytest -m integration -v"
 
 
   ##########################################################################

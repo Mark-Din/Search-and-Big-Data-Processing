@@ -1,18 +1,18 @@
 pytest
 pytest-mock
-fastapi
-uvicorn
-pydantic
-starlette
-sqlalchemy
-pandas
-pyspark
+# fastapi
+# uvicorn
+# pydantic
+# starlette
+# sqlalchemy
+# pandas
+# pyspark
 elasticsearch==8.13.0
-Requests==2.32.5
-httpx==0.28.1
-mysql-connector-python
-numpy==1.26.3
-itsdangerous==2.1.2
-uvicorn==0.38.0
-minio==7.2.16
-kafka-python
+# Requests==2.32.5
+# httpx==0.28.1
+# mysql-connector-python
+# numpy==1.26.3
+# itsdangerous==2.1.2
+# uvicorn==0.38.0
+# minio==7.2.16
+# kafka-python

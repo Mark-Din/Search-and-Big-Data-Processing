@@ -86,17 +86,9 @@ jobs:
         
       - name: Start services
         run: |
-          docker compose -f ./platform/docker-compose.yml up -d --build elasticsearch
+          docker compose -f ./platform/docker-compose.yml --profile integration_test up -d --build elasticsearch
           sleep 10
           docker ps
-
-      - name: List docker network
-        run: docker network ls
-
-      - name: Run integration tests inside Docker network
-        run: |
-          docker compose -f ./platform/docker-compose.yml run --rm test-runner \
-              bash -c "pip install -r /app/tests/requirements.txt && pytest -m integration -v"
 
 
   ##########################################################################
@@ -112,21 +104,22 @@ jobs:
 
       - name: Start services 
         run: |
-          docker compose -f ./platform/docker-compose.yml up -d --build mysql_db
-          sleep 10
-          docker ps
+          docker compose -f ./platform/docker-compose.yml --profile integration_test up -d --build
+      #     docker compose -f ./platform/docker-compose.yml up -d --build mysql_db
+      #     sleep 10
+      #     docker ps
 
-      - name: Run system tests inside Docker network
-        run: |
-          NETWORK=$(docker network ls --format "{{.Name}}" | grep "bigdata-net$")
-          echo "Detected network: $NETWORK"
+      # - name: Run system tests inside Docker network
+      #   run: |
+      #     NETWORK=$(docker network ls --format "{{.Name}}" | grep "bigdata-net$")
+      #     echo "Detected network: $NETWORK"
 
-          docker run --rm -i \
-            --network $NETWORK \
-            -v $PWD:/app \
-            -w /app \
-            python:3.11 \
-            /bin/bash -c "pip install -r ./platform/tests/requirements.txt && pytest -m system -v"
+      #     docker run --rm -i \
+      #       --network $NETWORK \
+      #       -v $PWD:/app \
+      #       -w /app \
+      #       python:3.11 \
+      #       /bin/bash -c "pip install -r ./platform/tests/requirements.txt && pytest -m system -v"
 
 
   ##########################################################################

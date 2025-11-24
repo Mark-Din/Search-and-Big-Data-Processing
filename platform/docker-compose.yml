@@ -3,39 +3,39 @@
 # # ---------------
 services:
   # For custome purpose
-  mysql_db:
-    build:
-      context: .
-      dockerfile: sql/Dockerfile
-    container_name: mysql_db_container
-    environment:
-      MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
-      MYSQL_ROOT_HOST: "%"
-      MYSQL_DATABASE: whole_corp
-    command: [
-      "--server-id=1",
-      "--log-bin=mysql-bin",
-      "--binlog-format=ROW",
-      "--binlog-row-image=FULL"
-    ]
-    volumes:
-      - ./volumes/mysql_data:/var/lib/mysql
-    ports:
-      - "3307:3306"  # Expose MySQL on port 3306
-    profiles: ["search","test","dev","full"]    
-    networks:
-      - bigdata-net
+  # mysql_db:
+  #   build:
+  #     context: .
+  #     dockerfile: sql/Dockerfile
+  #   container_name: mysql_db_container
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
+  #     MYSQL_ROOT_HOST: "%"
+  #     MYSQL_DATABASE: whole_corp
+  #   command: [
+  #     "--server-id=1",
+  #     "--log-bin=mysql-bin",
+  #     "--binlog-format=ROW",
+  #     "--binlog-row-image=FULL"
+  #   ]
+  #   volumes:
+  #     - ./volumes/mysql_data:/var/lib/mysql
+  #   ports:
+  #     - "3307:3306"  # Expose MySQL on port 3306
+  #   profiles: ["search","test","dev","full"]    
+  #   networks:
+  #     - bigdata-net
   
-  mysql:
-    image: mysql:8
-    container_name: hive_mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: metastore
-    ports:
-      - "3308:3306"
-    networks:
-      - bigdata-net
+  # mysql:
+  #   image: mysql:8
+  #   container_name: hive_mysql
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: root
+  #     MYSQL_DATABASE: metastore
+  #   ports:
+  #     - "3308:3306"
+  #   networks:
+  #     - bigdata-net
 
   elasticsearch:
     build:
@@ -57,7 +57,7 @@ services:
     volumes:
       - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
       - ./volumes/es_data:/usr/share/elasticsearch/data  # Persistent data storage for Elasticsearch
-    profiles: ["search","test","dev","full"]    
+    profiles: ["search","test","dev","full", "integration_test"]    
     # depends_on:
     #   - mysql_db
     ports:
@@ -327,12 +327,17 @@ services:
   # Test Cluster
   # --------------------
   test-runner:
-    image: python:3.11
+    build:
+      context: .
+      dockerfile: test-runner.Dockerfile
+    container_name: test_py
     volumes:
       - .:/app
     working_dir: /app
+    profiles: ["integration_test"]    
     networks:
       - bigdata-net
+
 
 networks:
   bigdata-net:

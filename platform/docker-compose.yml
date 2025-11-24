@@ -34,8 +34,8 @@ services:
       MYSQL_DATABASE: metastore
     ports:
       - "3308:3306"
-  networks:
-    - bigdata-net
+    networks:
+      - bigdata-net
 
   elasticsearch:
     build:
@@ -334,6 +334,6 @@ services:
     networks:
       - bigdata-net
 
-
 networks:
   bigdata-net:
+    driver: bridge

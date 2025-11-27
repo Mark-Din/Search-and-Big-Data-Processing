@@ -213,8 +213,8 @@ services:
     container_name: spark-master
     command: >
       bash -c "/opt/spark/sbin/start-master.sh && tail -f /dev/null"
-    # volumes:
-    #   - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab # For jupyterlab to test spark
+    volumes:
+      - ./spark_jobs/conf:/opt/spark/conf
     environment:
       - SPARK_MODE=master
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
@@ -245,6 +245,8 @@ services:
       context: .   # root of repo
       dockerfile: spark_jobs/Dockerfile
     container_name: spark-worker-1
+    volumes:
+      - ./spark_jobs/conf:/opt/spark/conf
     depends_on:
       - spark-master
     command: >
@@ -260,26 +262,28 @@ services:
     networks:
       - bigdata-net
 
-  spark-worker-2:
-    build:
-      context: .   # root of repo
-      dockerfile: spark_jobs/Dockerfile
-    container_name: spark-worker-2
-    command: >
-      bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
-    depends_on:
-      - spark-master
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=4G
-      - SPARK_WORKER_CORES=2
-      - SPARK_MASTER_HOST=spark-master
-      - PYSPARK_NO_DRIVER=true
-    profiles:
-      - spark
-    networks:
-      - bigdata-net
+  # spark-worker-2:
+  #   build:
+  #     context: .   # root of repo
+  #     dockerfile: spark_jobs/Dockerfile
+  #   container_name: spark-worker-2
+  #   command: >
+  #     bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
+  #   volumes:
+  #     - ./spark_jobs/conf:/opt/spark/conf
+  #   depends_on:
+  #     - spark-master
+  #   environment:
+  #     - SPARK_MODE=worker
+  #     - SPARK_MASTER_URL=spark://spark-master:7077
+  #     - SPARK_WORKER_MEMORY=4G
+  #     - SPARK_WORKER_CORES=2
+  #     - SPARK_MASTER_HOST=spark-master
+  #     - PYSPARK_NO_DRIVER=true
+  #   profiles:
+  #     - spark
+  #   networks:
+  #     - bigdata-net
 
   # jupyter:
   #   build:
@@ -323,22 +327,23 @@ services:
       - bigdata-net
 
   hive-metastore:
-    image: bde2020/hive-metastore-postgresql:latest
-    container_name: hive_metastore
+    image: apache/hive:standalone-metastore-4.1.0
+    container_name: hive-metastore
     environment:
-      METASTORE_TYPE: postgresql 
+      SERVICE_NAME: metastore
+      HIVE_METASTORE_DB_TYPE: postgres
       CONNECTION_URL: jdbc:postgresql://postgres_db_hive:5432/metastore
-      CONNECTION_DRIVER_NAME: org.postgresql.Driver
       CONNECTION_USER_NAME: postgres
       CONNECTION_PASSWORD: "!QAZ2wsx"
+      HIVE_METASTORE_DRIVE: org.postgresql.Driver
     ports:
-      - "9083:9083"   # Hive Metastore Thrift port
+      - "9083:9083"
     depends_on:
       - postgres_db_hive
-    profiles:
-      - hive
     networks:
       - bigdata-net
+    profiles:
+      - hive
 
   # --------------------
   # Test Cluster

@@ -7,7 +7,7 @@ COPY ./spark_jobs/requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt
 
 COPY ./airflow/include/dependencies/* /opt/spark/jars
-COPY ./spark_jobs/spark-defaults.conf /opt/spark/conf/spark-defaults.conf
+# COPY ./spark_jobs/spark-defaults.conf /opt/spark/conf/spark-defaults.conf
 
 ENV DEBIAN_FRONTEND=noninteractive
 

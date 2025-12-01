@@ -77,12 +77,12 @@ services:
   
   fastapi_search_service:
     build:
-      context: ./search_system
-      dockerfile: Dockerfile_py
+      context: .
+      dockerfile: search_system/Dockerfile_py
     container_name: fastapi_search_service
     volumes:
       - ./search_system/es_certs:/usr/certs
-      - ./search_system/FastAPI_service/code:/app  # Persistent data storage for FastAPI
+      - ./search_system/FastAPI_service/code:/app/code  # Persistent data storage for FastAPI
     environment:
       - ES_USERNAME=elastic
       - ES_PASSWORD=gAcstb8v-lFCVzCBC__a  # Use the manually set password
@@ -311,7 +311,7 @@ services:
   #   ports:
   #     - "8888:8888"
   #   profiles:
-  #     - spark
+  #     - sparks
   #   command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --ip=0.0.0.0
   #   depends_on:
   #     - spark-master
@@ -341,4 +341,4 @@ services:
 
 networks:
   bigdata-net:
-    driver: bridge
+    # driver: bridge

@@ -17,8 +17,9 @@ RUN useradd -m appuser
 WORKDIR /app
 
 # Copy the current directory contents into the container at /app
-COPY requirements.txt /app/requirements.txt
-COPY ./FastAPI_service/code /app
+COPY ./search_system/requirements.txt /app/requirements.txt
+COPY ./search_system/FastAPI_service/code /app/code
+COPY ./python_common /app/common
 
 # Create the logs directory and set permissions
 RUN mkdir -p /app/logs && \
@@ -35,7 +36,7 @@ ENV PATH="/home/appuser/.local/bin:${PATH}"
 RUN pip install -r /app/requirements.txt
 
 # Copy supervisor config
-COPY ./FastAPI_service/supervisord.conf /etc/supervisord.conf
+COPY ./search_system/FastAPI_service/supervisord.conf /etc/supervisord.conf
 
 # Expose both ports
 EXPOSE 3002 8501

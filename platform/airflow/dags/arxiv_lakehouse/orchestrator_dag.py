@@ -7,7 +7,7 @@ from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.email import send_email
 
 sys.path.append('/opt/airflow')
-from include.mysql_log import store_metadata
+from include.code.mysql_log import store_metadata
 
 # -------------------------------------------------------------------
 # DAG configuration

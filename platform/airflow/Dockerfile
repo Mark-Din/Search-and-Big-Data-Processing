@@ -20,6 +20,8 @@ RUN mkdir -p /mnt/spark-tmp/local && \
 USER airflow
 
 COPY requirements.txt /requirements.txt
+COPY ../python_common /include
+
 RUN pip install --no-cache-dir -r /requirements.txt
 
 

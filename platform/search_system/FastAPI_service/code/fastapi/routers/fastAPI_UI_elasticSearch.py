@@ -5,18 +5,17 @@ from fastapi import Query, Request, APIRouter, HTTPException, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 import locale
 from fastapi import Body
-from pydantic import BaseModel
 
 # Custom local imports
 import sys
 import os
 # sys.path.append('/app/common')
-
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..",".."))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 sys.path.append(os.path.join(PROJECT_ROOT,  "common"))
-print('path:',os.path.join(PROJECT_ROOT, "common"))
+print('path====:',os.path.join(PROJECT_ROOT, "common"))
+
 from init_log import initlog
-from connection import ElasticSearchConnectionManager
+from connection import ConnectionManager
 
 logger = initlog('fastapi')
 from queries.query_arxiv import all_params, knn_params
@@ -39,7 +38,7 @@ def format_currency(number):
 
 
 def tokenization(text, index_name) -> list:
-    es = ElasticSearchConnectionManager._create_es_connection()
+    es = ConnectionManager.elastic()
     """Tokenize a text string."""
     analysis_text = es.indices.analyze(index=index_name, body={"text": text, "analyzer": "english"})
     analyzed_tokens_list = [token['token'] for token in analysis_text['tokens']]
@@ -53,7 +52,7 @@ def search(index_name, search_param, es):
     try:
         return es.search(index=index_name, body=search_param)
     except Exception as e:
-        # es = ElasticSearchConnectionManager._create_es_connection()
+        # es = ConnectionManager._create_es_connection()
         return es.search(index=index_name, body=search_param)
 
 def search_query(es, index_name, search_params=None):
@@ -94,7 +93,7 @@ def search_query(es, index_name, search_params=None):
 
 @router.get("/get_indices", response_class=JSONResponse)
 async def perform_index_search(
-        es: ElasticSearchConnectionManager = Depends(ElasticSearchConnectionManager.get_instance)
+        es: ConnectionManager = Depends(ConnectionManager.elastic)
 ):
     try:
         indices = es.indices.get_alias(index="*,-.*")
@@ -110,7 +109,7 @@ async def perform_index_search(
 async def full_search(request: Request,
                         query: str = Query(...),
                         index_name: str = '',
-                        es = Depends(ElasticSearchConnectionManager.get_instance)):
+                        es = Depends(ConnectionManager.elastic)):
     
     # Tokenize the queries
     try:
@@ -140,20 +139,20 @@ async def full_search(request: Request,
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/knn_search")
-async def knn_search(
-    vector: list = Body(..., embed=True),
-    k: int = 10,
-    es: ElasticSearchConnectionManager = Depends(ElasticSearchConnectionManager.get_instance)
-):
+# @router.post("/knn_search")
+# async def knn_search(
+#     vector: list = Body(..., embed=True),
+#     k: int = 10,
+#     es: ConnectionManager = Depends(ConnectionManager.elastic)
+# ):
     
-    try:
-        logger.info(f'KNN search with k={k} and vector length={len(vector)}')
-        query = knn_params(vector, k)
-        response = es.search(index=INDEX_NAME, body=query)
-        results = [hit["_source"] for hit in response["hits"]["hits"]]
-        return JSONResponse(content={"results": results, "total_hits": len(results)})
-    except Exception as e:
-        logger.error(f"KNN search failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+#     try:
+#         logger.info(f'KNN search with k={k} and vector length={len(vector)}')
+#         query = knn_params(vector, k)
+#         response = es.search(index=INDEX_NAME, body=query)
+#         results = [hit["_source"] for hit in response["hits"]["hits"]]
+#         return JSONResponse(content={"results": results, "total_hits": len(results)})
+#     except Exception as e:
+#         logger.error(f"KNN search failed: {e}", exc_info=True)
+#         raise HTTPException(status_code=500, detail=str(e))
 

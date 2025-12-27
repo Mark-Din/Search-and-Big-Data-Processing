@@ -12,12 +12,12 @@ This project implements an end-to-end data pipeline for arXiv and some other com
 ### 🗺️ High-Level Data Flow
 The following diagram illustrates the overall flow of data from ingestion to the user interface.
 
-![High-Level Architecture](image/architecture_overview.png)
+![High-Level Architecture](projects/arXiv_lakehouse/architecture_overview.png)
 
 ### ⚙️ Logical Process Flow
 The diagram below details how each component interacts and how data moves through the system.
 
-![Logical Workflow](image/architecture_flowchart.png)
+![Logical Workflow](projects/arXiv_lakehouse/architecture_flowchart.png)
 
 **Layer Summary**
 - Ingestion → ETL → Feature Engineering → Clustering → Elasticsearch → Streamlit + FastAPI  
@@ -68,7 +68,7 @@ The diagram below details how each component interacts and how data moves throug
 - Cumulative submissions per author/institution.  
 - Co-authorship network visualization.
 
-![alt text](image/monitoring_dashboard.png)
+![alt text](projects/arXiv_lakehouse/monitoring_dashboard.png)
 <!-- - Co-authorship network visualization. -->
 
 ---

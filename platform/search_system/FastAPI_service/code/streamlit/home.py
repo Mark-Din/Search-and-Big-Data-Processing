@@ -41,7 +41,7 @@ async def search_for_similarity(client, name):
     # Request to search within the selected index
     response = await client.get(
                                 "http://127.0.0.1:3002/recommend_search",
-                                params={'companyName': name}
+                                params={'companyName': name, 'index_name': TABLE.lower()}
                             )
     if response.status_code != 200:
         print("Error:", response.status_code, response.text)
@@ -54,7 +54,7 @@ async def get_recommendations(vector):
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             "http://127.0.0.1:3002/knn_search",
-            json={"vector": vector, "k": 5}
+            json={"vector": vector, "k": 5, 'index_name': TABLE.lower()}
         )
         logger.info(f'Recommendation response status: {resp.json()}')
         return resp.json()

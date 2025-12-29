@@ -18,7 +18,7 @@ from init_log import initlog
 from connection import ConnectionManager
 
 logger = initlog('fastapi')
-from queries.query_arxiv import all_params, knn_params
+from queries.query_arxiv import all_params, knn_params, search_company_params
 from queries.query_smb import all_params, recommend_params
 
 # Configuration
@@ -139,20 +139,53 @@ async def full_search(request: Request,
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# @router.post("/knn_search")
-# async def knn_search(
-#     vector: list = Body(..., embed=True),
-#     k: int = 10,
-#     es: ConnectionManager = Depends(ConnectionManager.elastic)
-# ):
-    
-#     try:
-#         logger.info(f'KNN search with k={k} and vector length={len(vector)}')
-#         query = knn_params(vector, k)
-#         response = es.search(index=INDEX_NAME, body=query)
-#         results = [hit["_source"] for hit in response["hits"]["hits"]]
-#         return JSONResponse(content={"results": results, "total_hits": len(results)})
-#     except Exception as e:
-#         logger.error(f"KNN search failed: {e}", exc_info=True)
-#         raise HTTPException(status_code=500, detail=str(e))
+@router.get("/recommend_search")
+async def recommend_system(
+    companyName: str = '', 
+    es: ConnectionManager = Depends(ConnectionManager.get_instance)
+    ):
 
+    try:
+        # Extract the search parameters
+        company_param = search_company_params(companyName)
+        company_result, _ = search_query(es, company_param)  # Assume search_query processes these params
+
+        logger.info(f'company_result:========{company_result}')
+        # Extract vector and cluseter from the first result
+        
+        if 'vector' in company_result:
+            vector = company_result[0]['vector']
+            cluster = company_result[0]['cluster']
+
+            search_params = recommend_params(vector, cluster)
+
+            logger.info(f'=========search_params: {search_params}=========')
+            results, total_hits = search_query(es, search_params)  # Assume search_query processes these params
+            logger.debug(f'=========results&total_hits:{results} , {total_hits}=========')
+            logger.debug(f'=========search_params: {search_params}===========')
+            # Return extracted fields
+            return JSONResponse(content={"results": results, "total_hits": total_hits})
+        else:
+            return JSONResponse(content={"results": [], "total_hits": 0})
+
+    except AttributeError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid data format: {e}")
+    
+
+@router.post("/knn_search")
+async def knn_search(
+    vector: list = Body(..., embed=True),
+    k: int = 10,
+    index_name: str = Query(..., description='For search specific data'), 
+    es: ConnectionManager = Depends(ConnectionManager.get_instance)
+):
+    
+    try:
+        logger.info(f'KNN search with k={k} and vector length={len(vector)}')
+        query = knn_params(vector, k)
+        response = es.search(index=index_name, body=query)
+        results = [hit["_source"] for hit in response["hits"]["hits"]]
+        return JSONResponse(content={"results": results, "total_hits": len(results)})
+    except Exception as e:
+        logger.error(f"KNN search failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))

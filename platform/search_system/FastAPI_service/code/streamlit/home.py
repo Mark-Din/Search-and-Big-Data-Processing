@@ -41,7 +41,7 @@ async def search_for_similarity(client, name):
     # Request to search within the selected index
     response = await client.get(
                                 "http://127.0.0.1:3002/recommend_search",
-                                params={'companyName': name, 'index_name': TABLE.lower()}
+                                params={'companyName': name}
                             )
     if response.status_code != 200:
         print("Error:", response.status_code, response.text)

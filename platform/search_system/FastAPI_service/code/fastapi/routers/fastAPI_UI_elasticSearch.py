@@ -18,8 +18,8 @@ from init_log import initlog
 from connection import ConnectionManager
 
 logger = initlog('fastapi')
-from queries.query_arxiv import all_params, knn_params, search_company_params
-from queries.query_smb import all_params, recommend_params
+from queries.query_arxiv import all_params, knn_params
+from queries.query_smb import all_params, recommend_params, search_company_params
 
 # Configuration
 for loc in ("zh_TW.UTF-8", "en_US.UTF-8", "C.UTF-8", "C"):

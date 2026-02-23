@@ -158,5 +158,5 @@ aws-java-sdk-bundle-1.11.1026.jar
 # kafka connect
 confluentinc-kafka-connect-elasticsearch-14.1.0
 
-# jar file
+#jar
 *.jar

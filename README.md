@@ -108,11 +108,13 @@ The diagram below details how each component interacts and how data moves throug
     # You need to have Astronomer.Astro installed first
     astro dev start
     ```
-3. Start other services
+3. Adjust docker-compose.yml if needed (e.g., ports, volumes).
+    Chagen minio bind mount to /mnt/data if you want to persist data across restarts.
+4. Start other services
     ```bash
     docker-compose up --build
     ``` 
-4. Access UIs
+5. Access UIs
 - MinIO: http://localhost:9001
 - Spark: http://localhost:8080
 - Streamlit: http://localhost:8501

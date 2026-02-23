@@ -5,7 +5,7 @@ USER root
 WORKDIR /app
 
 COPY kafka/run_py_script.sh /app/run_py_script.sh
-# COPY kafka/python_kafka/kafka_processing.py /app/kafka_processing.py
+COPY kafka/python_kafka/kafka_processing.py /app/kafka_processing.py
 
 RUN chmod +x /app/run_py_script.sh
 

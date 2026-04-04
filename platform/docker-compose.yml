@@ -61,7 +61,7 @@ services:
     # depends_on:
     #   - mysql_db
     ports:
-      - "9202:9200"
+      - "9200:9200"
     networks:
       - bigdata-net
 
@@ -95,7 +95,7 @@ services:
     #   - elasticsearch
     ports:
       - "3002:3002"  # Expose FastAPI on port 3002
-      - "8501:8501"
+      - "8501:8501"  # Expose streamlit on port 8501
 
 
   # --------------------
@@ -145,7 +145,7 @@ services:
         echo "Initialization complete.";
         exit 0;
       "
-    profiles: ["storage","full",'iceberg']    
+    profiles: ["storage","full"]    
     networks:
       - bigdata-net
 
@@ -249,8 +249,8 @@ services:
       - AWS_SECRET_ACCESS_KEY=minioadmin
       - AWS_REGION=us-east-1
     ports:
-      - "7077:7077"
-      - "8081:8080"
+      - "7077:7077" # Spark master port
+      - "8081:8080" # Spark master web UI
     # depends_on:
     #   - kafka
     #   - kafka-connect
@@ -307,32 +307,50 @@ services:
     networks:
       - bigdata-net
 
-  # jupyter:
-  #   build:
-  #     context: .
-  #     dockerfile: spark_jobs/Dockerfile_jupyter
-  #   container_name: jupyter
-  #   volumes:
-  #     # - ./airflow/include/dependencies:/home/jovyan/work/dependencies
-  #     - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyter
-  #   environment:
-  #     - GRANT_SUDO=yes
-  #     - PYSPARK_NO_DRIVER=true
-  #     - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
-  #     - JUPYTER_ENABLE_LAB=yes
-  #   ports:
-  #     - "8888:8888"
-  #   profiles:
-  #     - sparks
-  #   command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --ip=0.0.0.0
-  #   depends_on:
-  #     - spark-master
-  #   networks:
-  #     - bigdata-net
+  jupyter:
+    build:
+      context: .
+      dockerfile: spark_jobs/Dockerfile_jupyter
+    container_name: jupyter
+    volumes:
+      # - ./airflow/include/dependencies:/home/jovyan/work/dependencies
+      - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyter
+    environment:
+      - GRANT_SUDO=yes
+      - PYSPARK_NO_DRIVER=true
+      - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
+      - JUPYTER_ENABLE_LAB=yes
+    ports:
+      - "8888:8888"
+    profiles:
+      - sparks
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --ip=0.0.0.0
+    depends_on:
+      - spark-master
+    networks:
+      - bigdata-net
 
   # --------------------
   # Iceberg REST catalog backed by MinIO
   # --------------------
+  postgres_db:
+    build:
+      context: ./sql
+      dockerfile: Dockerfile_pg
+    container_name: postgres_db
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=!QAZ2wsx
+      - POSTGRES_DB=storage_search
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./volumes/postgres_data:/var/lib/postgresql/data
+    ports:  
+      - "5432:5432"
+    networks: 
+      - bigdata-net
+    profiles: ['spark', 'iceberg']
+
   iceberg-rest:
     image: tabulario/iceberg-rest
     container_name: iceberg-rest
@@ -343,6 +361,10 @@ services:
     ports:
       - "8181:8181"
     environment:
+      - CATALOG_CATALOG__IMPL=org.apache.iceberg.jdbc.JdbcCatalog
+      - CATALOG_URI=jdbc:postgresql://postgres_db:5432/iceberg
+      - CATALOG_JDBC_USER=root
+      - CATALOG_JDBC_PASSWORD=!QAZ2wsx
       # Iceberg's S3FileIO uses AWS SDK → MinIO needs S3-compatible access
       - AWS_ACCESS_KEY_ID=minioadmin
       - AWS_SECRET_ACCESS_KEY=minioadmin
@@ -370,6 +392,22 @@ services:
     networks:
       - bigdata-net
 
+  # --------------------
+  # analysis tools
+  # --------------------
+  trino:
+    image: trinodb/trino:latest
+    container_name: trino
+    ports:
+      - "8085:8080"
+    volumes:
+      - ./trino/etc:/etc/trino
+    profiles:
+      - iceberg
+    depends_on:
+      - iceberg-rest
+    networks:
+      - bigdata-net
 
 networks:
   bigdata-net:

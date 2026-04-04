@@ -1,0 +1,4 @@
+FROM postgres:12
+
+COPY ./init_for_iceberg.sql /docker-entrypoint-initdb.d/init_for_iceberg.sql
+

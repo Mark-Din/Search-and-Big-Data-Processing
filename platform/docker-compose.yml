@@ -375,6 +375,8 @@ services:
       - CATALOG_IO__IMPL=org.apache.iceberg.aws.s3.S3FileIO
       # Point to MinIO endpoint
       - CATALOG_S3_ENDPOINT=http://minio:9000 #:contentReference[oaicite:1]{index=1}
+      # S3 path style access (required for MinIO)
+      - CATALOG_S3_PATH_STYLE_ACCESS=true
     profiles: ['spark', 'iceberg']
 
   # --------------------
@@ -404,6 +406,10 @@ services:
       - ./trino/etc:/etc/trino
     profiles:
       - iceberg
+    environment:
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_REGION=us-east-1
     depends_on:
       - iceberg-rest
     networks:

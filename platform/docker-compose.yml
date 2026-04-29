@@ -172,6 +172,9 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
       CLUSTER_ID: it0xCINPS5ayG7l_DQRpDA
+      
+      KAFKA_MESSAGE_MAX_BYTES: 5242880
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 5242880
     ports:
       - "9092:9092"
     profiles: ["streaming","test","dev","full"]   

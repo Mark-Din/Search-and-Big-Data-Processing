@@ -6,18 +6,29 @@ def spark_session():
     # Stop any old session so new configs take effect in notebooks
     return (
         SparkSession.builder
-        .appName("MySQL_to_Delta_on_MinIO")
+        .appName("arXivLakehouseSparkSession")
         .master("spark://spark-master:7077")
-        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
         .config("spark.sql.shuffle.partitions", "50")
+        # Iceberg REST catalog
+        .config("spark.sql.catalog.iceberg", "org.apache.iceberg.spark.SparkCatalog")
+        .config("spark.sql.catalog.iceberg.type", "rest")
+        .config("spark.sql.catalog.iceberg.uri", "http://iceberg-rest:8181")
+        # .config("spark.sql.catalog.demo.uri", "http://rest:8181")
+        .config("spark.sql.catalog.iceberg.warehouse", "s3a://warehouse/")
+        # .config("spark.sql.catalog.iceberg.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
+        .config("spark.sql.catalog.iceberg.io-impl", "org.apache.iceberg.hadoop.HadoopFileIO")
+        # .config("spark.sql.catalog.iceberg.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
+        .config("spark.sql.defaultCatalog", "iceberg")
+        # Time zone
+        .config("spark.sql.session.timeZone", "UTC")
         # MinIO (S3A) configs
-        .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000")
+        .config("spark.hadoop.fs.s3a.endpoint", "http://10.11.60.43:9000")
         .config("spark.hadoop.fs.s3a.access.key", "minioadmin")
         .config("spark.hadoop.fs.s3a.secret.key", "minioadmin")
         .config("spark.hadoop.fs.s3a.path.style.access", "true")
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
         .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
+        .config("spark.hadoop.fs.s3a.endpoint.region", "us-east-1")
         .config("spark.ui.port", "4040")                 # fix the port
         .config("spark.driver.bindAddress", "0.0.0.0")   # listen on all ifaces
         .config("spark.driver.host", driver_host)          # OR "spark-master" – the container's DNS name
@@ -31,7 +42,10 @@ def spark_session():
         # .config("spark.executor.memory", "2g")
         # .config("spark.executor.memoryOverhead", "1g")  # or omit in Standalone
         .config("spark.network.timeout", "600s")
-        # .config("spark.local.dir", "/mnt/spark-tmp/local") # For giving it much more space to run CV
+        .config("spark.local.dir", "/mnt/spark-tmp/local") # For giving it much more space to run CV
+        # IMPORTANT: map s3:// → s3a:// (safety)
+        .config("spark.hadoop.fs.s3.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+        .config("spark.hadoop.fs.AbstractFileSystem.s3.impl", "org.apache.hadoop.fs.s3a.S3A")
         .getOrCreate()
     )
 

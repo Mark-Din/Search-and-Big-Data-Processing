@@ -6,8 +6,8 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.email import send_email
 
-sys.path.append('/opt/airflow')
-from include.code.mysql_log import store_metadata
+sys.path.append('/opt/airflow/include')
+from psql_log import store_metadata
 
 # -------------------------------------------------------------------
 # DAG configuration
@@ -41,18 +41,18 @@ def validate_output(**context):
     """
     Basic quality check:
     - Ensure output folder not empty
-    - Could later check MinIO file count or row count in Delta
+    - Could later check MinIO file count or row count in Iceberg table
     """
     import boto3
 
     s3 = boto3.client(
         "s3",
-        endpoint_url="http://minio:9000",
+        endpoint_url="http://10.11.60.43:9000",
         aws_access_key_id="minioadmin",
         aws_secret_access_key="minioadmin",
     )
 
-    bucket = "deltabucket"
+    bucket = "icebergbucket"
     prefix = "gold/arxiv_features/"
     objects = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
 

@@ -2,8 +2,8 @@
 import time
 from pyspark.sql import SparkSession, functions as F
 from include.init_log import initlog
-from include.mysql_log import store_metadata
-from include.config import mysql_conf
+from include.psql_log import store_metadata
+from include.config import config_mysql
 from sparksession import spark_session
 from include.init_log import initlog
 

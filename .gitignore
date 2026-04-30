@@ -153,7 +153,7 @@ FastAPI_service/__pycache__/
 volumes/
 
 # big jar files
-aws-java-sdk-bundle-1.11.1026.jar
+*.jar
 
 # kafka connect
 confluentinc-kafka-connect-elasticsearch-14.1.0

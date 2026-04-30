@@ -3,7 +3,7 @@ import feedparser
 from datetime import date, datetime, timedelta
 
 from include.arxiv_lakehouse.init_log import initlog
-from include.arxiv_lakehouse.mysql_log import store_metadata
+from include.arxiv_lakehouse.psql_log import store_metadata
 from include.arxiv_lakehouse.connection import ElasticSearchConnectionManager as em
 from include.arxiv_lakehouse.category import category_map
 

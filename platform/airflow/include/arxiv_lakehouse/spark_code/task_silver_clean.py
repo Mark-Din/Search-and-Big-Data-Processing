@@ -4,8 +4,8 @@ from pyspark.sql import functions as F, Window
 import os
 from include.init_log import initlog
 from sparksession import spark_session
-from include.mysql_log import store_metadata
-from include.config import mysql_conf
+from include.psql_log import store_metadata
+from include.config import config_mysql
 from task_co_authorship import main as co_main
 
 logger = initlog(__name__)
@@ -15,15 +15,15 @@ logger = initlog(__name__)
 # ------------------------------
 def read_from_mysql(spark):
     url = (
-        f"jdbc:mysql://{mysql_conf['host']}:3306/{mysql_conf['database']}"
+        f"jdbc:mysql://{config_mysql['host']}:3306/{config_mysql['database']}"
         "?useUnicode=true&characterEncoding=utf8"
         "&serverTimezone=Asia/Taipei"
         "&useSSL=false&allowPublicKeyRetrieval=true"
     )
 
     props = {
-        "user": mysql_conf['user'],
-        "password": mysql_conf['password'],
+        "user": config_mysql['user'],
+        "password": config_mysql['password'],
         "driver": "com.mysql.cj.jdbc.Driver"
     }
 
@@ -102,9 +102,9 @@ def bronze_to_silver(spark):
     latest_versions = latest_versions.na.drop(how="all")
 
     # --- Write to MinIO (Silver layer) ---
-    silver_path = os.getenv("SILVER_PATH", "s3a://deltabucket/silver/arxiv_cleaned")
+    silver_path = os.getenv("SILVER_PATH", "s3a://icebergbucket/silver/arxiv_cleaned")
     (
-        latest_versions.write.format("delta")
+        latest_versions.write.format("iceberg")
         .mode("overwrite")
         .option("overwriteSchema", "true")
         .save(silver_path)

@@ -1,10 +1,13 @@
 import mysql.connector
+import sys
 from datetime import datetime
-from include.config import mysql_conf
+
+sys.path.append('/opt/airflow/include/')
+from config import config_mysql
 
 def store_metadata(run_id, stage_name, record_count, duration, status, component=None, note=None):
     try:
-        conn = mysql.connector.connect(**mysql_conf)
+        conn = mysql.connector.connect(**config_mysql)
         cursor = conn.cursor()
 
         cursor.execute("""

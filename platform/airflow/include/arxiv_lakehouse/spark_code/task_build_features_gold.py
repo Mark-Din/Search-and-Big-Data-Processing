@@ -1,5 +1,6 @@
 import os, json
 import time
+
 from pyspark.sql import functions as F
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import (
@@ -9,8 +10,8 @@ import boto3
 from urllib.parse import urlparse
 from sparksession import spark_session
 from include.init_log import initlog
-
-from include.mysql_log import store_metadata
+from include.psql_log import store_metadata
+from include.config import config_minio
 
 logger = initlog(__name__)
 
@@ -18,8 +19,8 @@ logger = initlog(__name__)
 # Read Silver data
 # -------------------------------
 def read_silver(spark):
-    silver = os.getenv("SILVER_PATH", "s3a://deltabucket/silver/arxiv_cleaned")
-    df = spark.read.format("delta").option("versionAsOf", 1).load(silver)
+    silver = os.getenv("SILVER_PATH", "s3a://icebergbucket/silver/arxiv_cleaned")
+    df = spark.read.format("iceberg").option("versionAsOf", 1).load(silver)
 
     # Drop null abstracts or titles
     df = df.dropna(subset=["title", "abstract"])
@@ -63,12 +64,12 @@ def vectorize(df, stopwords_list=None):
 
 
 # -------------------------------
-# Save Delta Gold output
+# Save Iceberg Gold output
 # -------------------------------
 def save_gold(df):
-    gold = os.getenv("GOLD_PATH", "s3a://deltabucket/gold/arxiv_features")
+    gold = os.getenv("GOLD_PATH", "s3a://icebergbucket/gold/arxiv_features")
     (
-        df.write.format("delta")
+        df.write.format("iceberg")
         .mode("overwrite")
         .option("overwriteSchema", "true")
         .save(gold)
@@ -79,7 +80,7 @@ def save_gold(df):
 # -------------------------------
 # Export learned params to MinIO
 # -------------------------------
-def export_params_to_minio(model, s3a_uri="s3a://deltabucket/models/arxiv_tfidf_params/model_params.json"):
+def export_params_to_minio(model, s3a_uri="s3://icebergbucket/models/arxiv_tfidf_params/model_params.json"):
     tfm = next(s for s in model.stages if s.__class__.__name__ == "HashingTF")
     scal = next(s for s in model.stages if s.__class__.__name__ == "StandardScalerModel")
 
@@ -89,7 +90,7 @@ def export_params_to_minio(model, s3a_uri="s3a://deltabucket/models/arxiv_tfidf_
         "with_std": scal.getWithStd(),
     }
 
-    u = urlparse(s3a_uri.replace("s3a://", "s3://"))
+    u = urlparse(s3a_uri)
     bucket = u.netloc
     key = u.path.lstrip("/")
     if not key or key.endswith("/"):
@@ -97,9 +98,9 @@ def export_params_to_minio(model, s3a_uri="s3a://deltabucket/models/arxiv_tfidf_
 
     s3 = boto3.client(
         "s3",
-        endpoint_url='http://minio:9000',
-        aws_access_key_id='minioadmin',
-        aws_secret_access_key='minioadmin'
+        endpoint_url=config_minio['MINIO_ENDPOINT'],
+        aws_access_key_id=config_minio['MINIO_ACCESS_KEY'],
+        aws_secret_access_key=config_minio['MINIO_SECRET_KEY']
     )
 
     s3.put_object(
@@ -130,7 +131,7 @@ def main():
         out, model = vectorize(df)
 
         logger.info(">>> Saving Spark model to MinIO ...")
-        model.write().overwrite().save("s3a://deltabucket/models/arxiv_tfidf_model")
+        model.write().overwrite().save("s3a://icebergbucket/models/arxiv_tfidf_model")
 
         logger.info(">>> Exporting params to MinIO ...")
         export_params_to_minio(model)

@@ -1,23 +1,28 @@
-import mysql.connector
+import psycopg2
+import sys
 from datetime import datetime
-from config import mysql_conf
+
+sys.path.append('/opt/airflow/include/')
+from config import config_pg  # rename config
 
 def store_metadata(run_id, stage_name, record_count, duration, status, component=None, note=None):
+    conn = None
+    cursor = None
     try:
-        conn = mysql.connector.connect(**mysql_conf)
+        conn = psycopg2.connect(**config_pg)
         cursor = conn.cursor()
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS pipeline_metadata (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
                 run_id VARCHAR(50),
                 stage_name VARCHAR(50),
                 component VARCHAR(50),
-                processed_records INT,
-                duration_sec FLOAT,
+                processed_records INTEGER,
+                duration_sec DOUBLE PRECISION,
                 status VARCHAR(20),
                 note TEXT,
-                created_at DATETIME
+                created_at TIMESTAMP
             )
         """)
 
@@ -25,18 +30,26 @@ def store_metadata(run_id, stage_name, record_count, duration, status, component
             INSERT INTO pipeline_metadata
             (run_id, stage_name, component, processed_records, duration_sec, status, note, created_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """, (run_id, stage_name, component, record_count, duration, status, note, datetime.now()))
+        """, (
+            run_id,
+            stage_name,
+            component,
+            record_count,
+            duration,
+            status,
+            note,
+            datetime.now()
+        ))
 
         conn.commit()
-    except mysql.connector.Error as err:
-        print(f"❌ MySQL logging failed: {err}")
-        try:
+
+    except psycopg2.Error as err:
+        print(f"❌ PostgreSQL logging failed: {err}")
+        if conn:
             conn.rollback()
-        except Exception:
-            pass
+
     finally:
-        try:
+        if cursor:
             cursor.close()
+        if conn:
             conn.close()
-        except Exception:
-            pass

@@ -8,7 +8,7 @@ from sklearn.cluster import MiniBatchKMeans
 from scipy.sparse import csr_matrix
 from elasticsearch import Elasticsearch, helpers
 from sparksession import spark_session
-from include.mysql_log import store_metadata
+from include.psql_log import store_metadata
 from include.init_log import initlog
 
 from es_mapping import arxiv_mapping
@@ -22,8 +22,8 @@ logger = initlog(__name__)
 # Read GOLD layer
 # ------------------------------
 def read_gold(spark):
-    GOLD = os.getenv("GOLD_PATH", "s3a://deltabucket/gold/arxiv_features")
-    return spark.read.format("delta").load(GOLD)
+    GOLD = os.getenv("GOLD_PATH", "s3a://icebergbucket/gold/arxiv_features")
+    return spark.read.format("iceberg").load(GOLD)
 
 # ------------------------------
 # Write results to Elasticsearch
@@ -214,7 +214,7 @@ def fit_predict(data_whole, sample_frac=0.01, sample_cap=5000, batch_size=10000)
 def save_models(kmeans, svd):
     s3 = boto3.client(
         "s3",
-        endpoint_url="http://minio:9000",
+        endpoint_url="http://10.11.60.43:9000",
         aws_access_key_id="minioadmin",
         aws_secret_access_key="minioadmin"
     )
@@ -224,8 +224,8 @@ def save_models(kmeans, svd):
     joblib.dump(kmeans, "/tmp/kmeans.pkl")
 
     # upload to MinIO
-    s3.upload_file("/tmp/svd.pkl", "deltabucket", "models/arxiv_svd.pkl")
-    s3.upload_file("/tmp/kmeans.pkl", "deltabucket", "models/arxiv_kmeans.pkl")
+    s3.upload_file("/tmp/svd.pkl", "icebergbucket", "models/arxiv_svd.pkl")
+    s3.upload_file("/tmp/kmeans.pkl", "icebergbucket", "models/arxiv_kmeans.pkl")
     print("✅ Models saved to MinIO.")
 
 

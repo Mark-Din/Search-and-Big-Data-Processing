@@ -3,7 +3,7 @@ import pandas as pd
 import itertools
 from datetime import datetime
 from include.init_log import initlog
-from include.mysql_log import store_metadata
+from include.psql_log import store_metadata
 from include.connection import ElasticSearchConnectionManager as em
 
 import networkx as nx

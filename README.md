@@ -1,11 +1,5 @@
 # arXiv Data Lakehouse & Search System
 
-## 🧩 Project Summary
-A complete end-to-end data pipeline built with **Spark**, **Kafka**, **Delta Lake**, **MinIO**, and **Elasticsearch**.  
-It ingests and cleans arXiv metadata, performs clustering and vector embedding, and provides a **Streamlit interface** for semantic search, recommendations, and pipeline monitoring.
-
----
-
 ## 🏗️ System Architecture Overview
 This project implements an end-to-end data pipeline for arXiv and some other companies' metadata processing, analytics, and search.
 
@@ -21,18 +15,17 @@ The diagram below details how each component interacts and how data moves throug
 
 **Layer Summary**
 - Ingestion → ETL → Feature Engineering → Clustering → Elasticsearch → Streamlit + FastAPI  
-- Bronze (MySQL) → Silver (Delta cleaned) → Gold (feature vectors) → Elasticsearch (vector index)
-
+- Bronze (MySQL) → Silver (Iceberg cleaned) → Gold (feature vectors) → Elasticsearch (vector index)
 ---
 
 ## 🧠 System Components
 | Stage | Description |
 |--------|--------------|
 | **Ingestion** | Python scripts ingest data from the arXiv OAI/API and store it in MySQL (Bronze). |
-| **Cleaning** | `task_silver_clean.py` — Spark ETL cleans, deduplicates, and joins data → Delta (Silver). |
-| **Feature Engineering** | `task_build_features_gold.py` — TF-IDF feature generation → Delta (Gold). |
+| **Cleaning** | `task_silver_clean.py` — Spark ETL cleans, deduplicates, and joins data → Iceberg (Silver). |
+| **Feature Engineering** | `task_build_features_gold.py` — TF-IDF feature generation → Iceberg (Gold). |
 | **Clustering** | `task_data_clustering.py` — SVD + KMeans clustering → write vectors to Elasticsearch. |
-| **Storage** | Delta Lake on MinIO for Silver/Gold layers. |
+| **Storage** | Iceberg on MinIO for Silver/Gold layers. |
 | **Search API** | FastAPI integrates with Elasticsearch for vector and keyword search. |
 | **Frontend** | Streamlit UI for search, recommendations, and visualization. |
 | **Monitoring** | MySQL + `ETL_metrics.py` for pipeline logs, status, and performance. |
@@ -44,8 +37,8 @@ The diagram below details how each component interacts and how data moves throug
 | Stage | Script | Description |
 |--------|---------|-------------|
 | **Bronze** | `etl_data_to_mysql_OAI.py`& `etl_data_to_mysql_api.py`| Pull raw XML → store in MySQL. |
-| **Silver** | `task_silver_clean.py` | Clean, deduplicate, and join → Delta Lake. |
-| **Gold** | `task_build_features_gold.py` | TF-IDF vectorization → Delta Lake. |
+| **Silver** | `task_silver_clean.py` | Clean, deduplicate, and join → Iceberg. |
+| **Gold** | `task_build_features_gold.py` | TF-IDF vectorization → Iceberg. |
 | **Clustering** | `task_data_clustering.py` | Dimensionality reduction (SVD) + KMeans → Elasticsearch. |
 | **Monitoring** | `ETL_metrics.py` | Track ETL runs and visualize pipeline metadata. |
 | **Analysis** | `etl_coauthorship_edges.py` | Basic visualizaion on data |
@@ -85,7 +78,7 @@ The diagram below details how each component interacts and how data moves throug
 |-----------|-------|
 | Programming | Python 3.x |
 | Orchestration | Apache Airflow |
-| Data Processing | PySpark, Delta Lake |
+| Data Processing | PySpark, Iceberg |
 | Database | MySQL |
 | Object Storage | MinIO |
 | Search Engine | Elasticsearch |
@@ -147,7 +140,6 @@ Each component mirrors a cloud equivalent (e.g., MinIO ↔ S3, Spark ↔ AWS Glu
 - Each arXiv `paper_id` uniquely identifies a single paper across versions.
 - Category mapping (`category_map`) is stable across all records.
 - The pipeline runs daily and overwrites Silver/Gold layers for simplicity.
-- On-premise setup (MinIO, Docker) simulates cloud-based architecture for demonstration.
 
 ## 🧩 Challenges & Irregularities
 - **Inconsistent date formats:** The `updated` and `created` fields varied across OAI records, requiring normalization to standard ISO date strings.  

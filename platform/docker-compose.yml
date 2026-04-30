@@ -2,40 +2,23 @@
 # # search_system
 # # ---------------
 services:
-  # For custome purpose
-  # mysql_db:
-  #   build:
-  #     context: .
-  #     dockerfile: sql/Dockerfile
-  #   container_name: mysql_db_container
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: "!QAZ2wsx"
-  #     MYSQL_ROOT_HOST: "%"
-  #     MYSQL_DATABASE: whole_corp
-  #   command: [
-  #     "--server-id=1",
-  #     "--log-bin=mysql-bin",
-  #     "--binlog-format=ROW",
-  #     "--binlog-row-image=FULL"
-  #   ]
-  #   volumes:
-  #     - ./volumes/mysql_data:/var/lib/mysql
-  #   ports:
-  #     - "3307:3306"  # Expose MySQL on port 3306
-  #   profiles: ["search","test","dev","full"]    
-  #   networks:
-  #     - bigdata-net
-  
-  # mysql:
-  #   image: mysql:8
-  #   container_name: hive_mysql
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: root
-  #     MYSQL_DATABASE: metastore
-  #   ports:
-  #     - "3308:3306"
-  #   networks:
-  #     - bigdata-net
+  postgres_db:
+    build:
+      context: ./sql
+      dockerfile: Dockerfile_pg
+    container_name: postgres_db_container
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=!QAZ2wsx
+      - POSTGRES_DB=storage_search
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./volumes/postgres_data:/var/lib/postgresql/data
+    ports:  
+      - "5432:5432"
+    networks: 
+      - bigdata-net
+    profiles: ["storage","search","test","dev","full"]
 
   elasticsearch:
     build:
@@ -127,22 +110,12 @@ services:
       - minio
     entrypoint: >
       /bin/sh -c "
-        until (mc alias set local http://minio:9000 minioadmin minioadmin) do
-          echo '...waiting...';
-          sleep 2;
-        done;
-
-        echo 'Creating buckets...';
-        mc mb -p local/deltabucket || true;
-        mc mb -p local/media-bucket || true;
-        mc mb -p local/warehouse || true;
-
-        echo 'Applying public policies...';
-        mc policy set public local/deltabucket || true;
-        mc policy set public local/media-bucket || true;
-        mc policy set public local/warehouse || true;
-
-        echo "Initialization complete.";
+        sleep 5;
+        mc alias set local http://10.11.60.43:9000 minioadmin minioadmin; 
+        mc mb -p local/icebergbucket;
+        mc mb -p local/media-bucket;
+        mc policy set public local/icebergbucket;
+        mc policy set public local/media-bucket;
         exit 0;
       "
     profiles: ["storage","full"]    
@@ -420,4 +393,8 @@ services:
 
 networks:
   bigdata-net:
-    # driver: bridge
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
+          gateway: 172.30.0.1

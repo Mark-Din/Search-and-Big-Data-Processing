@@ -1,16 +1,19 @@
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionError, SSLError
+from minio import Minio
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-from common.conf import config_es, config_pg
+import sys
+sys.path.append('/opt/airflow/include/')
+from config import config_es, config_pg
+from init_log import initlog
 import time
-import logging
 
-logger = logging.getLogger(__name__)
+logger = initlog('fastAPI_file_UploadAndProcess')
 
-class ElasticsearchConnection:
+
+class ElasticSearchConnectionManager:
     def __init__(self, config):
         self.host = config['ES_HOST']
         self.password = config['ES_PASSWORD']
@@ -32,7 +35,7 @@ class ElasticsearchConnection:
                     retry_on_timeout=True
                 )
 
-                if es.ping:
+                if es.ping():
                     logger.info('ES conneciton established')
                     self.client = es
                     return es
@@ -58,7 +61,7 @@ class SQLAlchemyConnection:
             conn_str
         )
 
-        self.SessionalLocal = sessionmaker(
+        self.SessionaLocal = sessionmaker(
             autocommit=False, autoflush= False, bind= self.engine
         )
 
@@ -66,10 +69,49 @@ class SQLAlchemyConnection:
 
     def get_db(self):
         try:
-            db = self.SessionalLocal()
+            db = self.SessionaLocal()
             yield db
         finally:
             db.close()
+
+class MinIOConnection:
+    def __init__(self, config):
+        self.endpoint_internal = config['MINIO_INTERNAL']
+        self.endpoint_public = config['MINIO_PUBLIC']
+        self.password = config['MINIO_SECRET_KEY']
+        self.access_key = config['MINIO_ACCESS_KEY']
+        self.secure = config['MINIO_SECURE']
+
+    def connect(self, type_ = 'public'):
+        logger.info(f"type_==============: {type_}")
+
+        # Save = internal, any data operations
+        if type_ == "save":
+            endpoint = self.endpoint_internal
+
+        # Signing file URL for preview/download
+        elif type_ == "public":
+            endpoint = self.endpoint_public
+        else:
+            raise ValueError("Invalid MinIO client type")
+        
+        print(f"MinIO endpoint selected: {endpoint}")
+
+        client = Minio(
+            endpoint,
+            access_key=self.access_key,
+            secret_key=self.password,
+            secure=self.secure
+        )
+
+        try:
+            client.list_buckets()
+            logger.info("MinIO connection established")
+        except Exception as e:
+            logger.error(f"MinIO connection failed: {e}", exc_info=True)
+            raise ConnectionError("{[MinIO]} Could not connect to MinIO server")
+        
+        return client
 
 
 class ConnectionManager:
@@ -79,11 +121,8 @@ class ConnectionManager:
     @classmethod
     def elastic(cls):
         if cls._es_instance is None:
-            es_conn = ElasticsearchConnection(
-                config_es
-            )
-            cls._instance = es_conn.connect()
-        return cls._instance
+            cls._es_instance = ElasticSearchConnectionManager(config_es).connect()
+        return cls._es_instance
     
         
     @classmethod
@@ -91,4 +130,8 @@ class ConnectionManager:
         if cls._db_instance is None:
             cls._db_instance = SQLAlchemyConnection(config_pg)
         return cls._db_instance
+
+
+
     
+

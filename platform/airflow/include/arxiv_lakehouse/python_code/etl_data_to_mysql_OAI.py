@@ -4,11 +4,11 @@ from datetime import date, timedelta
 import time
 import sys
 
-sys.path.append('/opt/airflow/include/arxiv_lakehouse')
-# sys.path.append('/opt/airflow/include/arxiv_lakehouse/python_code')
+# sys.path.append('/opt/airflow/include/arxiv_lakehouse')
+sys.path.append('/opt/airflow/include/')
 from init_log import initlog
-from mysql_log import store_metadata
-from connection import ElasticSearchConnectionManager as em
+from psql_log import store_metadata
+from connection import ConnectionManager as em
 
 logger = initlog(__name__)
 
@@ -25,15 +25,15 @@ BASE_URL = (
 )
 
 # ============= DB CONNECTION =============
-conn = em.mysql_connection()
-cursor = conn.cursor()
+conn = em.sqlalchemy()
 
+cursor = conn.engine.connect()
 # Create tables if not exist
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS papers (
     id VARCHAR(50) PRIMARY KEY,
     title TEXT,
-    abstract LONGTEXT,
+    abstract TEXT,
     updated DATE,
     published DATE,
     categories TEXT,
@@ -46,24 +46,29 @@ CREATE TABLE IF NOT EXISTS papers (
 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS versions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     paper_id VARCHAR(50),
     version VARCHAR(10),
-    created DATETIME,
-    FOREIGN KEY (paper_id) REFERENCES papers(id)
+    created TIMESTAMP,
+    CONSTRAINT fk_versions_paper
+        FOREIGN KEY (paper_id)
+        REFERENCES papers(id)
+        ON DELETE CASCADE
 );
 """)
 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS authors (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     paper_id VARCHAR(50),
     name VARCHAR(255),
-    FOREIGN KEY (paper_id) REFERENCES papers(id)
+    CONSTRAINT fk_authors_paper
+        FOREIGN KEY (paper_id)
+        REFERENCES papers(id)
+        ON DELETE CASCADE
 );
 """)
 
-conn.commit()
 
 len_paper = 0
 len_authors = 0

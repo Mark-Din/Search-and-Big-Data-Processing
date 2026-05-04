@@ -3,7 +3,7 @@
 echo "⏳ Waiting for Kafka broker to become ready..."
 
 # Wait until kafka responds to metadata request
-while ! kafka-topics --bootstrap-server kafka_qidu:9092 --list >/dev/null 2>&1; do
+while ! kafka-topics --bootstrap-server kafka:9092 --list >/dev/null 2>&1; do
     echo "   Kafka is not ready yet... retrying in 3 seconds."
     sleep 3
 done
@@ -29,4 +29,3 @@ kafka-topics --bootstrap-server kafka:9092 \
 
 echo "🎉 Kafka topics created. Starting broker..."
 
-exec /etc/confluent/docker/run

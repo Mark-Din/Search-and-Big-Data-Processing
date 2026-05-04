@@ -14,7 +14,7 @@ def spark_session():
         .config("spark.sql.catalog.iceberg.type", "rest")
         .config("spark.sql.catalog.iceberg.uri", "http://iceberg-rest:8181")
         # .config("spark.sql.catalog.demo.uri", "http://rest:8181")
-        .config("spark.sql.catalog.iceberg.warehouse", "s3a://warehouse/")
+        .config("spark.sql.catalog.iceberg.warehouse", "s3a://icebergbucket/")
         # .config("spark.sql.catalog.iceberg.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
         .config("spark.sql.catalog.iceberg.io-impl", "org.apache.iceberg.hadoop.HadoopFileIO")
         # .config("spark.sql.catalog.iceberg.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")

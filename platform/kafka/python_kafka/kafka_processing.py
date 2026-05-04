@@ -23,7 +23,8 @@ KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka_qidu:9092"
 KAFKA_TOPICS = os.getenv("KAFKA_TOPICS", "postgres.public.files,postgres.public.logs").split(",")
 KAFKA_GROUP_ID = os.getenv("KAFKA_GROUP_ID", "python-consumer")
 
-ES_HOST = os.getenv("ES_HOST", "http://elasticsearch_qidu:9200")
+# ES_HOST = os.getenv("ES_HOST", "http://elasticsearch_qidu:9200")
+ES_HOST = os.getenv("ES_HOST", "http://10.11.60.43:9200")
 ES_USERNAME = os.getenv("ES_USERNAME", "elastic")
 ES_PASSWORD = os.getenv("ES_PASSWORD", "gAcstb8v-lFCVzCBC__a")
 

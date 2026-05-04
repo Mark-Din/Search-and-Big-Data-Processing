@@ -1,63 +1,73 @@
-# # ---------------
-# # search_system
-# # ---------------
 services:
-  postgres_db:
-    build:
-      context: ./sql
-      dockerfile: Dockerfile_pg
-    container_name: postgres_db_container
-    environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=!QAZ2wsx
-      - POSTGRES_DB=storage_search
-      - TZ=Asia/Shanghai
+
+  # --------------------
+  # PostgreSQL
+  # --------------------
+  # postgres_db:
+  #   image: postgres:12
+  #   container_name: postgres_db
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_USER}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  #     POSTGRES_DB: ${POSTGRES_DB}
+  #     TZ: ${TZ}
+  #   volumes:
+  #     - ./volumes/postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "${POSTGRES_PORT}:5432"
+  #   networks:
+  #     - bigdata-net
+  #   profiles: ["storage","search","test","dev","full"]
+
+  postgres_init:
+    image: postgres:12
     volumes:
-      - ./volumes/postgres_data:/var/lib/postgresql/data
-    ports:  
-      - "5432:5432"
-    networks: 
-      - bigdata-net
+      - ./postgres/init_postgres.sh:/init_postgres.sh
+    entrypoint: ["/bin/sh", "/init_postgres.sh"]
     profiles: ["storage","search","test","dev","full"]
-
-  elasticsearch:
-    build:
-      context: ./search_system
-      dockerfile: Dockerfile_es
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=true  # Keep security enabled
-      # - xpack.security.http.ssl.enabled=true
-      # - xpack.security.http.ssl.keystore.path=certs/http.p12
-      # - xpack.security.http.ssl.truststore.path=certs/http.p12
-      - ELASTIC_PASSWORD=gAcstb8v-lFCVzCBC__a  # Set password manually
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9200"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    volumes:
-      - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt  # Mount certificates 
-      - ./volumes/es_data:/usr/share/elasticsearch/data  # Persistent data storage for Elasticsearch
-    profiles: ["search","test","dev","full", "integration_test"]    
-    # depends_on:
-    #   - mysql_db
-    ports:
-      - "9200:9200"
     networks:
       - bigdata-net
 
-  elastic_indices_init:
-    image: curlimages/curl:latest
-    build: 
-      context: ./search_system
-      dockerfile: Dockerfile_es_init
-    command: ["bash", "-c", "/app/init_es.py"]
-    networks:
-      - bigdata-net
-    profiles: ["search","test","dev","full"]    
-  
+
+  # --------------------
+  # Elasticsearch
+  # --------------------
+  # elasticsearch:
+  #   build:
+  #     context: ./search_system
+  #     dockerfile: Dockerfile_es
+  #   container_name: elasticsearch
+  #   environment:
+  #     discovery.type: single-node
+  #     xpack.security.enabled: "true"
+  #     ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:9200"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
+  #   volumes:
+  #     - ./search_system/es_certs/http_ca.crt:/usr/share/elasticsearch/config/certs/http_ca.crt
+  #     - ./volumes/es_data:/usr/share/elasticsearch/data
+  #   ports:
+  #     - "${ES_PORT}:9200"
+  #   profiles: ["search","test","dev","full","integration_test"]
+  #   networks:
+  #     - bigdata-net
+
+  # elastic_indices_init:
+  #   image: curlimages/curl:latest
+  #   build: 
+  #     context: ./search_system
+  #     dockerfile: Dockerfile_es_init
+  #   command: ["bash", "-c", "/app/init_es.py"]
+  #   networks:
+  #     - bigdata-net
+  #   profiles: ["search","test","dev","full"]   
+
+  # --------------------
+  # FastAPI Search Service
+  # --------------------
   fastapi_search_service:
     build:
       context: .
@@ -65,233 +75,162 @@ services:
     container_name: fastapi_search_service
     volumes:
       - ./search_system/es_certs:/usr/certs
-      - ./search_system/FastAPI_service/code:/app/code  # Persistent data storage for FastAPI
+      - ./search_system/FastAPI_service/code:/app/code
     environment:
-      - ES_USERNAME=elastic
-      - ES_PASSWORD=gAcstb8v-lFCVzCBC__a  # Use the manually set password
-      - ES_HOST=http://elasticsearch:9200
-      - ES_CA_CERT=/usr/certs/http_ca.crt  # Optional, if you're using SSL
+      ES_USERNAME: ${ES_USERNAME}
+      ES_PASSWORD: ${ELASTIC_PASSWORD}
+      ES_HOST: ${ES_HOST}
+      ES_CA_CERT: ${ES_CA_CERT}
+    ports:
+      - "${FASTAPI_PORT}:3002"
+      - "${STREAMLIT_PORT}:8501"
+    profiles: ["search","test","dev","full"]
     networks:
       - bigdata-net
-    profiles: ["search","test","dev","full"]    
-    # depends_on:
-    #   - elasticsearch
-    ports:
-      - "3002:3002"  # Expose FastAPI on port 3002
-      - "8501:8501"  # Expose streamlit on port 8501
 
 
   # --------------------
-  # MinIO for object storage
+  # MinIO
   # --------------------
-  minio:
-    image: minio/minio
-    container_name: minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
-    volumes:
-      - ./volumes/minio-data:/data
-      # - /mnt/ssd/minio-hot:/data
-    command: server /data --console-address ":9001"
-    profiles: ["storage","full"]    
-    networks:
-      bigdata-net:
-        aliases:
-          - warehouse.minio  # used by REST catalog demo:contentReference[oaicite:0]{index=0}
-  # MinIO client – create "warehouse" bucket
+  # minio:
+  #   image: minio/minio
+  #   container_name: minio
+  #   environment:
+  #     MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+  #     MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+  #   volumes:
+  #     - ./volumes/minio-data:/data
+  #     - /mnt/ssd/minio-hot:/data
+  #   command: server /data --console-address ":9001"
+  #   ports:
+  #     - "${MINIO_API_PORT}:9000"
+  #     - "${MINIO_CONSOLE_PORT}:9001"
+  #   profiles: ["storage","full"]
+  #   networks:
+  #     - bigdata-net
 
+
+  # # --------------------
+  # # MinIO Bucket Init
+  # # --------------------
   createbucket:
     image: minio/mc
-    depends_on:
-      - minio
+    # depends_on:
+    #   - minio
     entrypoint: >
       /bin/sh -c "
         sleep 5;
-        mc alias set local http://10.11.60.43:9000 minioadmin minioadmin; 
-        mc mb -p local/icebergbucket;
-        mc mb -p local/media-bucket;
-        mc policy set public local/icebergbucket;
-        mc policy set public local/media-bucket;
+        mc alias set local ${MINIO_PROTOCOL}://${MINIO_HOST}:${MINIO_PORT} ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+        mc mb -p local/${ICEBERG_BUCKET};
+        mc mb -p local/${MEDIA_BUCKET};
+        mc policy set public local/${ICEBERG_BUCKET};
+        mc policy set public local/${MEDIA_BUCKET};
         exit 0;
       "
-    profiles: ["storage","full"]    
+    profiles: ["storage","full"]
     networks:
       - bigdata-net
 
+
   # --------------------
-  # Kafka cluster
+  # Kafka
   # --------------------
   kafka:
     image: confluentinc/cp-kafka:7.6.0
     container_name: kafka
     environment:
-      # KRaft mode enabled
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: ${KAFKA_CONTROLLER_QUORUM_VOTERS}
 
-      # Listeners
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_LISTENERS: ${KAFKA_LISTENERS}
+      KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
 
-      # Basic settings
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
-      CLUSTER_ID: it0xCINPS5ayG7l_DQRpDA
-      
-      KAFKA_MESSAGE_MAX_BYTES: 5242880
-      KAFKA_REPLICA_FETCH_MAX_BYTES: 5242880
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID}
     ports:
-      - "9092:9092"
-    profiles: ["streaming","test","dev","full"]   
-    networks:
-      - bigdata-net
-
-  kafka_init:
-    build: 
-      context: .
-      dockerfile: kafka/Dockerfile_kafka_init
-    depends_on: 
-      - kafka
-    command: ["bash", "-c", "/app/init_kafka.sh"]
+      - "${KAFKA_PORT}:9092"
     profiles: ["streaming","test","dev","full"]
     networks:
       - bigdata-net
 
-  python-kafka-consumer:
+
+  # --------------------
+  # Kafka Connect
+  # --------------------
+  kafka-connect:
     build:
-      context: .
-      dockerfile: kafka/Dockerfile_python_consumer
-    container_name: kafka_python_consumer
-    volumes:
-      - ./kafka/python_kafka:/app/python
-    depends_on:
-      - kafka
-    profiles: ["streaming","test","dev","full"]   
-    networks:
-      - bigdata-net
-
-
-  kafka-connect:  # It will break if topics in kafka-qidu is not created
-    build: 
       context: .
       dockerfile: kafka/Dockerfile_connect
     container_name: kafka-connect
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
-      CONNECT_GROUP_ID: "connect-cluster"
-      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
-      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
-      CONNECT_STATUS_STORAGE_TOPIC: connect-status
+      CONNECT_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      CONNECT_GROUP_ID: ${CONNECT_GROUP_ID}
+
+      CONNECT_CONFIG_STORAGE_TOPIC: ${CONNECT_CONFIG_TOPIC}
+      CONNECT_OFFSET_STORAGE_TOPIC: ${CONNECT_OFFSET_TOPIC}
+      CONNECT_STATUS_STORAGE_TOPIC: ${CONNECT_STATUS_TOPIC}
+
       CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+
       CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
       CONNECT_PLUGIN_PATH: /usr/share/confluent-hub-components
     ports:
-      - "8083:8083"  # REST API for managing connectors
+      - "${KAFKA_CONNECT_PORT}:8083"
     depends_on:
       - kafka
-    profiles: ["streaming","test","dev","full"]   
+    profiles: ["streaming","test","dev","full"]
     networks:
       - bigdata-net
 
-  kafka_connector_init:  # Create topics for kafka_qidu container
-    image: confluentinc/cp-kafka:7.6.0
-    depends_on:
-      - kafka-connect
-    command: ["bash", "-c", "/app/kafka_connector_config.sh"]
-    volumes:
-      - ./kafka/kafka_connector_config.sh:/app/kafka_connector_config.sh
-    profiles:
-      - streaming
-    networks:
-      - bigdata-net
 
   # --------------------
-  # Spark Cluster
+  # Spark Master
   # --------------------
   spark-master:
     build:
-      context: .   # root of repo
+      context: .
       dockerfile: spark_jobs/Dockerfile
     container_name: spark-master
     command: >
       bash -c "/opt/spark/sbin/start-master.sh && tail -f /dev/null"
-    # volumes:
-    #   - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyterlab # For jupyterlab to test spark
     environment:
-      - SPARK_MODE=master
-      - SPARK_MASTER_HOST=spark-master
-      - PYSPARK_NO_DRIVER=true
-      - SPARK_MASTER_REST_ENABLED=true
-      - SPARK_MASTER_WEBUI_PORT=8080
-      - SPARK_MASTER_PORT=7077
-      - AWS_ACCESS_KEY_ID=minioadmin
-      - AWS_SECRET_ACCESS_KEY=minioadmin
-      - AWS_REGION=us-east-1
+      SPARK_MODE: master
+      SPARK_MASTER_HOST: spark-master
+      SPARK_MASTER_PORT: 7077
+      SPARK_MASTER_WEBUI_PORT: 8080
+      PYSPARK_NO_DRIVER: "true"
     ports:
-      - "7077:7077" # Spark master port
-      - "8081:8080" # Spark master web UI
-    # depends_on:
-    #   - kafka
-    #   - kafka-connect
-    #   - elasticsearch
-    #   - mysql_db
+      - "${SPARK_MASTER_PORT}:7077"
+      - "${SPARK_MASTER_UI_PORT}:8080"
     profiles: ["spark","full"]
     networks:
       - bigdata-net
 
+
+  # --------------------
+  # Spark Worker 1
+  # --------------------
   spark-worker-1:
     build:
-      context: .   # root of repo
+      context: .
       dockerfile: spark_jobs/Dockerfile
     container_name: spark-worker-1
-    # volumes:
-    #     - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
-    depends_on:
-      - spark-master
     command: >
       bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
+    depends_on:
+      - spark-master
     environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=4G
-      - SPARK_WORKER_CORES=2
-      - SPARK_MASTER_HOST=spark-master
-      - PYSPARK_NO_DRIVER=true
-      - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: ${SPARK_WORKER_MEMORY}
+      SPARK_WORKER_CORES: ${SPARK_WORKER_CORES}
     profiles: ["spark","full"]
-    networks:
-      - bigdata-net
-
-  spark-worker-2:
-    build:
-      context: .   # root of repo
-      dockerfile: spark_jobs/Dockerfile
-    container_name: spark-worker-2
-    # volumes:
-    #   - ./volumes/spark_volume/spark_code:/opt/bitnami/spark/work-dir
-    command: >
-      bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
-    depends_on:
-      - spark-master
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=4G
-      - SPARK_WORKER_CORES=2
-      - SPARK_MASTER_HOST=spark-master
-      - PYSPARK_NO_DRIVER=true
-      - PYSPARK_SUBMIT_ARGS=--jars /opt/bitnami/spark/jars/delta-core_2.12-3.1.0.jar,/opt/bitnami/spark/jars/delta-storage-3.1.0.jar pyspark-shell
-    profiles:
-      - spark
     networks:
       - bigdata-net
 
@@ -317,96 +256,41 @@ services:
       - spark-master
     networks:
       - bigdata-net
-
+      
   # --------------------
-  # Iceberg REST catalog backed by MinIO
+  # Iceberg REST Catalog
   # --------------------
-  postgres_db:
-    build:
-      context: ./sql
-      dockerfile: Dockerfile_pg
-    container_name: postgres_db
-    environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=!QAZ2wsx
-      - POSTGRES_DB=storage_search
-      - TZ=Asia/Shanghai
-    volumes:
-      - ./volumes/postgres_data:/var/lib/postgresql/data
-    ports:  
-      - "5432:5432"
-    networks: 
-      - bigdata-net
-    profiles: ['spark', 'iceberg']
-
   iceberg-rest:
     image: tabulario/iceberg-rest
     container_name: iceberg-rest
-    # depends_on:
-    #   - minio
-    networks:
-      - bigdata-net
     ports:
-      - "8181:8181"
+      - "${ICEBERG_REST_PORT}:8181"
     environment:
-      - CATALOG_CATALOG__IMPL=org.apache.iceberg.jdbc.JdbcCatalog
-      - CATALOG_URI=jdbc:postgresql://postgres_db:5432/iceberg
-      - CATALOG_JDBC_USER=root
-      - CATALOG_JDBC_PASSWORD=!QAZ2wsx
-      # Iceberg's S3FileIO uses AWS SDK → MinIO needs S3-compatible access
-      - AWS_ACCESS_KEY_ID=minioadmin
-      - AWS_SECRET_ACCESS_KEY=minioadmin
-      - AWS_REGION=us-east-1
-      # Where the tables live (MinIO bucket "warehouse")
-      - CATALOG_WAREHOUSE=s3a://warehouse/
-      # Use S3FileIO
-      - CATALOG_IO__IMPL=org.apache.iceberg.aws.s3.S3FileIO
-      # Point to MinIO endpoint
-      - CATALOG_S3_ENDPOINT=http://minio:9000 #:contentReference[oaicite:1]{index=1}
-      # S3 path style access (required for MinIO)
-      - CATALOG_S3_PATH_STYLE_ACCESS=true
-    profiles: ['spark', 'iceberg']
+      CATALOG_CATALOG__IMPL: org.apache.iceberg.jdbc.JdbcCatalog
 
-  # --------------------
-  # Test Cluster
-  # --------------------
-  test-runner:
-    build:
-      context: .
-      dockerfile: test-runner.Dockerfile
-    container_name: test_py
-    volumes:
-      - .:/app
-    working_dir: /app
-    profiles: ["integration_test"]    
+      CATALOG_URI: jdbc:postgresql://${ICEBERG_DB_HOST}:5432/${ICEBERG_DB_NAME}
+      CATALOG_JDBC_USER: ${POSTGRES_USER}
+      CATALOG_JDBC_PASSWORD: ${POSTGRES_PASSWORD}
+
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      AWS_REGION: ${AWS_REGION}
+
+      CATALOG_WAREHOUSE: s3://${ICEBERG_BUCKET}/
+
+      CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO
+
+      CATALOG_S3_ENDPOINT: ${MINIO_PROTOCOL}://${MINIO_HOST}:${MINIO_PORT}
+      CATALOG_S3_PATH_STYLE_ACCESS: "true"
+    profiles: ["spark","iceberg","full"]
     networks:
       - bigdata-net
 
-  # --------------------
-  # analysis tools
-  # --------------------
-  trino:
-    image: trinodb/trino:latest
-    container_name: trino
-    ports:
-      - "8085:8080"
-    volumes:
-      - ./trino/etc:/etc/trino
-    profiles:
-      - iceberg
-    environment:
-      - AWS_ACCESS_KEY_ID=minioadmin
-      - AWS_SECRET_ACCESS_KEY=minioadmin
-      - AWS_REGION=us-east-1
-    depends_on:
-      - iceberg-rest
-    networks:
-      - bigdata-net
 
 networks:
   bigdata-net:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.30.0.0/16
-          gateway: 172.30.0.1
+        - subnet: ${DOCKER_SUBNET}
+          gateway: ${DOCKER_GATEWAY}

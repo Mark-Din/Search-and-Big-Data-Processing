@@ -16,7 +16,8 @@ curl -X POST "http://kafka-connect:8083/connectors" \
     "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
     "tasks.max": "1",
 
-    "database.hostname": "postgres_db",
+    # "database.hostname": "postgres_db",
+    "database.hostname": "10.11.60.43",
     "database.port": "5432",
     "database.user": "root",
     "database.password": "!QAZ2wsx",

@@ -3,13 +3,12 @@
 echo "Waiting for kafka connector!"
 sleep 5
 
-echo "Delete current mysql connector in kafka-connect container if exists"
-curl -X DELETE http://localhost:8083/connectors/mysql-connector
+echo "Delete current postgresql connector in kafka-connect container if exists"
+curl -X DELETE http://kafka-connect:8083/connectors/mysql-connector
 
-echo "Create mysql connector"
+echo "Create postgresql connector"
 
-
-curl -X POST "http://kafka-connect_qidu:8083/connectors" \
+curl -X POST "http://kafka-connect:8083/connectors" \
   -H "Content-Type: application/json" \
   -d '{
   "name": "postgres-connector",
@@ -17,7 +16,7 @@ curl -X POST "http://kafka-connect_qidu:8083/connectors" \
     "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
     "tasks.max": "1",
 
-    "database.hostname": "postgres_db_container",
+    "database.hostname": "postgres_db",
     "database.port": "5432",
     "database.user": "root",
     "database.password": "!QAZ2wsx",
@@ -34,7 +33,7 @@ curl -X POST "http://kafka-connect_qidu:8083/connectors" \
 
     "snapshot.mode": "always",
 
-    "schema.history.internal.kafka.bootstrap.servers": "kafka_qidu:9092",
+    "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",
     "schema.history.internal.kafka.topic": "schema-changes.postgres"
   }
 }'

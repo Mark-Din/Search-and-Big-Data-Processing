@@ -202,6 +202,18 @@ services:
     networks:
       - bigdata-net
 
+  kafka_connector_init:  # Create topics for kafka_qidu container
+    image: confluentinc/cp-kafka:7.6.0
+    depends_on:
+      - kafka-connect
+    command: ["bash", "-c", "/app/kafka_connector_config.sh"]
+    volumes:
+      - ./kafka/kafka_connector_config.sh:/app/kafka_connector_config.sh
+    profiles:
+      - streaming
+    networks:
+      - bigdata-net
+
   # --------------------
   # Spark Cluster
   # --------------------

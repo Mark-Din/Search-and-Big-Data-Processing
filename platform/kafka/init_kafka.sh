@@ -29,4 +29,3 @@ kafka-topics --bootstrap-server kafka:9092 \
 
 echo "🎉 Kafka topics created. Starting broker..."
 
-exec /etc/confluent/docker/run

@@ -1,11 +1,14 @@
 FROM confluentinc/cp-kafka-connect:7.6.0
 
-# Install Debezium MySQL connector
-RUN curl -L https://repo1.maven.org/maven2/io/debezium/debezium-connector-mysql/2.6.2.Final/debezium-connector-mysql-2.6.2.Final-plugin.tar.gz \
-    -o /tmp/debezium-mysql.tar.gz \
- && mkdir -p /usr/share/confluent-hub-components/debezium-connector-mysql \
- && tar -xzf /tmp/debezium-mysql.tar.gz -C /usr/share/confluent-hub-components/debezium-connector-mysql \
- && rm /tmp/debezium-mysql.tar.gz
+ # Install Debezium postgres connector
+RUN curl -L https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/2.6.2.Final/debezium-connector-postgres-2.6.2.Final-plugin.tar.gz \
+    -o /tmp/debezium-postgres.tar.gz \
+ && mkdir -p /usr/share/confluent-hub-components/debezium-connector-postgres /usr/share/confluent-hub-components/confluentinc-es \
+ && tar -xzf /tmp/debezium-postgres.tar.gz -C /usr/share/confluent-hub-components/debezium-connector-postgres \
+ && rm /tmp/debezium-postgres.tar.gz
+
+
+# COPY ./kafka/confluentinc-kafka-connect-elasticsearch-14.1.0 /usr/share/confluent-hub-components/elasticsearch
 
 COPY kafka/confluentinc-kafka-connect-elasticsearch-14.1.0.zip /usr/share/confluent-hub-components/elasticsearch/confluentinc-kafka-connect-elasticsearch-14.1.0.zip
 
@@ -13,6 +16,6 @@ USER root
 
 RUN yum install -y unzip && \
      yum clean all && \
-     unzip /usr/share/confluent-hub-components/elasticsearch/confluentinc-kafka-connect-elasticsearch-14.1.0.zip
+     unzip /usr/share/confluent-hub-components/elasticsearch/confluentinc-kafka-connect-elasticsearch-14.1.0.zip -d /usr/share/confluent-hub-components/confluentinc-es
 
 USER appuser

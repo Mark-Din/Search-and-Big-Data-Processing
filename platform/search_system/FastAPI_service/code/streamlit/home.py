@@ -54,7 +54,7 @@ async def get_recommendations(vector):
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             "http://127.0.0.1:3002/knn_search",
-            json={"vector": vector, "k": 5}
+            json={"vector": vector, "k": 5, 'index_name': TABLE.lower()}
         )
         logger.info(f'Recommendation response status: {resp.json()}')
         return resp.json()

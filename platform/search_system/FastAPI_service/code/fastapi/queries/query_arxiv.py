@@ -55,41 +55,6 @@ def all_params(query, page_size=10):
 	return query_param
 
 
-def search_company_params(name):
-	return {
-		"size": 1,
-		"query": {
-			"match": {
-				"abstract": {"query": name}
-			}
-		},
-	}
-
-def recommend_params(vector, cluster):
-    return {
-        "size": 30,
-        "query": {
-            "script_score": {
-                "query": {
-					# "bool":{
-					# 	"must": [{"exists": {"field": "vector"}}]
-					# }
-                    "term": { "cluster": str(cluster) }   # ensure string match
-                },
-                "script": {
-                    "source": """
-                        double cos = cosineSimilarity(params.qv, 'vector') + 1.0;
-                        return cos;
-                    """,
-                    "params": {
-                        "qv": vector   # must be len=59
-                    }
-                }
-            }
-        }
-    }
-
-
 def knn_params(vector, k=10, num_candidates=100):
     return {
         "knn": {
@@ -104,21 +69,3 @@ def knn_params(vector, k=10, num_candidates=100):
         ]
     }
 
-
-
-# def init_param():
-# 	return  {
-# 		"size": 0,  # We do not need to return documents
-# 		"aggs": {
-# 			"max_date": {
-# 				"max": {
-# 					"field": "updated"
-# 				}
-# 			},
-# 			"min_date": {
-# 				"min": {
-# 					"field": "updated"
-# 				}
-# 			},
-# 		}
-# 	}

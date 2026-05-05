@@ -65,29 +65,6 @@ services:
   #     - bigdata-net
   #   profiles: ["search","test","dev","full"]   
 
-  # --------------------
-  # FastAPI Search Service
-  # --------------------
-  fastapi_search_service:
-    build:
-      context: .
-      dockerfile: search_system/Dockerfile_py
-    container_name: fastapi_search_service
-    volumes:
-      - ./search_system/es_certs:/usr/certs
-      - ./search_system/FastAPI_service/code:/app/code
-    environment:
-      ES_USERNAME: ${ES_USERNAME}
-      ES_PASSWORD: ${ELASTIC_PASSWORD}
-      ES_HOST: ${ES_HOST}
-      ES_CA_CERT: ${ES_CA_CERT}
-    ports:
-      - "${FASTAPI_PORT}:3002"
-      - "${STREAMLIT_PORT}:8501"
-    profiles: ["search","test","dev","full"]
-    networks:
-      - bigdata-net
-
 
   # --------------------
   # MinIO
@@ -108,7 +85,6 @@ services:
   #   profiles: ["storage","full"]
   #   networks:
   #     - bigdata-net
-
 
   # # --------------------
   # # MinIO Bucket Init
@@ -131,6 +107,29 @@ services:
     networks:
       - bigdata-net
 
+
+  # --------------------
+  # FastAPI Search Service
+  # --------------------
+  fastapi_search_service:
+    build:
+      context: .
+      dockerfile: search_system/Dockerfile_py
+    container_name: fastapi_search_service
+    volumes:
+      - ./search_system/es_certs:/usr/certs
+      - ./search_system/FastAPI_service/code:/app/code
+    environment:
+      ES_USERNAME: ${ES_USERNAME}
+      ES_PASSWORD: ${ELASTIC_PASSWORD}
+      ES_HOST: ${ES_HOST}
+      ES_CA_CERT: ${ES_CA_CERT}
+    ports:
+      - "${FASTAPI_PORT}:3002"
+      - "${STREAMLIT_PORT}:8501"
+    profiles: ["search","test","dev","full"]
+    networks:
+      - bigdata-net
 
   # --------------------
   # Kafka
@@ -241,7 +240,7 @@ services:
     container_name: jupyter
     volumes:
       # - ./airflow/include/dependencies:/home/jovyan/work/dependencies
-      - ./volumes/spark_volume/jupyterlab:/home/jovyan/work/jupyter
+      - ./volumes/jupyterlab:/home/jovyan/work/jupyter
     environment:
       - GRANT_SUDO=yes
       - PYSPARK_NO_DRIVER=true
@@ -252,8 +251,6 @@ services:
     profiles:
       - sparks
     command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password='' --ip=0.0.0.0
-    depends_on:
-      - spark-master
     networks:
       - bigdata-net
       
@@ -286,6 +283,24 @@ services:
     networks:
       - bigdata-net
 
+  # --------------------
+  # analysis tools
+  # --------------------
+  trino:
+    image: trinodb/trino:latest
+    container_name: trino
+    ports:
+      - "8085:8080"
+    volumes:
+      - ./trino/etc:/etc/trino
+    env_file:
+      - .env
+    profiles:
+      - iceberg
+    depends_on:
+      - iceberg-rest
+    networks:
+      - bigdata-net
 
 networks:
   bigdata-net:

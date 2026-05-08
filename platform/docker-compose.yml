@@ -98,9 +98,7 @@ services:
         sleep 5;
         mc alias set local ${MINIO_PROTOCOL}://${MINIO_HOST}:${MINIO_PORT} ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
         mc mb -p local/${ICEBERG_BUCKET};
-        mc mb -p local/${MEDIA_BUCKET};
         mc policy set public local/${ICEBERG_BUCKET};
-        mc policy set public local/${MEDIA_BUCKET};
         exit 0;
       "
     profiles: ["storage","full"]

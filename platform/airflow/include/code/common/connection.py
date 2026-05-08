@@ -1,3 +1,6 @@
+from sqlalchemy import create_engine, text
+from urllib.parse import quote
+
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionError, SSLError
 from minio import Minio
@@ -9,6 +12,62 @@ sys.path.append('/opt/airflow/include/')
 from config import config_es, config_pg
 from init_log import initlog
 import time
+
+class DatabaseConnection:
+    """Handles database connections."""
+
+    @staticmethod
+    def create_connection_string(user, password, host, port, db_name=None, driver=''):
+        password = str(password)
+        password = quote(password)  # Ensure the password is URL encoded
+        db_path = f"{host}:{port}"
+        if db_name:
+            db_path += f"/{db_name}"
+        return f"{driver}://{user}:{password}@{db_path}"
+
+    @staticmethod
+    def mysql_connection(config, db_name=None):
+        password = config['password']
+        driver = 'mysql+mysqlconnector'
+        user = config['user']
+        host = config['host']
+        port = config['port']
+        db_name = db_name if db_name is not None else config.get('db')
+        return create_engine(DatabaseConnection.create_connection_string(user, password, host, port, db_name, driver))
+
+    @staticmethod
+    def postgres_connection(config, db_name=None):
+        password = config['password']
+        driver = 'postgresql+psycopg2'
+        user = config['user']
+        host = config['host']
+        port = config['port']
+        db_name = db_name if db_name is not None else config.get('db')
+        return create_engine(DatabaseConnection.create_connection_string(user, password, host, port, db_name, driver))
+    
+    @staticmethod
+    def ssh_connection(ssh, conf_201_ssh):
+        import paramiko
+
+        hostname = conf_201_ssh["hostname"]
+        port = conf_201_ssh["port"]
+        username = conf_201_ssh["username"]
+        password = conf_201_ssh["password"]
+
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(hostname, port, username, password)
+        sftp = ssh.open_sftp()
+
+        ssh.close()
+
+        return sftp
+    
+def create_database(engine, db_name):
+    """Creates a database if it does not exist."""
+    with engine.connect() as connection:
+        connection.execute(text(f"CREATE DATABASE IF NOT EXISTS {db_name} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"))
+
+
 
 logger = initlog('fastAPI_file_UploadAndProcess')
 

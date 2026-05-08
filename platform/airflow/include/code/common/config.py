@@ -57,3 +57,47 @@ config_minio = {
     "MINIO_SECRET_KEY": require_env("MINIO_SECRET_KEY"),
     "MINIO_SECURE": get_bool_env("MINIO_SECURE", False),
 }
+
+
+conf_41_ssh = {
+    'ip': '10.11.60.41',
+    'port': 22,
+    "username" :"joe",
+    "password" : "qZ3*nRPrqpCQQ",
+    "remote_dir" : "/home/joe/nexva-2.0/backend/dist/web_upload",
+}
+
+config_41_mysql = {
+    'host': '10.11.60.41',
+    'port': '3307',   
+    'user': 'root',  
+    'password': 'Inf0p0werc@rp',  # Replace with your actual MySQL password
+    'db': 'nexva',
+    'belongs_to': 'mitac',
+}
+
+config_43_mysql = {
+    'host': '10.11.60.43',
+    'port': '3306',   
+    'user': 'root',  
+    'password': '!QAZ2wsx',  # Replace with your actual MySQL password
+    'db': 'qidu_quickreport',
+}
+
+config_pg = {
+    # 'host': 'localhost',
+    'host': '10.11.60.43',
+    'port': '5432',
+    'user': 'root',
+    'password': '!QAZ2wsx',  # Replace with your actual PostgreSQL password
+    'db': 'storage_search'
+}
+
+config_43_minio = {
+    'MINIO_ENDPOINT': '10.11.60.43:9000',
+    # 'MINIO_ENDPOINT': 'localhost:9000',
+    'MINIO_ACCESS_KEY': 'minioadmin',
+    'MINIO_SECRET_KEY': 'minioadmin',
+    'MINIO_SECURE': False,
+    "bucket" : "nexva"
+}    

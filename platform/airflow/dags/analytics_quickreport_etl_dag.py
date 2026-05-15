@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 
 sys.path.append("/opt/airflow/include/code")
-from code.analytics.main import main as analytics_main
+from analytics.main import main as analytics_main
 
 try:
     from airflow.providers.standard.operators.python import PythonOperator
@@ -30,9 +30,9 @@ with DAG(
     description="Build quickreport analytics tables from storage_search files and log data.",
     default_args=default_args,
     start_date=datetime(2026, 5, 7, tzinfo=pendulum.timezone("Asia/Taipei")),
-    schedule="@daily",
+    schedule="@hourly",
     catchup=False,
-    tags=["qidu", "analytics", "quickreport"],
+    tags=["qidu", "analytics"],
 ) as dag:
     run_etl = PythonOperator(
         task_id="run_analytics_etl",

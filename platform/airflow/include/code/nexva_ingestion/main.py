@@ -210,11 +210,13 @@ def upload_files():
 
     logger.info("Start extracting files")
     
+    count = 0
+
     try:
         with engine_pg.begin() as connection, engine_mysql.begin() as mysql_conn:
 
             # pg_user_id = sync_users_from_mysql(mysql_conn, connection)
-
+            
             for file_attr in sftp.listdir_attr(remote_dir):
 
                 if datetime.fromtimestamp(file_attr.st_mtime) < target_date:
@@ -229,18 +231,15 @@ def upload_files():
                 if file_type not in ['jpg','png','pdf','mp4','mp3','docx','txt','json','xml','csv','xlsx','xls','ndjson']:
                     continue
                 
-                logger.info(f'file name ============= {file}')
                 result = get_file_info(file, mysql_conn)
                 
                 if not result:
-                    logger.info(f'{file} result not founnd')
+                    # logger.info(f'{file} result not founnd')
                     continue
 
                 nexva_id, life_circle_id, title = result[0], result[1], result[2]
 
                 user_id = get_or_create_user(connection, nexva_id, mysql_conn)
-
-                logger.info(f'result from get_file_info============= {result}')
 
                 file_info_dict = {
                         "nexva_id": nexva_id,
@@ -249,8 +248,6 @@ def upload_files():
                         "file_name": file_name
                     }
                 
-                logger.info(f'file_info_dict ==== {file_info_dict}')
-
                 # determine target directory
                 if file_type in ['csv','xlsx','xls']:
                     target_dir = f'structured/{user_id}/'
@@ -279,7 +276,7 @@ def upload_files():
                             object_key
                         )
 
-                        logger.info(f"Uploaded and stored metadata {object_key}")
+                        # logger.info(f"Uploaded and stored metadata {object_key}")
 
                         # Insert metadata
                         file_model = connection.execute(text("""
@@ -302,9 +299,10 @@ def upload_files():
                             "life_circle_id": life_circle_id
                         }).fetchone()
                     
-                    logger.info(
-                        f"Insert files successfully {file_model.id}"
-                    )
+                    # logger.info(
+                    #     f"Insert files successfully {file_model.id}, file_info_dict: {file_info_dict}"
+                    # )
+                    count += 1
 
                 except Exception as e:
                     
@@ -316,7 +314,8 @@ def upload_files():
                         logger.info(f"Rollback: deleted object {object_key}")
                     except Exception as delete_error:
                         logger.error(f"Failed rollback deletion {delete_error}")
-
+                        
+        logger.info(f"Finished uploading files, total count: {count}")
     except Exception as e:
         logger.error(f"Failed to upload files: {e}", exc_info=True)
 

@@ -83,7 +83,7 @@ config_43_mysql = {
     'password': '!QAZ2wsx',  # Replace with your actual MySQL password
     'db': 'qidu_quickreport',
 }
-
+# 10.11.60.43:3306/qidu_quickreport
 config_pg = {
     # 'host': 'localhost',
     'host': '10.11.60.43',

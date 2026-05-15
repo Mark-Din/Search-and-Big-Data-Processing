@@ -19,7 +19,7 @@ def shift_date(df):
     if not isinstance(df, pd.DataFrame):
         return df
     # Check and convert 'created_at' column
-    for column in ['create_date', 'created_at', 'updated_at']:
+    for column in ['create_date', 'updated_at']:
         if column in df.columns:
             # df[column] = pd.to_datetime(df[column])
             # Check if the column contains timezone information
@@ -30,7 +30,7 @@ def shift_date(df):
                 df[column] = df[column].dt.tz_localize('UTC').dt.tz_convert('Asia/Taipei')
             
             # Format and convert back to datetime
-            df[column] = df[column].apply(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'))
+            df[column] = df[column].apply(lambda x: x.strftime('%Y-%m-%d'))
 
     # Reset index
     df.reset_index(drop=True, inplace=True)

@@ -8,7 +8,10 @@ pyspark==3.5.0
 setuptools
 
 mysql-connector-python
-pandas
+pandas==2.3.3
+aiohttp==3.13.2
+SQLAlchemy==2.0.44
+
 apache-airflow
 boto3
 paramiko
@@ -24,7 +27,6 @@ networkit
 networkx
 pytest
 psycopg2-binary
-aiohttp==3.13.2
+
 itsdangerous
 pendulum
-# delta-spark==3.1.0

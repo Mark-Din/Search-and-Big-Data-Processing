@@ -1,9 +1,17 @@
 import ast
 import os
 import json
+import hashlib
+import sys 
 
 from datetime import datetime, timedelta
-from .models import query_for_loop, upsert_data, initialize_database
+from typing import Any
+
+import requests
+import pandas as pd
+
+sys.path.append('/opt/airflow/include/code/analytics')
+from models import query_for_loop, upsert_data, initialize_database
 
 from common.connection import DatabaseConnection, create_database
 from common.utils import batch_convert_uuid, batch_shift_date, asia_time_zone
@@ -27,60 +35,158 @@ def get_db_connection(db_type, config, db_name=None):
         raise ValueError(f"Invalid database type: {db_type}")
     
 
+# def basic_info_process(df):
+    
+    # df['file_size'] = df['file_size'].apply(lambda x: int(x))
+
+    # size = df.file_size.sum()
+
+    # if size != 0:
+    #     if size >= 1000000000:
+    #         total_size = df.file_size.sum().item()/1000000000
+    #     elif size >= 1000000:
+    #         total_size = df.file_size.sum().item()/1000000
+    #     else:
+    #         total_size = df.file_size.sum()
+    
+    # basic_info = pd.DataFrame([['uuid', len(df), total_size]], columns=['總檔案數', '容量總使用'])
+
+    # return basic_info
+
+
+def serach_detail_process(search_detail, logs):
+    query_valueCount = search_detail.apply(lambda x : json.loads(x)['search_query'][0]).value_counts().to_frame().reset_index(names=['關鍵字']).rename(columns={'count':'數量'})
+    # Filter out the search queries that are purely numeric and count the top 10 searched keywords
+    query_valueCount = query_valueCount[query_valueCount['關鍵字'].isin([str(i) for i in range(10000)]) == False].head(10)
+
+    # For the search queries with results, count how many are found and how many are failed
+    query_result = search_detail.apply(lambda x : 'found' if json.loads(x)['query_id'] != "" else 'failed')#.value_counts().to_frame()
+    found_or_not = (query_result.value_counts()).reset_index(name='數量').rename(columns={'details':'尋找結果計數'})
+
+    # For the failed search queries, extract the search query keyword
+    notfound = logs.loc[query_result[query_result == 'failed'].index]['details'].apply(lambda x : json.loads(x)['search_query'][0] if 'search_query' in x else 0).to_frame().rename(columns={'details':'搜尋關鍵字'})
+
+    return query_valueCount, found_or_not, notfound
+
+def hash_password(*args: Any) -> str:
+    key = "_".join("" if arg is None else str(arg) for arg in args)
+    return hashlib.sha256(key.encode("utf-8")).hexdigest()
+
 def user_behavior(df, logs , db):
 
     try:
         # For the search queries, extract the search query keyword and count the top 10 searched keywords
-        query_valueCount = logs[logs.action == 'full_search']['details'].apply(lambda x : json.loads(x)['search_query'][0]).value_counts().to_frame().reset_index(names=['關鍵字']).rename(columns={'count':'數量'})
-        query_valueCount = query_valueCount[query_valueCount['關鍵字'].isin([str(i) for i in range(10)]) == False].head(10)
+        search_detail_norm = logs[(logs.action == 'full_search')&(logs.details.str.contains('search_query'))]['details']
+        search_detail_ai = logs[logs.action == 'full_search_ai']['details']
 
-        # For the search queries with results, count how many are found and how many are failed
-        query_result = logs[(logs.action == 'full_search')&(logs.details.str.contains('result'))]['details'].apply(lambda x : 'found' if json.loads(x)['result'] != [] else 'failed')#.value_counts().to_frame()
-        found_or_not = (query_result.value_counts()).reset_index(name='數量').rename(columns={'details':'尋找結果計數'})
-
-        # For the failed search queries, extract the search query keyword
-        notfound = logs.loc[query_result[query_result == 'failed'].index]['details'].apply(lambda x : json.loads(x)['search_query'][0] if 'search_query' in x else 0).to_frame().rename(columns={'details':'搜尋關鍵字'})
+        search_detail_norm_result = serach_detail_process(search_detail_norm, logs)
+        search_detail_ai_result = serach_detail_process(search_detail_ai, logs)
 
         upsert_data(
-            'log_query_valueCount',
-            query_valueCount,
+            'log_valuecount_query',
+            search_detail_norm_result[0],
             db
         )
         upsert_data(
             'log_found_or_not',
-            found_or_not,
+            search_detail_norm_result[1],
             db
         )
         upsert_data(
             'log_notfound',
-            notfound,
+            search_detail_norm_result[2],
             db
         )
 
         data_type = (df.file_type.value_counts()).to_frame().reset_index(names='檔案類型').rename(columns={'count':'數量'})
 
-        othe_info = df.groupby('file_type').agg({'file_size':'sum'}).reset_index(names='檔案類型').rename(columns={'file_size':'容量'})
+        othe_info = df.groupby('file_type').agg({'file_size':'sum'}).reset_index(names='檔案類型').rename(columns={'file_size':'容量(KB)'})
         data_type = data_type.merge(othe_info, on='檔案類型')
-
-        df['file_size'] = df['file_size'].apply(lambda x: int(x))
-
-        # size = df.file_size.sum()
-
-        # if size != 0:
-        #     if size >= 1000000000:
-        #         total_size = df.file_size.sum().item()/1000000000
-        #     elif size >= 1000000:
-        #         total_size = df.file_size.sum().item()/1000000
-        #     else:
-        #         total_size = df.file_size.sum()
-        
-        # basic_info = pd.DataFrame([['uuid', len(df), total_size]], columns=['總檔案數', '容量總使用'])
+        data_type['容量(KB)'] = data_type['容量(KB)']// (1024)
 
         upsert_data(
             'file_data_type_count',
             data_type,
             db
         )
+
+        df_file = df.copy(deep=True)
+
+        df_file['created_at'] = df_file['created_at'].apply(lambda x: x.strftime('%Y-%m-%d %H:%M:%S') if pd.notnull(x) else None)
+        df_file = df_file[['id', 'file_type', 'file_size',  'title', 'created_at']].rename(columns={'id':'file_id','file_type':'檔案類型', 'file_size':'檔案大小', 'title':'檔案名稱', 'created_at':'建立時間'})
+        df_file['數量'] = 1
+
+        upsert_data(
+                'log_file_info',
+                df_file,
+                db
+        )
+
+        df_popu_keyword = search_detail_ai.apply(lambda x : json.loads(x)['search_query']).value_counts().to_frame().reset_index(names=['關鍵字']).rename(columns={'count':'數量'})
+
+        upsert_data(
+                'log_valuecount_query',
+                df_popu_keyword,
+                db
+        )
+
+
+        df_file_viewed = pd.DataFrame()
+
+        df_preview = logs[(logs.action == 'preview_file')]
+
+        df_file_viewed['action'] = df_preview['action']
+
+        df_original = df_preview[['id', 'user_id', 'action', 'created_at']].reset_index(drop=True)
+        df_normalized = pd.json_normalize(df_preview['details'].apply(json.loads)).reset_index(drop=True)
+
+        df_file_viewed = pd.merge(df_original, df_normalized, left_index=True, right_index=True)
+        df_file_viewed = df_file_viewed.rename(columns={'id':'log_id', 'user_id':'使用者ID', 'file_type':'檔案類型', 'file_name':'檔案名稱', 'created_at':'建立時間','action':'使用者行為', 'bucket':'資料來源'})
+
+        df_file_viewed['使用者ID'] = df_file_viewed['使用者ID'].astype(str)
+
+        df_file_viewed['資料來源'] = df_file_viewed['資料來源'].apply(lambda x : '本地' if x == 'raw' else x )
+
+        logger.debug(f'df === 2\n {df_file_viewed}')
+
+        upsert_data(
+                'log_user_action',
+                df_file_viewed,
+                db
+        )
+
+        df_ai_search = logs[(logs.action == 'full_search_ai')]
+
+        df_logs = df_ai_search[['user_id', 'action', 'created_at']].reset_index(drop=True)
+        df_logs = df_logs.merge(pd.json_normalize(df_ai_search['details'].apply(json.loads)), left_index=True, right_index=True)
+        df_logs = df_logs.merge(pd.json_normalize(df_logs['ml_response'].apply(json.loads)), left_index=True, right_index=True)
+
+        df_logs = df_logs[['user_id', 'title','search_query']].groupby(['title','user_id']).count().reset_index().rename(columns={'user_id':'使用者ID', 'title':'標題', 'search_query':'搜尋結果數量'})
+
+        df_logs['hash_id'] = df_logs.apply(lambda x: hash_password([x['使用者ID'], x['標題']]), axis=1)
+
+        upsert_data(
+                'log_valuecount_result',
+                df_logs,
+                db
+        )
+
+        response = requests.get("https://10.11.60.43:3002/public/storage_info", verify=False)
+
+        data = response.json()
+
+        df = pd.DataFrame([data])
+        df = df[['used_disk_gb','free_disk_gb']]
+        df = df.transpose().reset_index().rename(columns={'index':'儲存資訊', 0 : '數值'})
+        df.loc[0,'儲存資訊'] = '已使用'
+        df.loc[1,'儲存資訊'] = '未使用'
+
+        upsert_data(
+                'storage_info',
+                df,
+                db
+        )
+
     except Exception as e:
         logger.error(f'Error processing data {e}', exc_info=True)
         raise 

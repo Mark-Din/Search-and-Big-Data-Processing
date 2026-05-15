@@ -6,6 +6,9 @@ import pendulum
 
 from airflow import DAG
 
+sys.path.append("/opt/airflow/include/code")
+from nexva_ingestion.main import main as nexva_ingestion_main
+
 try:
     from airflow.providers.standard.operators.python import PythonOperator
 except ImportError:
@@ -13,20 +16,6 @@ except ImportError:
 
 
 DAG_ID = "nexva_ingestion_etl_dag"
-
-AIRFLOW_HOME = os.environ.get("AIRFLOW_HOME", "/opt/airflow")
-INCLUDE_ROOT = os.path.join(AIRFLOW_HOME, "include", "code")
-CODE_ROOT = os.path.join(INCLUDE_ROOT, "code")
-
-for path in (INCLUDE_ROOT, CODE_ROOT):
-    if path not in sys.path:
-        sys.path.insert(0, path)
-
-
-def run_nexva_ingestion_etl():
-    from include.code.nexva_ingestion import main as nexva_ingestion_main
-
-    nexva_ingestion_main.main()
 
 
 default_args = {
@@ -45,9 +34,9 @@ with DAG(
     schedule="@daily",
     catchup=False,
     max_active_runs=1,
-    tags=["qidu", "nexva", "ingestion"],
+    tags=["qidu", "ingestion"],
 ) as dag:
     run_etl = PythonOperator(
         task_id="run_nexva_ingestion_etl",
-        python_callable=run_nexva_ingestion_etl,
+        python_callable=nexva_ingestion_main,
     )

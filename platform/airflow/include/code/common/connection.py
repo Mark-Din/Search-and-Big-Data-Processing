@@ -8,10 +8,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 import sys
+import time
+
 sys.path.append('/opt/airflow/include/')
+sys.path.append(r'D:\markding_git\big-data-ai-integration-platform\platform\airflow\include\code\common')
 from config import config_es, config_pg
 from init_log import initlog
-import time
 
 class DatabaseConnection:
     """Handles database connections."""
